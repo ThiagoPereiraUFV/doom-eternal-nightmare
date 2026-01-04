@@ -14,8 +14,8 @@ export class TouchInputManager {
     
     // Constants
     this.JOYSTICK_MAX_DISTANCE = 50; // pixels
-    this.JOYSTICK_CENTER_PERCENT = 25; // Center position as percentage
-    this.JOYSTICK_RANGE_PERCENT = 25; // Movement range as percentage
+    this.JOYSTICK_CENTER_POSITION = 25; // Center position as percentage of joystick element
+    this.JOYSTICK_MOVEMENT_RANGE = 25; // Maximum movement range as percentage
     
     // Virtual joystick state
     this.joystick = {
@@ -198,9 +198,19 @@ export class TouchInputManager {
     
     // Reset stick position
     if (this.joystickStick) {
-      this.joystickStick.style.left = `${this.JOYSTICK_CENTER_PERCENT}%`;
-      this.joystickStick.style.top = `${this.JOYSTICK_CENTER_PERCENT}%`;
+      this.joystickStick.style.left = `${this.JOYSTICK_CENTER_POSITION}%`;
+      this.joystickStick.style.top = `${this.JOYSTICK_CENTER_POSITION}%`;
     }
+  }
+  
+  /**
+   * Calculate joystick stick position as percentage
+   * @private
+   * @param {number} clampedValue - Clamped position value
+   * @returns {number} Position as percentage
+   */
+  _calculateStickPosition(clampedValue) {
+    return this.JOYSTICK_CENTER_POSITION + (clampedValue / this.JOYSTICK_MAX_DISTANCE) * this.JOYSTICK_MOVEMENT_RANGE;
   }
   
   /**
@@ -225,8 +235,8 @@ export class TouchInputManager {
     
     // Update visual position
     if (this.joystickStick) {
-      const stickX = this.JOYSTICK_CENTER_PERCENT + (clampedX / this.JOYSTICK_MAX_DISTANCE) * this.JOYSTICK_RANGE_PERCENT;
-      const stickY = this.JOYSTICK_CENTER_PERCENT + (clampedY / this.JOYSTICK_MAX_DISTANCE) * this.JOYSTICK_RANGE_PERCENT;
+      const stickX = this._calculateStickPosition(clampedX);
+      const stickY = this._calculateStickPosition(clampedY);
       this.joystickStick.style.left = `${stickX}%`;
       this.joystickStick.style.top = `${stickY}%`;
     }
@@ -318,8 +328,8 @@ export class TouchInputManager {
     this.buttons.reload = false;
     
     if (this.joystickStick) {
-      this.joystickStick.style.left = `${this.JOYSTICK_CENTER_PERCENT}%`;
-      this.joystickStick.style.top = `${this.JOYSTICK_CENTER_PERCENT}%`;
+      this.joystickStick.style.left = `${this.JOYSTICK_CENTER_POSITION}%`;
+      this.joystickStick.style.top = `${this.JOYSTICK_CENTER_POSITION}%`;
     }
   }
 }

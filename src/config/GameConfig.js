@@ -27,6 +27,7 @@ export const GameConfig = {
   // Input configuration
   INPUT: {
     TOUCH_SENSITIVITY: 0.003,
+    VALID_CONTROL_TYPES: ['keyboard', 'touch'],
   },
 
   // Rendering

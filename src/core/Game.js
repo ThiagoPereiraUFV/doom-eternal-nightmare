@@ -253,9 +253,8 @@ export class Game {
    */
   _selectControl(type) {
     // Validate control type
-    const validTypes = ['keyboard', 'touch'];
-    if (!validTypes.includes(type)) {
-      console.error(`Invalid control type: ${type}. Must be 'keyboard' or 'touch'.`);
+    if (!GameConfig.INPUT.VALID_CONTROL_TYPES.includes(type)) {
+      console.error(`Invalid control type: ${type}. Must be one of: ${GameConfig.INPUT.VALID_CONTROL_TYPES.join(', ')}`);
       return;
     }
     
