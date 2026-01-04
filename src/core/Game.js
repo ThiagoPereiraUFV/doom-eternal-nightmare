@@ -107,14 +107,29 @@ export class Game {
       }
     });
 
-    // Weapon switching
+    // Pause menu buttons
+    const pauseResume = document.getElementById("pause-resume");
+    const pauseExit = document.getElementById("pause-exit");
+    if (pauseResume) pauseResume.onclick = () => this.resumeGame();
+    if (pauseExit) pauseExit.onclick = () => this.exitToMenu();
+
+    // Weapon switching and pause
     this.eventManager.on("keydown", (key) => {
-      if (key === "1") this.player?.switchWeapon(0);
-      if (key === "2") this.player?.switchWeapon(1);
-      if (key === "3") this.player?.switchWeapon(2);
-      if (key === "q") this.player?.previousWeapon();
-      if (key === "e") this.player?.nextWeapon();
-      if (key === "r") this.player?.reload();
+      const lowerKey = key.toLowerCase();
+
+      if (lowerKey === "p") {
+        this.togglePause();
+        return;
+      }
+
+      if (this.stateManager.is(GameStates.PAUSED)) return;
+
+      if (lowerKey === "1") this.player?.switchWeapon(0);
+      if (lowerKey === "2") this.player?.switchWeapon(1);
+      if (lowerKey === "3") this.player?.switchWeapon(2);
+      if (lowerKey === "q") this.player?.previousWeapon();
+      if (lowerKey === "e") this.player?.nextWeapon();
+      if (lowerKey === "r") this.player?.reload();
     });
 
     // Shooting via mousedown event
@@ -194,6 +209,7 @@ export class Game {
     // Hide end screens
     document.getElementById("gameOverScreen").classList.remove("show");
     document.getElementById("victoryScreen").classList.remove("show");
+    document.getElementById("pauseMenu").classList.remove("show");
 
     // Reset state
     this.enemiesKilled = 0;
@@ -201,6 +217,78 @@ export class Game {
 
     // Restart
     this.startGame();
+  }
+
+  /**
+   * Toggle pause state
+   */
+  togglePause() {
+    if (this.stateManager.is(GameStates.PLAYING)) {
+      this.pauseGame();
+    } else if (this.stateManager.is(GameStates.PAUSED)) {
+      this.resumeGame();
+    }
+  }
+
+  /**
+   * Pause the game
+   */
+  pauseGame() {
+    if (!this.stateManager.is(GameStates.PLAYING)) return;
+
+    this.stateManager.setState(GameStates.PAUSED);
+    const pauseMenu = document.getElementById("pauseMenu");
+    pauseMenu.style.display = "flex";
+    pauseMenu.classList.add("show");
+    document.exitPointerLock();
+  }
+
+  /**
+   * Resume the game
+   */
+  resumeGame() {
+    if (!this.stateManager.is(GameStates.PAUSED)) return;
+
+    const pauseMenu = document.getElementById("pauseMenu");
+    pauseMenu.classList.remove("show");
+    pauseMenu.style.display = "none";
+    this.stateManager.setState(GameStates.PLAYING);
+    this.canvas.requestPointerLock();
+    this.lastFrameTime = performance.now(); // Reset frame time to prevent jump
+  }
+
+  /**
+   * Exit to main menu
+   */
+  exitToMenu() {
+    // Stop game loop
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+
+    // Stop audio
+    this.audioSystem.stopAmbience();
+
+    // Hide pause menu
+    const pauseMenu = document.getElementById("pauseMenu");
+    pauseMenu.classList.remove("show");
+    pauseMenu.style.display = "none";
+
+    // Exit pointer lock
+    document.exitPointerLock();
+
+    // Show start screen
+    const startScreen = document.getElementById("startScreen");
+    startScreen.classList.remove("hidden");
+    startScreen.style.display = "flex";
+
+    // Reset game state
+    this.stateManager.setState(GameStates.MENU);
+    this.enemiesKilled = 0;
+    this.bloodSplatters = [];
+    this.player = null;
+    this.enemies = [];
   }
 
   /**
@@ -271,6 +359,9 @@ export class Game {
    * @private
    */
   _gameLoop = () => {
+    // Continue loop even when paused
+    this.animationFrameId = requestAnimationFrame(this._gameLoop);
+
     if (!this.stateManager.is(GameStates.PLAYING)) {
       return;
     }
@@ -284,9 +375,6 @@ export class Game {
 
     // Render
     this._render();
-
-    // Continue loop
-    this.animationFrameId = requestAnimationFrame(this._gameLoop);
   };
 
   /**
