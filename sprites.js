@@ -542,20 +542,19 @@ const SVGSprites = {
     </svg>`,
   },
 
-  // Weapon sprites (for weapon canvas)
+  // Weapon sprites (for weapon canvas) - FPS Perspective
   weapons: {
-    pistol: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 160">
+    pistol: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
       <defs>
-        <linearGradient id="gunMetal" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#6a6a6a;stop-opacity:1" />
-          <stop offset="30%" style="stop-color:#404040;stop-opacity:1" />
-          <stop offset="70%" style="stop-color:#2a2a2a;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#1a1a1a;stop-opacity:1" />
-        </linearGradient>
-        <linearGradient id="grip" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style="stop-color:#5a5a5a;stop-opacity:1" />
-          <stop offset="50%" style="stop-color:#3a3a3a;stop-opacity:1" />
+        <linearGradient id="gunMetal" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#2a2a2a;stop-opacity:1" />
+          <stop offset="50%" style="stop-color:#505050;stop-opacity:1" />
           <stop offset="100%" style="stop-color:#2a2a2a;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="slideTop" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#303030;stop-opacity:1" />
+          <stop offset="50%" style="stop-color:#606060;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#303030;stop-opacity:1" />
         </linearGradient>
         <filter id="weaponShadow">
           <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
@@ -564,309 +563,156 @@ const SVGSprites = {
         </filter>
       </defs>
 
-      <!-- Slide (top part) -->
-      <rect x="35" y="50" width="140" height="24" rx="2" fill="#4a4a4a" filter="url(#weaponShadow)"/>
-
-      <!-- Slide serrations -->
-      <g fill="#2a2a2a">
-        <rect x="140" y="53" width="2" height="18"/>
-        <rect x="145" y="53" width="2" height="18"/>
-        <rect x="150" y="53" width="2" height="18"/>
-        <rect x="155" y="53" width="2" height="18"/>
-        <rect x="160" y="53" width="2" height="18"/>
-        <rect x="165" y="53" width="2" height="18"/>
+      <!-- Hand holding the gun -->
+      <g transform="translate(200, 300)">
+         <!-- Thumb -->
+         <path d="M -40 -20 Q -20 -50 10 -40" stroke="#4a3a2a" stroke-width="25" stroke-linecap="round" />
+         <!-- Fingers -->
+         <path d="M 40 -10 Q 60 -40 50 -70" stroke="#4a3a2a" stroke-width="25" stroke-linecap="round" />
       </g>
 
-      <!-- Barrel extending forward -->
-      <rect x="175" y="55" width="110" height="14" rx="2" fill="url(#gunMetal)" filter="url(#weaponShadow)"/>
-      <!-- Barrel highlight -->
-      <rect x="177" y="57" width="105" height="3" fill="rgba(150,150,150,0.3)"/>
+      <!-- Gun Body (FPS Perspective) -->
+      <g transform="translate(200, 300)">
+        <!-- Slide Side -->
+        <path d="M -30 -20 L -20 -180 L 20 -180 L 30 -20 Z" fill="#2a2a2a" filter="url(#weaponShadow)"/>
 
-      <!-- Muzzle -->
-      <circle cx="285" cy="62" r="7" fill="#1a1a1a"/>
-      <circle cx="285" cy="62" r="5" fill="#0a0a0a"/>
+        <!-- Slide Top -->
+        <path d="M -20 -180 L -15 -200 L 15 -200 L 20 -180 Z" fill="url(#slideTop)" />
 
-      <!-- Frame/receiver -->
-      <rect x="35" y="74" width="140" height="32" rx="2" fill="#3a3a3a" filter="url(#weaponShadow)"/>
+        <!-- Barrel Tip -->
+        <ellipse cx="0" cy="-200" rx="5" ry="3" fill="#000" />
 
-      <!-- Ejection port -->
-      <rect x="120" y="52" width="20" height="10" fill="#1a1a1a"/>
+        <!-- Rear Sight -->
+        <path d="M -25 -40 L -25 -60 L -10 -60 L -10 -50 L 10 -50 L 10 -60 L 25 -60 L 25 -40 Z" fill="#1a1a1a" />
 
-      <!-- Trigger guard -->
-      <path d="M 80 106 Q 70 118 80 130" stroke="#4a4a4a" stroke-width="4" fill="none"/>
+        <!-- Front Sight -->
+        <rect x="-2" y="-198" width="4" height="6" fill="#00ff00" opacity="0.8" />
 
-      <!-- Trigger -->
-      <rect x="75" y="110" width="12" height="22" rx="2" fill="#5a5a5a"/>
-
-      <!-- Grip (vertical) -->
-      <path d="M 35 106 L 35 150 Q 35 155 40 155 L 70 155 Q 75 155 75 150 L 75 106 Z" fill="url(#grip)" filter="url(#weaponShadow)"/>
-
-      <!-- Grip texture lines -->
-      <g stroke="#2a2a2a" stroke-width="1.5">
-        <line x1="40" y1="115" x2="70" y2="115"/>
-        <line x1="40" y1="122" x2="70" y2="122"/>
-        <line x1="40" y1="129" x2="70" y2="129"/>
-        <line x1="40" y1="136" x2="70" y2="136"/>
-        <line x1="40" y1="143" x2="70" y2="143"/>
+        <!-- Ejection Port -->
+        <path d="M 10 -120 L 18 -120 L 18 -100 L 12 -100 Z" fill="#1a1a1a" />
       </g>
 
-      <!-- Front sight -->
-      <rect x="270" y="45" width="6" height="10" fill="#5a5a5a"/>
-      <rect x="271" y="47" width="4" height="4" fill="#00ff00"/>
-
-      <!-- Rear sight -->
-      <g fill="#4a4a4a">
-        <rect x="130" y="44" width="4" height="8"/>
-        <rect x="146" y="44" width="4" height="8"/>
-      </g>
-
-      <!-- Hammer -->
-      <path d="M 45 74 L 40 65 L 50 65 Z" fill="#3a3a3a"/>
-
-      <!-- Magazine -->
-      <rect x="85" y="106" width="22" height="50" rx="2" fill="#3a3a3a"/>
-      <rect x="87" y="108" width="18" height="46" rx="1" fill="#2a2a2a"/>
+      <!-- Muzzle Flash (Hidden by default) -->
+      <circle cx="200" cy="100" r="0" fill="yellow" opacity="0.5">
+        <animate attributeName="r" from="0" to="20" dur="0.1s" begin="click" />
+        <animate attributeName="opacity" from="0.8" to="0" dur="0.1s" begin="click" />
+      </circle>
     </svg>`,
 
-    shotgun: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 180">
+    shotgun: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 350">
       <defs>
-        <linearGradient id="wood" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#a87850;stop-opacity:1" />
-          <stop offset="50%" style="stop-color:#8b5a3c;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#6b4423;stop-opacity:1" />
-        </linearGradient>
-        <linearGradient id="barrel" x1="0%" y1="50%" x2="100%" y2="50%">
+        <linearGradient id="barrelGrad" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" style="stop-color:#1a1a1a;stop-opacity:1" />
-          <stop offset="15%" style="stop-color:#3a3a3a;stop-opacity:1" />
-          <stop offset="50%" style="stop-color:#2a2a2a;stop-opacity:1" />
-          <stop offset="85%" style="stop-color:#3a3a3a;stop-opacity:1" />
+          <stop offset="40%" style="stop-color:#4a4a4a;stop-opacity:1" />
+          <stop offset="60%" style="stop-color:#4a4a4a;stop-opacity:1" />
           <stop offset="100%" style="stop-color:#1a1a1a;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="woodGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#5a3a1a;stop-opacity:1" />
+          <stop offset="50%" style="stop-color:#8a5a3a;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#5a3a1a;stop-opacity:1" />
         </linearGradient>
         <filter id="shotgunShadow">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
-          <feOffset dx="2" dy="2"/>
+          <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+          <feOffset dx="0" dy="4"/>
           <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
       </defs>
 
-      <!-- Stock (wooden, pointing left/back) -->
-      <path d="M 20 70 L 20 110 Q 20 115 25 115 L 70 115 L 70 70 Q 70 65 65 65 L 25 65 Q 20 65 20 70 Z" fill="url(#wood)" filter="url(#shotgunShadow)"/>
-
-      <!-- Wood grain on stock -->
-      <g stroke="#6b4423" stroke-width="1" fill="none" opacity="0.4">
-        <path d="M 25 72 Q 35 85 30 108"/>
-        <path d="M 35 70 Q 45 85 40 110"/>
-        <path d="M 50 70 Q 60 85 55 110"/>
+      <!-- Left Hand (Pump) -->
+      <g transform="translate(250, 350)">
+         <ellipse cx="-40" cy="-100" rx="30" ry="20" fill="#4a3a2a" transform="rotate(-20)" />
+         <path d="M -60 -90 Q -40 -130 -10 -120" stroke="#4a3a2a" stroke-width="20" stroke-linecap="round" />
       </g>
 
-      <!-- Receiver (metal) -->
-      <rect x="70" y="65" width="80" height="50" rx="3" fill="#3a3a3a" filter="url(#shotgunShadow)"/>
+      <!-- Shotgun Body (FPS Perspective) -->
+      <g transform="translate(250, 350)">
+        <!-- Receiver -->
+        <rect x="-40" y="-60" width="80" height="60" fill="#2a2a2a" filter="url(#shotgunShadow)" />
 
-      <!-- Loading port -->
-      <rect x="80" y="73" width="30" height="14" fill="#1a1a1a"/>
+        <!-- Barrel -->
+        <path d="M -25 -60 L -15 -300 L 15 -300 L 25 -60 Z" fill="url(#barrelGrad)" />
 
-      <!-- Ejection port -->
-      <rect x="120" y="70" width="18" height="10" fill="#1a1a1a"/>
+        <!-- Magazine Tube -->
+        <path d="M -20 -50 L -12 -280 L 12 -280 L 20 -50 Z" fill="#1a1a1a" transform="translate(0, 10)" />
 
-      <!-- Pump/foregrip (wood) -->
-      <rect x="180" y="70" width="40" height="40" rx="4" fill="url(#wood)" filter="url(#shotgunShadow)"/>
-      <rect x="182" y="72" width="36" height="36" rx="3" fill="none" stroke="#5a3a1a" stroke-width="2"/>
+        <!-- Pump Handle -->
+        <path d="M -30 -100 L -22 -200 L 22 -200 L 30 -100 Z" fill="url(#woodGrad)" filter="url(#shotgunShadow)" />
+        <!-- Pump Texture -->
+        <g stroke="#3a2a0a" stroke-width="1" opacity="0.5">
+            <line x1="-28" y1="-110" x2="28" y2="-110" />
+            <line x1="-27" y1="-120" x2="27" y2="-120" />
+            <line x1="-26" y1="-130" x2="26" y2="-130" />
+            <line x1="-25" y1="-140" x2="25" y2="-140" />
+            <line x1="-24" y1="-150" x2="24" y2="-150" />
+        </g>
 
-      <!-- Double barrel -->
-      <rect x="220" y="70" width="200" height="40" rx="3" fill="url(#barrel)" filter="url(#shotgunShadow)"/>
+        <!-- Sight Bead -->
+        <circle cx="0" cy="-295" r="3" fill="gold" />
 
-      <!-- Barrel separation -->
-      <line x1="320" y1="70" x2="320" y2="110" stroke="#0a0a0a" stroke-width="3"/>
-
-      <!-- Barrel muzzle -->
-      <g fill="#1a1a1a">
-        <circle cx="420" cy="82" r="9" fill="#0a0a0a"/>
-        <circle cx="420" cy="98" r="9" fill="#0a0a0a"/>
-        <circle cx="420" cy="82" r="7"/>
-        <circle cx="420" cy="98" r="7"/>
-      </g>
-
-      <!-- Front sight bead -->
-      <rect x="410" y="63" width="5" height="10" fill="#5a5a5a"/>
-      <circle cx="412" cy="66" r="2.5" fill="#ff6600"/>
-
-      <!-- Trigger guard -->
-      <path d="M 100 115 Q 90 127 100 139" stroke="#3a3a3a" stroke-width="5" fill="none"/>
-
-      <!-- Trigger -->
-      <rect x="95" y="120" width="12" height="22" rx="2" fill="#5a5a5a"/>
-
-      <!-- Pump action rod -->
-      <rect x="150" y="88" width="75" height="4" fill="#2a2a2a"/>
-
-      <!-- Barrel bands -->
-      <rect x="260" y="75" width="5" height="30" fill="#2a2a2a" rx="1"/>
-      <rect x="360" y="75" width="5" height="30" fill="#2a2a2a" rx="1"/>
-
-      <!-- Shell holder on receiver -->
-      <g>
-        <rect x="75" y="58" width="12" height="6" rx="1" fill="#4a3a2a"/>
-        <rect x="90" y="58" width="12" height="6" rx="1" fill="#4a3a2a"/>
-        <rect x="105" y="58" width="12" height="6" rx="1" fill="#4a3a2a"/>
-        <!-- Shells -->
-        <rect x="76" y="52" width="10" height="6" rx="1" fill="#d4af37" stroke="#8b7500"/>
-        <rect x="91" y="52" width="10" height="6" rx="1" fill="#d4af37" stroke="#8b7500"/>
-        <rect x="106" y="52" width="10" height="6" rx="1" fill="#d4af37" stroke="#8b7500"/>
+        <!-- Ejection Port -->
+        <rect x="10" y="-50" width="20" height="10" fill="#000" transform="skewY(-10)" />
       </g>
     </svg>`,
 
-    rifle: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 550 160">
+    rifle: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 340">
       <defs>
-        <linearGradient id="tacBlack" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style="stop-color:#4a4a4a;stop-opacity:1" />
-          <stop offset="50%" style="stop-color:#2a2a2a;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#1a1a1a;stop-opacity:1" />
+        <linearGradient id="rifleMetal" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#202020;stop-opacity:1" />
+          <stop offset="50%" style="stop-color:#404040;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#202020;stop-opacity:1" />
         </linearGradient>
-        <linearGradient id="magazine" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style="stop-color:#5a5a5a;stop-opacity:1" />
-          <stop offset="50%" style="stop-color:#3a3a3a;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#2a2a2a;stop-opacity:1" />
-        </linearGradient>
+        <pattern id="railPattern" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
+          <rect width="10" height="2" fill="#101010" />
+        </pattern>
         <filter id="rifleShadow">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+          <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
           <feOffset dx="2" dy="2"/>
           <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
       </defs>
 
-      <!-- Stock (collapsible tactical) -->
-      <rect x="20" y="60" width="90" height="40" rx="3" fill="url(#tacBlack)" filter="url(#rifleShadow)"/>
-      <!-- Stock texture panels -->
-      <g stroke="#1a1a1a" stroke-width="1" fill="none">
-        <rect x="25" y="63" width="18" height="34"/>
-        <rect x="46" y="63" width="18" height="34"/>
-        <rect x="67" y="63" width="18" height="34"/>
-        <rect x="88" y="63" width="18" height="34"/>
+      <!-- Hands -->
+      <g transform="translate(400, 340)">
+         <!-- Left Hand on Handguard -->
+         <ellipse cx="-80" cy="-100" rx="35" ry="25" fill="#4a3a2a" transform="rotate(-15)" />
+         <path d="M -100 -90 Q -80 -130 -50 -120" stroke="#4a3a2a" stroke-width="20" stroke-linecap="round" />
       </g>
 
-      <!-- Buffer tube -->
-      <rect x="110" y="70" width="30" height="20" rx="10" fill="#2a2a2a"/>
+      <!-- Rifle Body (FPS Perspective - Angled Right) -->
+      <g transform="translate(400, 340)">
+        <!-- Receiver -->
+        <path d="M -60 -20 L -50 -150 L 30 -150 L 40 -20 Z" fill="#2a2a2a" filter="url(#rifleShadow)" />
 
-      <!-- Lower Receiver -->
-      <rect x="140" y="65" width="100" height="45" rx="2" fill="#3a3a3a" filter="url(#rifleShadow)"/>
+        <!-- Top Rail -->
+        <path d="M -50 -150 L -45 -300 L 25 -300 L 30 -150 Z" fill="url(#rifleMetal)" />
+        <path d="M -50 -150 L -45 -300 L 25 -300 L 30 -150 Z" fill="url(#railPattern)" opacity="0.5" />
 
-      <!-- Upper Receiver -->
-      <rect x="145" y="55" width="95" height="20" fill="#2a2a2a"/>
+        <!-- Handguard -->
+        <path d="M -55 -100 L -48 -280 L 28 -280 L 35 -100 Z" fill="#333" opacity="0.9" />
+        <!-- Vents -->
+        <g fill="#111">
+            <ellipse cx="-10" cy="-140" rx="5" ry="15" />
+            <ellipse cx="-8" cy="-180" rx="4" ry="12" />
+            <ellipse cx="-6" cy="-220" rx="3" ry="9" />
+        </g>
 
-      <!-- Charging handle -->
-      <rect x="150" y="57" width="18" height="14" fill="#4a4a4a"/>
+        <!-- Front Sight Post -->
+        <path d="M -15 -290 L -15 -320 L -5 -320 L -5 -290 Z" fill="#111" />
+        <path d="M 15 -290 L 15 -320 L 5 -320 L 5 -290 Z" fill="#111" />
+        <rect x="-1" y="-315" width="2" height="10" fill="#111" />
 
-      <!-- Ejection port -->
-      <rect x="180" y="58" width="38" height="14" fill="#1a1a1a"/>
-      <circle cx="215" cy="65" r="2" fill="#5a5a5a"/>
+        <!-- Holographic Sight (Rear) -->
+        <g transform="translate(0, -160)">
+            <rect x="-25" y="-30" width="50" height="30" fill="#222" stroke="#444" stroke-width="2" />
+            <rect x="-20" y="-25" width="40" height="20" fill="#00ffff" opacity="0.2" />
+            <circle cx="0" cy="-15" r="2" fill="red" opacity="0.8" />
+            <circle cx="0" cy="-15" r="10" stroke="red" stroke-width="1" fill="none" opacity="0.6" />
+        </g>
 
-      <!-- Picatinny rail on top -->
-      <rect x="145" y="50" width="150" height="5" fill="#2a2a2a"/>
-      <g fill="#1a1a1a">
-        <rect x="150" y="51" width="3" height="3"/>
-        <rect x="158" y="51" width="3" height="3"/>
-        <rect x="166" y="51" width="3" height="3"/>
-        <rect x="174" y="51" width="3" height="3"/>
-        <rect x="182" y="51" width="3" height="3"/>
-        <rect x="190" y="51" width="3" height="3"/>
+        <!-- Magazine (Hint) -->
+        <path d="M -20 -20 L -30 50 L 10 50 L 20 -20 Z" fill="#1a1a1a" />
       </g>
-
-      <!-- Handguard/rail system -->
-      <rect x="240" y="60" width="120" height="40" rx="2" fill="url(#tacBlack)" filter="url(#rifleShadow)"/>
-
-      <!-- Rail slots on handguard -->
-      <g fill="#1a1a1a">
-        <rect x="245" y="63" width="3" height="34"/>
-        <rect x="253" y="63" width="3" height="34"/>
-        <rect x="261" y="63" width="3" height="34"/>
-        <rect x="269" y="63" width="3" height="34"/>
-        <rect x="277" y="63" width="3" height="34"/>
-        <rect x="285" y="63" width="3" height="34"/>
-        <rect x="293" y="63" width="3" height="34"/>
-        <rect x="301" y="63" width="3" height="34"/>
-        <rect x="309" y="63" width="3" height="34"/>
-        <rect x="317" y="63" width="3" height="34"/>
-        <rect x="325" y="63" width="3" height="34"/>
-        <rect x="333" y="63" width="3" height="34"/>
-        <rect x="341" y="63" width="3" height="34"/>
-        <rect x="349" y="63" width="3" height="34"/>
-      </g>
-
-      <!-- Gas block/front sight -->
-      <rect x="355" y="65" width="10" height="30" fill="#2a2a2a"/>
-      <rect x="357" y="58" width="6" height="8" fill="#4a4a4a"/>
-      <circle cx="360" cy="60" r="2" fill="#00ff00"/>
-
-      <!-- Barrel -->
-      <rect x="365" y="68" width="150" height="24" rx="12" fill="#1a1a1a" filter="url(#rifleShadow)"/>
-      <!-- Barrel highlight -->
-      <rect x="367" y="70" width="145" height="4" fill="rgba(80,80,80,0.4)"/>
-
-      <!-- Muzzle device/compensator -->
-      <g fill="#2a2a2a" stroke="#1a1a1a" stroke-width="1">
-        <rect x="515" y="65" width="20" height="30" rx="2"/>
-        <rect x="517" y="68" width="3" height="24"/>
-        <rect x="522" y="68" width="3" height="24"/>
-        <rect x="527" y="68" width="3" height="24"/>
-      </g>
-      <circle cx="535" cy="80" r="12" fill="#1a1a1a"/>
-      <circle cx="535" cy="80" r="9" fill="#0a0a0a"/>
-
-      <!-- Magazine -->
-      <rect x="175" y="110" width="28" height="60" rx="2" fill="url(#magazine)"/>
-      <path d="M 175 125 Q 173 140 175 160" stroke="#2a2a2a" stroke-width="2" fill="none"/>
-      <!-- Magazine window/ridges -->
-      <g fill="#2a2a2a">
-        <rect x="177" y="115" width="24" height="2"/>
-        <rect x="177" y="125" width="24" height="2"/>
-        <rect x="177" y="135" width="24" height="2"/>
-        <rect x="177" y="145" width="24" height="2"/>
-        <rect x="177" y="155" width="24" height="2"/>
-      </g>
-
-      <!-- Trigger guard -->
-      <path d="M 160 110 Q 150 120 160 130" stroke="#3a3a3a" stroke-width="4" fill="none"/>
-
-      <!-- Trigger -->
-      <rect x="155" y="113" width="12" height="22" rx="2" fill="#5a5a5a"/>
-
-      <!-- Pistol grip -->
-      <path d="M 150 135 Q 145 155 155 175 L 170 175 L 170 138 Z" fill="url(#tacBlack)"/>
-      <!-- Grip texture -->
-      <g stroke="#1a1a1a" stroke-width="1" fill="none">
-        <line x1="152" y1="145" x2="165" y2="145"/>
-        <line x1="151" y1="152" x2="164" y2="152"/>
-        <line x1="150" y1="159" x2="163" y2="159"/>
-        <line x1="151" y1="166" x2="164" y2="166"/>
-      </g>
-
-      <!-- Rear sight -->
-      <g fill="#3a3a3a">
-        <rect x="245" y="83" width="5" height="10"/>
-        <rect x="258" y="83" width="5" height="10"/>
-      </g>
-
-      <!-- Optics rail -->
-      <rect x="180" y="80" width="80" height="5" fill="#2a2a2a"/>
-      <g fill="#1a1a1a">
-        <rect x="185" y="80" width="2" height="5"/>
-        <rect x="195" y="80" width="2" height="5"/>
-        <rect x="205" y="80" width="2" height="5"/>
-        <rect x="215" y="80" width="2" height="5"/>
-        <rect x="225" y="80" width="2" height="5"/>
-        <rect x="235" y="80" width="2" height="5"/>
-        <rect x="245" y="80" width="2" height="5"/>
-        <rect x="255" y="80" width="2" height="5"/>
-      </g>
-
-      <!-- Bolt catch -->
-      <rect x="148" y="108" width="6" height="8" rx="1" fill="#4a4a4a"/>
-
-      <!-- Magazine release -->
-      <circle cx="172" cy="125" r="3" fill="#3a3a3a"/>
-
-      <!-- Forward assist -->
-      <circle cx="270" cy="95" r="4" fill="#2a2a2a"/>
     </svg>`,
   },
 };
@@ -915,22 +761,22 @@ async function preloadSprites(onProgress) {
   // Load weapon sprites
   loadedSprites.weapons.pistol = await createSVGSprite(
     SVGSprites.weapons.pistol,
-    200,
+    400,
     300,
   );
   updateProgress();
 
   loadedSprites.weapons.shotgun = await createSVGSprite(
     SVGSprites.weapons.shotgun,
-    300,
-    250,
+    500,
+    350,
   );
   updateProgress();
 
   loadedSprites.weapons.rifle = await createSVGSprite(
     SVGSprites.weapons.rifle,
-    400,
-    220,
+    600,
+    340,
   );
   updateProgress();
 
