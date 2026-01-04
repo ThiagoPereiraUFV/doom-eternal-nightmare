@@ -503,7 +503,7 @@ export class Game {
       // Handle look delta from touch
       const lookDelta = this.touchInputManager.getLookDelta();
       if (lookDelta.x !== 0) {
-        this.player.angle += lookDelta.x * 0.003; // Sensitivity multiplier
+        this.player.angle += lookDelta.x * GameConfig.INPUT.TOUCH_SENSITIVITY;
       }
       
       // Sprint is always off for touch (can be added as button if needed)

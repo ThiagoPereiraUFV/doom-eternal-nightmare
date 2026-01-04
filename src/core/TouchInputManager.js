@@ -5,8 +5,15 @@
  */
 
 export class TouchInputManager {
+  /**
+   * Create a TouchInputManager
+   * @param {EventManager} eventManager - Event manager for publishing input events
+   */
   constructor(eventManager) {
     this.eventManager = eventManager;
+    
+    // Constants
+    this.JOYSTICK_MAX_DISTANCE = 50; // pixels
     
     // Virtual joystick state
     this.joystick = {
@@ -44,6 +51,11 @@ export class TouchInputManager {
     this.weapon1Button = document.getElementById('touchWeapon1');
     this.weapon2Button = document.getElementById('touchWeapon2');
     this.weapon3Button = document.getElementById('touchWeapon3');
+    
+    // Validate elements exist
+    if (!this.touchControls || !this.joystickElement || !this.lookAreaElement) {
+      console.warn('Touch control elements not found in DOM');
+    }
     
     this._setupListeners();
   }
@@ -198,22 +210,21 @@ export class TouchInputManager {
     const dy = this.joystick.currentY - this.joystick.startY;
     
     // Limit to joystick radius
-    const maxDistance = 50; // pixels
     const distance = Math.sqrt(dx * dx + dy * dy);
     const angle = Math.atan2(dy, dx);
     
-    const clampedDistance = Math.min(distance, maxDistance);
+    const clampedDistance = Math.min(distance, this.JOYSTICK_MAX_DISTANCE);
     const clampedX = Math.cos(angle) * clampedDistance;
     const clampedY = Math.sin(angle) * clampedDistance;
     
     // Normalize to -1 to 1 range
-    this.joystick.deltaX = clampedX / maxDistance;
-    this.joystick.deltaY = clampedY / maxDistance;
+    this.joystick.deltaX = clampedX / this.JOYSTICK_MAX_DISTANCE;
+    this.joystick.deltaY = clampedY / this.JOYSTICK_MAX_DISTANCE;
     
     // Update visual position
     if (this.joystickStick) {
-      const stickX = 25 + (clampedX / maxDistance) * 25; // 25% center + offset
-      const stickY = 25 + (clampedY / maxDistance) * 25;
+      const stickX = 25 + (clampedX / this.JOYSTICK_MAX_DISTANCE) * 25; // 25% center + offset
+      const stickY = 25 + (clampedY / this.JOYSTICK_MAX_DISTANCE) * 25;
       this.joystickStick.style.left = `${stickX}%`;
       this.joystickStick.style.top = `${stickY}%`;
     }
