@@ -1,0 +1,314 @@
+/**
+ * Touch Input Manager
+ * Handles touch controls for mobile devices
+ * Following SRP - only touch input handling
+ */
+
+export class TouchInputManager {
+  constructor(eventManager) {
+    this.eventManager = eventManager;
+    
+    // Virtual joystick state
+    this.joystick = {
+      active: false,
+      startX: 0,
+      startY: 0,
+      currentX: 0,
+      currentY: 0,
+      deltaX: 0,
+      deltaY: 0,
+    };
+    
+    // Look area state
+    this.lookArea = {
+      active: false,
+      lastX: 0,
+      lastY: 0,
+      deltaX: 0,
+      deltaY: 0,
+    };
+    
+    // Touch button states
+    this.buttons = {
+      shoot: false,
+      reload: false,
+    };
+    
+    // Elements
+    this.touchControls = document.getElementById('touchControls');
+    this.joystickElement = document.getElementById('touchJoystick');
+    this.joystickStick = document.getElementById('joystickStick');
+    this.lookAreaElement = document.getElementById('touchLookArea');
+    this.shootButton = document.getElementById('touchShoot');
+    this.reloadButton = document.getElementById('touchReload');
+    this.weapon1Button = document.getElementById('touchWeapon1');
+    this.weapon2Button = document.getElementById('touchWeapon2');
+    this.weapon3Button = document.getElementById('touchWeapon3');
+    
+    this._setupListeners();
+  }
+  
+  /**
+   * Enable touch controls
+   */
+  enable() {
+    if (this.touchControls) {
+      this.touchControls.classList.add('active');
+    }
+  }
+  
+  /**
+   * Disable touch controls
+   */
+  disable() {
+    if (this.touchControls) {
+      this.touchControls.classList.remove('active');
+    }
+    this._resetState();
+  }
+  
+  /**
+   * Setup touch event listeners
+   * @private
+   */
+  _setupListeners() {
+    // Joystick
+    if (this.joystickElement) {
+      this.joystickElement.addEventListener('touchstart', (e) => this._handleJoystickStart(e));
+      this.joystickElement.addEventListener('touchmove', (e) => this._handleJoystickMove(e));
+      this.joystickElement.addEventListener('touchend', (e) => this._handleJoystickEnd(e));
+      this.joystickElement.addEventListener('touchcancel', (e) => this._handleJoystickEnd(e));
+    }
+    
+    // Look area
+    if (this.lookAreaElement) {
+      this.lookAreaElement.addEventListener('touchstart', (e) => this._handleLookStart(e));
+      this.lookAreaElement.addEventListener('touchmove', (e) => this._handleLookMove(e));
+      this.lookAreaElement.addEventListener('touchend', (e) => this._handleLookEnd(e));
+      this.lookAreaElement.addEventListener('touchcancel', (e) => this._handleLookEnd(e));
+    }
+    
+    // Shoot button
+    if (this.shootButton) {
+      this.shootButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.buttons.shoot = true;
+        this.eventManager.emit('mousedown', 'left');
+      });
+      this.shootButton.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        this.buttons.shoot = false;
+        this.eventManager.emit('mouseup', 'left');
+      });
+    }
+    
+    // Reload button
+    if (this.reloadButton) {
+      this.reloadButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.buttons.reload = true;
+        this.eventManager.emit('keydown', 'r');
+      });
+      this.reloadButton.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        this.buttons.reload = false;
+        this.eventManager.emit('keyup', 'r');
+      });
+    }
+    
+    // Weapon buttons
+    if (this.weapon1Button) {
+      this.weapon1Button.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.eventManager.emit('keydown', '1');
+      });
+    }
+    
+    if (this.weapon2Button) {
+      this.weapon2Button.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.eventManager.emit('keydown', '2');
+      });
+    }
+    
+    if (this.weapon3Button) {
+      this.weapon3Button.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.eventManager.emit('keydown', '3');
+      });
+    }
+  }
+  
+  /**
+   * Handle joystick touch start
+   * @private
+   */
+  _handleJoystickStart(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = this.joystickElement.getBoundingClientRect();
+    
+    this.joystick.active = true;
+    this.joystick.startX = rect.left + rect.width / 2;
+    this.joystick.startY = rect.top + rect.height / 2;
+    this.joystick.currentX = touch.clientX;
+    this.joystick.currentY = touch.clientY;
+    
+    this._updateJoystick();
+  }
+  
+  /**
+   * Handle joystick touch move
+   * @private
+   */
+  _handleJoystickMove(e) {
+    e.preventDefault();
+    if (!this.joystick.active) return;
+    
+    const touch = e.touches[0];
+    this.joystick.currentX = touch.clientX;
+    this.joystick.currentY = touch.clientY;
+    
+    this._updateJoystick();
+  }
+  
+  /**
+   * Handle joystick touch end
+   * @private
+   */
+  _handleJoystickEnd(e) {
+    e.preventDefault();
+    this.joystick.active = false;
+    this.joystick.deltaX = 0;
+    this.joystick.deltaY = 0;
+    
+    // Reset stick position
+    if (this.joystickStick) {
+      this.joystickStick.style.left = '25%';
+      this.joystickStick.style.top = '25%';
+    }
+  }
+  
+  /**
+   * Update joystick state
+   * @private
+   */
+  _updateJoystick() {
+    const dx = this.joystick.currentX - this.joystick.startX;
+    const dy = this.joystick.currentY - this.joystick.startY;
+    
+    // Limit to joystick radius
+    const maxDistance = 50; // pixels
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.atan2(dy, dx);
+    
+    const clampedDistance = Math.min(distance, maxDistance);
+    const clampedX = Math.cos(angle) * clampedDistance;
+    const clampedY = Math.sin(angle) * clampedDistance;
+    
+    // Normalize to -1 to 1 range
+    this.joystick.deltaX = clampedX / maxDistance;
+    this.joystick.deltaY = clampedY / maxDistance;
+    
+    // Update visual position
+    if (this.joystickStick) {
+      const stickX = 25 + (clampedX / maxDistance) * 25; // 25% center + offset
+      const stickY = 25 + (clampedY / maxDistance) * 25;
+      this.joystickStick.style.left = `${stickX}%`;
+      this.joystickStick.style.top = `${stickY}%`;
+    }
+  }
+  
+  /**
+   * Handle look area touch start
+   * @private
+   */
+  _handleLookStart(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    
+    this.lookArea.active = true;
+    this.lookArea.lastX = touch.clientX;
+    this.lookArea.lastY = touch.clientY;
+  }
+  
+  /**
+   * Handle look area touch move
+   * @private
+   */
+  _handleLookMove(e) {
+    e.preventDefault();
+    if (!this.lookArea.active) return;
+    
+    const touch = e.touches[0];
+    
+    this.lookArea.deltaX = touch.clientX - this.lookArea.lastX;
+    this.lookArea.deltaY = touch.clientY - this.lookArea.lastY;
+    
+    this.lookArea.lastX = touch.clientX;
+    this.lookArea.lastY = touch.clientY;
+  }
+  
+  /**
+   * Handle look area touch end
+   * @private
+   */
+  _handleLookEnd(e) {
+    e.preventDefault();
+    this.lookArea.active = false;
+    this.lookArea.deltaX = 0;
+    this.lookArea.deltaY = 0;
+  }
+  
+  /**
+   * Get movement input (-1 to 1)
+   * @returns {{forward: number, strafe: number}}
+   */
+  getMovement() {
+    return {
+      forward: -this.joystick.deltaY, // Inverted Y
+      strafe: this.joystick.deltaX,
+    };
+  }
+  
+  /**
+   * Get look delta
+   * @returns {{x: number, y: number}}
+   */
+  getLookDelta() {
+    const delta = {
+      x: this.lookArea.deltaX,
+      y: this.lookArea.deltaY,
+    };
+    
+    // Reset delta after reading (consumed)
+    this.lookArea.deltaX = 0;
+    this.lookArea.deltaY = 0;
+    
+    return delta;
+  }
+  
+  /**
+   * Reset all touch input state
+   * @private
+   */
+  _resetState() {
+    this.joystick.active = false;
+    this.joystick.deltaX = 0;
+    this.joystick.deltaY = 0;
+    
+    this.lookArea.active = false;
+    this.lookArea.deltaX = 0;
+    this.lookArea.deltaY = 0;
+    
+    this.buttons.shoot = false;
+    this.buttons.reload = false;
+    
+    if (this.joystickStick) {
+      this.joystickStick.style.left = '25%';
+      this.joystickStick.style.top = '25%';
+    }
+  }
+}
+
+export default TouchInputManager;

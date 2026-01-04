@@ -9,6 +9,7 @@ import { GameStateManager, GameStates } from "../managers/GameStateManager.js";
 import { ResourceManager } from "../managers/ResourceManager.js";
 import { EventManager } from "./EventManager.js";
 import { InputManager } from "./InputManager.js";
+import { TouchInputManager } from "./TouchInputManager.js";
 import { AudioSystem } from "../systems/AudioSystem.js";
 import { Renderer } from "./Renderer.js";
 import { Player } from "../entities/Player.js";
@@ -30,11 +31,15 @@ export class Game {
 
     // Initialize systems
     this.inputManager = new InputManager(this.canvas, this.eventManager);
+    this.touchInputManager = new TouchInputManager(this.eventManager);
     this.renderer = new Renderer(
       this.canvas,
       this.weaponCanvas,
       this.resourceManager,
     );
+
+    // Control type ('keyboard' or 'touch')
+    this.controlType = null;
 
     // Game state
     this.player = null;
@@ -87,12 +92,24 @@ export class Game {
    * @private
    */
   _setupEventListeners() {
+    // Control selection
+    const keyboardBtn = document.getElementById('control-keyboard');
+    const touchBtn = document.getElementById('control-touch');
+    
+    if (keyboardBtn) {
+      keyboardBtn.onclick = () => this._selectControl('keyboard');
+    }
+    
+    if (touchBtn) {
+      touchBtn.onclick = () => this._selectControl('touch');
+    }
+    
     // Start game button
     const startBtn = document.getElementById("start-btn");
     if (startBtn) {
-      startBtn.onclick = () => this.startGame();
+      startBtn.onclick = () => this._showControlSelection();
     } else {
-      document.getElementById("startScreen").onclick = () => this.startGame();
+      document.getElementById("startScreen").onclick = () => this._showControlSelection();
     }
 
     // Restart buttons
@@ -102,7 +119,7 @@ export class Game {
 
     // Mouse movement (setup once)
     document.addEventListener("mousemove", (e) => {
-      if (document.pointerLockElement === this.canvas && this.player) {
+      if (this.controlType === 'keyboard' && document.pointerLockElement === this.canvas && this.player) {
         this.player.angle += e.movementX * 0.002;
       }
     });
@@ -189,8 +206,15 @@ export class Game {
     // Resume audio context (required for browser autoplay policies)
     this.audioSystem.resume();
 
-    // Request pointer lock
-    this.canvas.requestPointerLock();
+    // Request pointer lock for keyboard controls
+    if (this.controlType === 'keyboard') {
+      this.canvas.requestPointerLock();
+    }
+
+    // Enable touch controls for touch mode
+    if (this.controlType === 'touch') {
+      this.touchInputManager.enable();
+    }
 
     // Initialize game world
     this._initializeWorld();
@@ -207,6 +231,38 @@ export class Game {
   }
 
   /**
+   * Show control selection screen
+   * @private
+   */
+  _showControlSelection() {
+    const startScreen = document.getElementById("startScreen");
+    const controlScreen = document.getElementById("controlSelectionScreen");
+    
+    if (startScreen) {
+      startScreen.style.display = "none";
+    }
+    
+    if (controlScreen) {
+      controlScreen.classList.add("show");
+    }
+  }
+
+  /**
+   * Select control type
+   * @private
+   */
+  _selectControl(type) {
+    this.controlType = type;
+    
+    const controlScreen = document.getElementById("controlSelectionScreen");
+    if (controlScreen) {
+      controlScreen.classList.remove("show");
+    }
+    
+    this.startGame();
+  }
+
+  /**
    * Restart game
    */
   restartGame() {
@@ -219,8 +275,8 @@ export class Game {
     this.enemiesKilled = 0;
     this.bloodSplatters = [];
 
-    // Restart
-    this.startGame();
+    // Show control selection again
+    this._showControlSelection();
   }
 
   /**
@@ -245,7 +301,10 @@ export class Game {
     const pauseMenu = document.getElementById("pauseMenu");
     pauseMenu.style.display = "flex";
     pauseMenu.classList.add("show");
-    document.exitPointerLock();
+    
+    if (this.controlType === 'keyboard') {
+      document.exitPointerLock();
+    }
   }
 
   /**
@@ -259,7 +318,11 @@ export class Game {
     pauseMenu.style.display = "none";
     this.stateManager.setState(GameStates.PLAYING);
     this.audioSystem.startMusic();
-    this.canvas.requestPointerLock();
+    
+    if (this.controlType === 'keyboard') {
+      this.canvas.requestPointerLock();
+    }
+    
     this.lastFrameTime = performance.now(); // Reset frame time to prevent jump
   }
 
@@ -282,8 +345,13 @@ export class Game {
     pauseMenu.classList.remove("show");
     pauseMenu.style.display = "none";
 
+    // Disable touch controls
+    this.touchInputManager.disable();
+
     // Exit pointer lock
-    document.exitPointerLock();
+    if (this.controlType === 'keyboard') {
+      document.exitPointerLock();
+    }
 
     // Show start screen
     const startScreen = document.getElementById("startScreen");
@@ -296,6 +364,7 @@ export class Game {
     this.bloodSplatters = [];
     this.player = null;
     this.enemies = [];
+    this.controlType = null;
   }
 
   /**
@@ -410,18 +479,35 @@ export class Game {
     let forward = 0;
     let strafe = 0;
 
-    if (this.inputManager.isKeyPressed("w")) forward += 1;
-    if (this.inputManager.isKeyPressed("s")) forward -= 1;
-    if (this.inputManager.isKeyPressed("a")) strafe -= 1;
-    if (this.inputManager.isKeyPressed("d")) strafe += 1;
+    if (this.controlType === 'keyboard') {
+      // Keyboard controls
+      if (this.inputManager.isKeyPressed("w")) forward += 1;
+      if (this.inputManager.isKeyPressed("s")) forward -= 1;
+      if (this.inputManager.isKeyPressed("a")) strafe -= 1;
+      if (this.inputManager.isKeyPressed("d")) strafe += 1;
 
-    this.player.isSprinting = this.inputManager.isKeyPressed("shift");
+      this.player.isSprinting = this.inputManager.isKeyPressed("shift");
 
-    if (this.inputManager.isKeyPressed("arrowleft")) {
-      this.player.rotate(-1);
-    }
-    if (this.inputManager.isKeyPressed("arrowright")) {
-      this.player.rotate(1);
+      if (this.inputManager.isKeyPressed("arrowleft")) {
+        this.player.rotate(-1);
+      }
+      if (this.inputManager.isKeyPressed("arrowright")) {
+        this.player.rotate(1);
+      }
+    } else if (this.controlType === 'touch') {
+      // Touch controls
+      const movement = this.touchInputManager.getMovement();
+      forward = movement.forward;
+      strafe = movement.strafe;
+      
+      // Handle look delta from touch
+      const lookDelta = this.touchInputManager.getLookDelta();
+      if (lookDelta.x !== 0) {
+        this.player.angle += lookDelta.x * 0.003; // Sensitivity multiplier
+      }
+      
+      // Sprint is always off for touch (can be added as button if needed)
+      this.player.isSprinting = false;
     }
 
     this.player.move(forward, strafe, this.map, deltaTime);
@@ -529,7 +615,12 @@ export class Game {
     this.stateManager.setState(GameStates.GAME_OVER);
     this.audioSystem.stopAmbience();
     this.audioSystem.stopMusic();
-    document.exitPointerLock();
+    
+    if (this.controlType === 'keyboard') {
+      document.exitPointerLock();
+    }
+    
+    this.touchInputManager.disable();
 
     setTimeout(() => {
       document.getElementById("gameOverScreen").classList.add("show");
@@ -544,7 +635,12 @@ export class Game {
     this.stateManager.setState(GameStates.VICTORY);
     this.audioSystem.stopAmbience();
     this.audioSystem.stopMusic();
-    document.exitPointerLock();
+    
+    if (this.controlType === 'keyboard') {
+      document.exitPointerLock();
+    }
+    
+    this.touchInputManager.disable();
 
     setTimeout(() => {
       document.getElementById("victoryScreen").classList.add("show");
