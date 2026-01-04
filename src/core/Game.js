@@ -78,7 +78,6 @@ export class Game {
         this.stateManager.setState(GameStates.MENU);
       }, 500);
     } catch (error) {
-      console.error("Initialization error:", error);
       this._updateLoadingScreen(0, "Error loading resources. Please refresh.");
     }
   }

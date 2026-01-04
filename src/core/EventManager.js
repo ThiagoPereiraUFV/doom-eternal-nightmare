@@ -66,7 +66,7 @@ export class EventManager {
       try {
         callback(...args);
       } catch (error) {
-        console.error(`Error in event handler for '${eventName}':`, error);
+        // Silently handle errors in event handlers
       }
     }
   }

@@ -72,7 +72,6 @@ export class EnemyFactory {
     if (stateObject) {
       enemy.setState(stateObject);
     } else {
-      console.warn(`Unknown AI state: ${initialState}, defaulting to patrol`);
       enemy.setState(this._aiStates.get("patrol"));
     }
 
@@ -83,8 +82,6 @@ export class EnemyFactory {
         const stateObj = this._aiStates.get(state.toLowerCase());
         if (stateObj) {
           originalSetState(stateObj);
-        } else {
-          console.warn(`Unknown AI state: ${state}`);
         }
       } else {
         originalSetState(state);

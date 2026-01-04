@@ -62,7 +62,6 @@ export class GameStateManager {
    */
   setState(newState) {
     if (!Object.values(GameStates).includes(newState)) {
-      console.warn(`Invalid state: ${newState}`);
       return;
     }
 
@@ -82,8 +81,6 @@ export class GameStateManager {
 
     // Call change callbacks
     this._callStateCallbacks("change", newState, oldState);
-
-    console.log(`State transition: ${oldState} → ${newState}`);
   }
 
   /**
@@ -116,7 +113,7 @@ export class GameStateManager {
         try {
           callback(...args);
         } catch (error) {
-          console.error(`Error in state callback for ${key}:`, error);
+          // Silently handle errors in state callbacks
         }
       });
     }

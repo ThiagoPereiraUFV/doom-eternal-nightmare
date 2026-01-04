@@ -57,7 +57,6 @@ export class ResourceManager {
       progressCallback?.(100, "Ready!");
       this.resourcesLoaded = true;
     } catch (error) {
-      console.error("Error loading resources:", error);
       throw error;
     }
   }
@@ -115,7 +114,6 @@ export class ResourceManager {
       };
 
       img.onerror = () => {
-        console.error(`Failed to load sprite: ${category}/${name}`);
         reject(new Error(`Failed to load sprite: ${category}/${name}`));
       };
 
