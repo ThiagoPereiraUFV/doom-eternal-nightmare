@@ -297,6 +297,9 @@ export class Game {
 
     // Update player systems
     this.player.update(deltaTime);
+
+    // Update HUD
+    this._updateHUD();
   }
 
   /**
