@@ -13,66 +13,137 @@
 	</head>
 
 	<body>
+		<div id="scanlines"></div>
+		<div id="vignette"></div>
+
 		<canvas id="gameCanvas"></canvas>
 		<canvas id="weaponCanvas"></canvas>
 		<div id="muzzleFlash"></div>
 		<div id="crosshair"></div>
+
 		<div id="hud">
-			<div class="hud-section">
-				<div class="health">HEALTH: <span id="health">100</span></div>
-				<div class="stamina">STAMINA: <span id="stamina">100</span></div>
-				<div class="ammo">AMMO: <span id="ammo">50</span></div>
-			</div>
-			<div class="hud-section">
-				<div class="weapon">WEAPON: <span id="weapon">PISTOL</span></div>
-				<div class="enemies" style="color: #f44; margin-top: 5px;">KILLS: <span id="enemyCounter">0 / 0</span></div>
-				<div style="color: #888; font-size: 14px; margin-top: 10px;">
-					[1] PISTOL [2] SHOTGUN [3] RIFLE | [SHIFT] SPRINT
+			<div class="hud-bottom-left">
+				<div class="stat-card health-card">
+					<div class="stat-icon">
+						<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"
+							stroke-linecap="round" stroke-linejoin="round">
+							<path
+								d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z">
+							</path>
+						</svg>
+					</div>
+					<div class="stat-data">
+						<div class="stat-value"><span id="health">100</span>%</div>
+						<div class="stat-bar-bg">
+							<div id="health-bar" class="stat-bar-fill" style="width: 100%"></div>
+						</div>
+					</div>
 				</div>
+
+				<div class="stat-card stamina-card">
+					<div class="stat-icon">
+						<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"
+							stroke-linecap="round" stroke-linejoin="round">
+							<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+						</svg>
+					</div>
+					<div class="stat-data">
+						<div class="stat-value"><span id="stamina">100</span>%</div>
+						<div class="stat-bar-bg">
+							<div id="stamina-bar" class="stat-bar-fill" style="width: 100%"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="hud-bottom-right">
+				<div class="weapon-card">
+					<div class="weapon-header">
+						<span id="weapon">PISTOL</span>
+					</div>
+					<div class="ammo-display">
+						<svg class="ammo-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2"
+							fill="none" stroke-linecap="round" stroke-linejoin="round">
+							<rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+							<rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+							<line x1="6" y1="6" x2="6.01" y2="6"></line>
+							<line x1="6" y1="18" x2="6.01" y2="18"></line>
+						</svg>
+						<span id="ammo">12 / 48</span>
+					</div>
+				</div>
+
+				<div class="kills-card">
+					<div class="kills-label">DEMONS ELIMINATED</div>
+					<div class="kills-value" id="enemyCounter">0 / 0</div>
+				</div>
+			</div>
+
+			<div class="hud-controls">
+				<div class="control-item"><span class="key">1</span> PISTOL</div>
+				<div class="control-item"><span class="key">2</span> SHOTGUN</div>
+				<div class="control-item"><span class="key">3</span> RIFLE</div>
+				<div class="control-item"><span class="key">R</span> RELOAD</div>
+				<div class="control-item"><span class="key">SHIFT</span> SPRINT</div>
 			</div>
 		</div>
 
 		<div id="loadingScreen">
 			<div class="loading-content">
-				<h1 class="loading-title">DOOM FPS</h1>
+				<div class="loading-logo">DOOM</div>
+				<div class="loading-status">INITIALIZING SYSTEMS...</div>
 				<div class="loading-bar-container">
 					<div class="loading-bar" id="loadingBar"></div>
 				</div>
-				<p class="loading-text" id="loadingText">LOADING RESOURCES...</p>
-				<p class="loading-percentage" id="loadingPercentage">0%</p>
+				<div class="loading-details">
+					<span id="loadingText">LOADING ASSETS</span>
+					<span id="loadingPercentage">0%</span>
+				</div>
 			</div>
 		</div>
 
 		<div id="startScreen" class="hidden">
-			<h1>DOOM FPS - ULTRA REALISTIC</h1>
-			<p>CLICK TO START</p>
-			<p
-				style="font-size: 14px; margin-top: 20px; opacity: 0.7; border: 1px solid rgba(255,255,255,0.2); padding: 15px;">
-				<strong>CONTROLS:</strong><br>
-				WASD: Move | Mouse/Arrow: Look | Click/Space: Shoot<br>
-				R: Reload | 1-3: Change Weapon | SHIFT: Sprint<br><br>
-				<strong>ULTRA REALISTIC FEATURES:</strong><br>
-				• Realistic blood physics & persistent splatters<br>
-				• Shell casing ejection with physics<br>
-				• Motion blur & chromatic aberration<br>
-				• Stamina system & sprint mechanics<br>
-				• Dynamic lighting & bloom effects
-			</p>
+			<div class="start-content">
+				<h1 class="game-title">DOOM <span class="subtitle">ETERNAL NIGHTMARE</span></h1>
+
+				<div class="menu-box">
+					<div class="menu-item active" id="start-btn">INITIATE MISSION</div>
+				</div>
+
+				<div class="features-grid">
+					<div class="feature-item">
+						<h3>REALISTIC GORE</h3>
+						<p>Persistent blood & physics</p>
+					</div>
+					<div class="feature-item">
+						<h3>ADVANCED BALLISTICS</h3>
+						<p>Shell ejection & recoil</p>
+					</div>
+					<div class="feature-item">
+						<h3>DYNAMIC LIGHTING</h3>
+						<p>Bloom & atmosphere</p>
+					</div>
+				</div>
+
+				<div class="controls-preview">
+					WASD to Move • Mouse to Look • Click to Shoot
+				</div>
+			</div>
 		</div>
 
 		<div id="gameOverScreen" class="overlay-screen">
 			<div class="overlay-content">
-				<h1 class="game-over-title">GAME OVER</h1>
-				<p class="overlay-message">You were defeated by demons!</p>
-				<button class="retry-button" onclick="location.reload()">TRY AGAIN</button>
+				<h1 class="game-over-title">CRITICAL FAILURE</h1>
+				<p class="overlay-message">OPERATIVE DECEASED</p>
+				<button class="retry-button" id="retry-btn-fail">REBOOT SYSTEM</button>
 			</div>
 		</div>
 
 		<div id="victoryScreen" class="overlay-screen">
 			<div class="overlay-content">
-				<h1 class="victory-title">VICTORY!</h1>
-				<p class="overlay-message">All demons defeated!</p>
-				<button class="retry-button" onclick="location.reload()">PLAY AGAIN</button>
+				<h1 class="victory-title">MISSION ACCOMPLISHED</h1>
+				<p class="overlay-message">AREA SECURED</p>
+				<button class="retry-button" id="retry-btn-win">NEXT MISSION</button>
 			</div>
 		</div>
 

@@ -88,7 +88,12 @@ export class Game {
    */
   _setupEventListeners() {
     // Start game button
-    document.getElementById("startScreen").onclick = () => this.startGame();
+    const startBtn = document.getElementById("start-btn");
+    if (startBtn) {
+      startBtn.onclick = () => this.startGame();
+    } else {
+      document.getElementById("startScreen").onclick = () => this.startGame();
+    }
 
     // Restart buttons
     document.getElementById("gameOverScreen").onclick = () =>
@@ -377,8 +382,20 @@ export class Game {
   _updateHUD() {
     const status = this.player.getStatus();
 
+    // Update text
     document.getElementById("health").textContent = Math.floor(status.health);
     document.getElementById("stamina").textContent = Math.floor(status.stamina);
+
+    // Update bars
+    const healthBar = document.getElementById("health-bar");
+    if (healthBar) {
+      healthBar.style.width = `${Math.max(0, Math.min(100, status.health))}%`;
+    }
+
+    const staminaBar = document.getElementById("stamina-bar");
+    if (staminaBar) {
+      staminaBar.style.width = `${Math.max(0, Math.min(100, status.stamina))}%`;
+    }
 
     if (status.weapon) {
       document.getElementById(
