@@ -1,8 +1,8 @@
-# DOOM FPS - Ultra-Realistic Game (Refactored)
+# DOOM - Eternal Nightmare
 
 ## 🎮 Project Overview
 
-An ultra-realistic DOOM-style first-person shooter built with vanilla JavaScript and HTML5 Canvas, completely refactored using **SOLID principles** and **modern design patterns**.
+A browser-based first-person shooter (FPS) game inspired by classic titles like DOOM and Wolfenstein 3D. Built using JavaScript and HTML5 Canvas, this project showcases advanced game development techniques, including raycasting, procedural map generation, AI state machines, and modular architecture following SOLID principles.
 
 ### Key Features
 - 🔫 Multiple weapons (Pistol, Shotgun, Rifle)
@@ -358,9 +358,3 @@ MIT License - see LICENSE file for details
 - Inspired by classic DOOM (id Software)
 - Raycasting techniques from Wolfenstein 3D
 - Community feedback and suggestions
-
----
-
-**Last Updated**: January 3, 2026
-**Version**: 2.0.0 (SOLID Refactor)
-**Maintainer**: Development Team
