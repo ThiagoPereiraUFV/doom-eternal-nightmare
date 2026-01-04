@@ -252,6 +252,13 @@ export class Game {
    * @private
    */
   _selectControl(type) {
+    // Validate control type
+    const validTypes = ['keyboard', 'touch'];
+    if (!validTypes.includes(type)) {
+      console.error(`Invalid control type: ${type}. Must be 'keyboard' or 'touch'.`);
+      return;
+    }
+    
     this.controlType = type;
     
     const controlScreen = document.getElementById("controlSelectionScreen");

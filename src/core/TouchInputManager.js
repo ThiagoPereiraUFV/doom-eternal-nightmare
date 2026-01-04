@@ -14,6 +14,8 @@ export class TouchInputManager {
     
     // Constants
     this.JOYSTICK_MAX_DISTANCE = 50; // pixels
+    this.JOYSTICK_CENTER_PERCENT = 25; // Center position as percentage
+    this.JOYSTICK_RANGE_PERCENT = 25; // Movement range as percentage
     
     // Virtual joystick state
     this.joystick = {
@@ -196,8 +198,8 @@ export class TouchInputManager {
     
     // Reset stick position
     if (this.joystickStick) {
-      this.joystickStick.style.left = '25%';
-      this.joystickStick.style.top = '25%';
+      this.joystickStick.style.left = `${this.JOYSTICK_CENTER_PERCENT}%`;
+      this.joystickStick.style.top = `${this.JOYSTICK_CENTER_PERCENT}%`;
     }
   }
   
@@ -223,8 +225,8 @@ export class TouchInputManager {
     
     // Update visual position
     if (this.joystickStick) {
-      const stickX = 25 + (clampedX / this.JOYSTICK_MAX_DISTANCE) * 25; // 25% center + offset
-      const stickY = 25 + (clampedY / this.JOYSTICK_MAX_DISTANCE) * 25;
+      const stickX = this.JOYSTICK_CENTER_PERCENT + (clampedX / this.JOYSTICK_MAX_DISTANCE) * this.JOYSTICK_RANGE_PERCENT;
+      const stickY = this.JOYSTICK_CENTER_PERCENT + (clampedY / this.JOYSTICK_MAX_DISTANCE) * this.JOYSTICK_RANGE_PERCENT;
       this.joystickStick.style.left = `${stickX}%`;
       this.joystickStick.style.top = `${stickY}%`;
     }
@@ -316,8 +318,8 @@ export class TouchInputManager {
     this.buttons.reload = false;
     
     if (this.joystickStick) {
-      this.joystickStick.style.left = '25%';
-      this.joystickStick.style.top = '25%';
+      this.joystickStick.style.left = `${this.JOYSTICK_CENTER_PERCENT}%`;
+      this.joystickStick.style.top = `${this.JOYSTICK_CENTER_PERCENT}%`;
     }
   }
 }
