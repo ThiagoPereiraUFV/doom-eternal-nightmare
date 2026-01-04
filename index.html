@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Doom FPS - Ultra Realistic (SOLID Refactor)</title>
+		<link rel="stylesheet" href="style.css">
+		<script src="sprites.js"></script>
+
+		<!-- New modular ES6 system -->
+		<script type="module" src="src/core/Game.js"></script>
+	</head>
+
+	<body>
+		<canvas id="gameCanvas"></canvas>
+		<canvas id="weaponCanvas"></canvas>
+		<div id="muzzleFlash"></div>
+		<div id="crosshair"></div>
+		<div id="hud">
+			<div class="hud-section">
+				<div class="health">HEALTH: <span id="health">100</span></div>
+				<div class="stamina">STAMINA: <span id="stamina">100</span></div>
+				<div class="ammo">AMMO: <span id="ammo">50</span></div>
+			</div>
+			<div class="hud-section">
+				<div class="weapon">WEAPON: <span id="weapon">PISTOL</span></div>
+				<div class="enemies" style="color: #f44; margin-top: 5px;">KILLS: <span id="enemyCounter">0 / 0</span></div>
+				<div style="color: #888; font-size: 14px; margin-top: 10px;">
+					[1] PISTOL [2] SHOTGUN [3] RIFLE | [SHIFT] SPRINT
+				</div>
+			</div>
+		</div>
+
+		<div id="loadingScreen">
+			<div class="loading-content">
+				<h1 class="loading-title">DOOM FPS</h1>
+				<div class="loading-bar-container">
+					<div class="loading-bar" id="loadingBar"></div>
+				</div>
+				<p class="loading-text" id="loadingText">LOADING RESOURCES...</p>
+				<p class="loading-percentage" id="loadingPercentage">0%</p>
+			</div>
+		</div>
+
+		<div id="startScreen" class="hidden">
+			<h1>DOOM FPS - ULTRA REALISTIC</h1>
+			<p>CLICK TO START</p>
+			<p
+				style="font-size: 14px; margin-top: 20px; opacity: 0.7; border: 1px solid rgba(255,255,255,0.2); padding: 15px;">
+				<strong>CONTROLS:</strong><br>
+				WASD: Move | Mouse/Arrow: Look | Click/Space: Shoot<br>
+				R: Reload | 1-3: Change Weapon | SHIFT: Sprint<br><br>
+				<strong>ULTRA REALISTIC FEATURES:</strong><br>
+				• Realistic blood physics & persistent splatters<br>
+				• Shell casing ejection with physics<br>
+				• Motion blur & chromatic aberration<br>
+				• Stamina system & sprint mechanics<br>
+				• Dynamic lighting & bloom effects
+			</p>
+		</div>
+
+		<div id="gameOverScreen" class="overlay-screen">
+			<div class="overlay-content">
+				<h1 class="game-over-title">GAME OVER</h1>
+				<p class="overlay-message">You were defeated by demons!</p>
+				<button class="retry-button" onclick="location.reload()">TRY AGAIN</button>
+			</div>
+		</div>
+
+		<div id="victoryScreen" class="overlay-screen">
+			<div class="overlay-content">
+				<h1 class="victory-title">VICTORY!</h1>
+				<p class="overlay-message">All demons defeated!</p>
+				<button class="retry-button" onclick="location.reload()">PLAY AGAIN</button>
+			</div>
+		</div>
+
+		<!-- Old monolithic game file (kept as backup) -->
+		<!-- <script src="game.js"></script> -->
+	</body>
+
+</html>
