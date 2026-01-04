@@ -65,8 +65,16 @@ export class Pistol extends Weapon {
     const maxDistance = 50;
     const step = 0.1;
     let distance = 0;
+    let iterations = 0;
+    const maxIterations = 1000; // Safety limit
 
-    while (distance < maxDistance) {
+    // Validate map
+    if (!map || !map.length || !map[0]) {
+      return { type: "miss", distance: maxDistance };
+    }
+
+    while (distance < maxDistance && iterations < maxIterations) {
+      iterations++;
       distance += step;
       const testX = x + Math.cos(angle) * distance;
       const testY = y + Math.sin(angle) * distance;

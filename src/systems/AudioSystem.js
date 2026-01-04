@@ -49,6 +49,9 @@ export class AudioSystem {
 
     const now = this.audioContext.currentTime;
 
+    // Start oscillator before scheduling stop
+    oscillator.start(now);
+
     switch (type) {
       case "shoot":
         oscillator.frequency.setValueAtTime(200, now);
@@ -106,8 +109,6 @@ export class AudioSystem {
         oscillator.stop(now + 2);
         break;
     }
-
-    oscillator.start(now);
   }
 
   /**

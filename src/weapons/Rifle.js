@@ -68,8 +68,20 @@ export class Rifle extends Weapon {
     const hits = [];
     let penetrationRemaining = this.penetration;
     const hitEnemies = new Set();
+    let iterations = 0;
+    const maxIterations = 1000; // Safety limit
 
-    while (distance < maxDistance && penetrationRemaining > 0) {
+    // Validate map
+    if (!map || !map.length || !map[0]) {
+      return [];
+    }
+
+    while (
+      distance < maxDistance &&
+      penetrationRemaining > 0 &&
+      iterations < maxIterations
+    ) {
+      iterations++;
       distance += step;
       const testX = x + Math.cos(angle) * distance;
       const testY = y + Math.sin(angle) * distance;

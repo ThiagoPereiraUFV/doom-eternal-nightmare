@@ -46,11 +46,27 @@ export class RayCaster {
     let hitX = x;
     let hitY = y;
     let side = 0; // 0 = vertical wall, 1 = horizontal wall
+    let iterations = 0;
+    const maxIterations = maxDistance / precision + 100; // Safety limit
 
     const dx = Math.cos(angle);
     const dy = Math.sin(angle);
 
-    while (!hit && distance < maxDistance) {
+    // Validate map
+    if (!map || !map.length || !map[0]) {
+      return {
+        distance: maxDistance,
+        hit: false,
+        wallType: 0,
+        hitX: x,
+        hitY: y,
+        angle,
+        side: 0,
+      };
+    }
+
+    while (!hit && distance < maxDistance && iterations < maxIterations) {
+      iterations++;
       distance += precision;
       hitX = x + dx * distance;
       hitY = y + dy * distance;
