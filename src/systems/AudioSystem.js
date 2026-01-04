@@ -21,6 +21,14 @@ export class AudioSystem {
     this.sounds = new Map();
     this.ambienceInterval = null;
 
+    // Background music
+    this.musicGain = this.audioContext.createGain();
+    this.musicGain.connect(this.masterGain);
+    this.musicGain.gain.value = 0.75; // Background music volume
+    this.currentMusic = null;
+    this.musicNodes = [];
+    this.isMusicPlaying = false;
+
     AudioSystem._instance = this;
   }
 
@@ -135,6 +143,214 @@ export class AudioSystem {
   }
 
   /**
+   * Start background music loop
+   * Generates procedural dark ambient music
+   */
+  startMusic() {
+    if (this.isMusicPlaying) return;
+
+    console.log(
+      "Starting music...",
+      "Audio context state:",
+      this.audioContext.state,
+    );
+    this.isMusicPlaying = true;
+    this._playMusicLoop();
+  }
+
+  /**
+   * Stop background music
+   */
+  stopMusic() {
+    this.isMusicPlaying = false;
+    this._stopAllMusicNodes();
+  }
+
+  /**
+   * Play procedural music loop
+   * @private
+   */
+  _playMusicLoop() {
+    if (!this.isMusicPlaying) return;
+
+    const now = this.audioContext.currentTime;
+    const duration = 8; // 8-second loop
+
+    console.log("Playing music loop at", now);
+
+    // Bass drone
+    this._createBassLine(now, duration);
+
+    // Atmospheric pad
+    this._createAtmosphericPad(now, duration);
+
+    // Occasional high notes for tension
+    this._createTensionNotes(now, duration);
+
+    // Schedule next loop
+    setTimeout(() => this._playMusicLoop(), duration * 1000);
+  }
+
+  /**
+   * Create bass line
+   * @private
+   */
+  _createBassLine(startTime, duration) {
+    const bassOsc = this.audioContext.createOscillator();
+    const bassGain = this.audioContext.createGain();
+    const filter = this.audioContext.createBiquadFilter();
+
+    bassOsc.type = "sine";
+    bassOsc.frequency.setValueAtTime(55, startTime); // A1 note
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(200, startTime);
+
+    bassOsc.connect(filter);
+    filter.connect(bassGain);
+    bassGain.connect(this.musicGain);
+
+    bassGain.gain.setValueAtTime(0, startTime);
+    bassGain.gain.linearRampToValueAtTime(0.3, startTime + 0.1);
+    bassGain.gain.setValueAtTime(0.3, startTime + duration - 0.5);
+    bassGain.gain.linearRampToValueAtTime(0, startTime + duration);
+
+    bassOsc.start(startTime);
+    bassOsc.stop(startTime + duration);
+
+    // Clean up after the oscillator finishes
+    bassOsc.onended = () => {
+      const index = this.musicNodes.findIndex((n) => n.osc === bassOsc);
+      if (index > -1) this.musicNodes.splice(index, 1);
+    };
+
+    this.musicNodes.push({ osc: bassOsc, gain: bassGain });
+  }
+
+  /**
+   * Create atmospheric pad
+   * @private
+   */
+  _createAtmosphericPad(startTime, duration) {
+    const notes = [165, 196, 220]; // E3, G3, A3 - minor chord
+
+    notes.forEach((freq, i) => {
+      const osc = this.audioContext.createOscillator();
+      const gain = this.audioContext.createGain();
+      const filter = this.audioContext.createBiquadFilter();
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(freq, startTime);
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(800, startTime);
+      filter.Q.setValueAtTime(1, startTime);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.musicGain);
+
+      const delay = i * 0.3;
+      gain.gain.setValueAtTime(0, startTime + delay);
+      gain.gain.linearRampToValueAtTime(0.08, startTime + delay + 1);
+      gain.gain.setValueAtTime(0.08, startTime + duration - 1);
+      gain.gain.linearRampToValueAtTime(0, startTime + duration);
+
+      osc.start(startTime + delay);
+      osc.stop(startTime + duration);
+
+      // Clean up after the oscillator finishes
+      osc.onended = () => {
+        const index = this.musicNodes.findIndex((n) => n.osc === osc);
+        if (index > -1) this.musicNodes.splice(index, 1);
+      };
+
+      this.musicNodes.push({ osc, gain });
+    });
+  }
+
+  /**
+   * Create tension notes
+   * @private
+   */
+  _createTensionNotes(startTime, duration) {
+    const tensionTimes = [2, 4.5, 6.8];
+    const frequencies = [440, 494, 523]; // A4, B4, C5
+
+    tensionTimes.forEach((time, i) => {
+      if (Math.random() > 0.5) {
+        // 50% chance for each note
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(
+          frequencies[i % frequencies.length],
+          startTime + time,
+        );
+
+        filter.type = "highpass";
+        filter.frequency.setValueAtTime(400, startTime + time);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.musicGain);
+
+        gain.gain.setValueAtTime(0, startTime + time);
+        gain.gain.linearRampToValueAtTime(0.05, startTime + time + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.01, startTime + time + 1.5);
+
+        osc.start(startTime + time);
+        osc.stop(startTime + time + 1.5);
+
+        // Clean up after the oscillator finishes
+        osc.onended = () => {
+          const index = this.musicNodes.findIndex((n) => n.osc === osc);
+          if (index > -1) this.musicNodes.splice(index, 1);
+        };
+
+        this.musicNodes.push({ osc, gain });
+      }
+    });
+  }
+
+  /**
+   * Stop all music nodes
+   * @private
+   */
+  _stopAllMusicNodes() {
+    const now = this.audioContext.currentTime;
+    this.musicNodes.forEach(({ osc, gain }) => {
+      try {
+        gain.gain.cancelScheduledValues(now);
+        gain.gain.setValueAtTime(gain.gain.value, now);
+        gain.gain.linearRampToValueAtTime(0, now + 0.1);
+        osc.stop(now + 0.1);
+      } catch (e) {
+        // Node might already be stopped
+      }
+    });
+    this.musicNodes = [];
+  }
+
+  /**
+   * Set music volume
+   * @param {number} volume - Volume level (0-1)
+   */
+  setMusicVolume(volume) {
+    this.musicGain.gain.value = Math.max(0, Math.min(1, volume));
+  }
+
+  /**
+   * Get music volume
+   * @returns {number} Current music volume
+   */
+  getMusicVolume() {
+    return this.musicGain.gain.value;
+  }
+
+  /**
    * Set master volume
    * @param {number} volume - Volume level (0-1)
    */
@@ -155,6 +371,7 @@ export class AudioSystem {
    */
   mute() {
     this._previousVolume = this.masterGain.gain.value;
+    this._previousMusicVolume = this.musicGain.gain.value;
     this.masterGain.gain.value = 0;
   }
 
@@ -163,6 +380,7 @@ export class AudioSystem {
    */
   unmute() {
     this.masterGain.gain.value = this._previousVolume || 0.3;
+    this.musicGain.gain.value = this._previousMusicVolume || 0.25;
   }
 
   /**

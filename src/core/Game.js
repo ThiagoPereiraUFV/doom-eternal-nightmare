@@ -186,6 +186,9 @@ export class Game {
    * Start new game
    */
   startGame() {
+    // Resume audio context (required for browser autoplay policies)
+    this.audioSystem.resume();
+
     // Request pointer lock
     this.canvas.requestPointerLock();
 
@@ -198,6 +201,7 @@ export class Game {
     // Start game loop
     this.stateManager.setState(GameStates.PLAYING);
     this.audioSystem.startAmbience();
+    this.audioSystem.startMusic(); // Start background music
     this.lastFrameTime = performance.now();
     this._gameLoop();
   }
@@ -237,6 +241,7 @@ export class Game {
     if (!this.stateManager.is(GameStates.PLAYING)) return;
 
     this.stateManager.setState(GameStates.PAUSED);
+    this.audioSystem.stopMusic();
     const pauseMenu = document.getElementById("pauseMenu");
     pauseMenu.style.display = "flex";
     pauseMenu.classList.add("show");
@@ -253,6 +258,7 @@ export class Game {
     pauseMenu.classList.remove("show");
     pauseMenu.style.display = "none";
     this.stateManager.setState(GameStates.PLAYING);
+    this.audioSystem.startMusic();
     this.canvas.requestPointerLock();
     this.lastFrameTime = performance.now(); // Reset frame time to prevent jump
   }
@@ -269,6 +275,7 @@ export class Game {
 
     // Stop audio
     this.audioSystem.stopAmbience();
+    this.audioSystem.stopMusic();
 
     // Hide pause menu
     const pauseMenu = document.getElementById("pauseMenu");
@@ -521,6 +528,7 @@ export class Game {
   _handleGameOver() {
     this.stateManager.setState(GameStates.GAME_OVER);
     this.audioSystem.stopAmbience();
+    this.audioSystem.stopMusic();
     document.exitPointerLock();
 
     setTimeout(() => {
@@ -535,6 +543,7 @@ export class Game {
   _handleVictory() {
     this.stateManager.setState(GameStates.VICTORY);
     this.audioSystem.stopAmbience();
+    this.audioSystem.stopMusic();
     document.exitPointerLock();
 
     setTimeout(() => {

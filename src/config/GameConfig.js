@@ -178,6 +178,8 @@ export const GameConfig = {
     FOOTSTEP_INTERVAL: 400,
     FOOTSTEP_INTERVAL_SPRINT: 300,
     AMBIENCE_INTERVAL: 3000,
+    MUSIC_VOLUME: 0.25,
+    MUSIC_LOOP_DURATION: 8, // seconds
   },
 
   // 3D Weapon rendering
