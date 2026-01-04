@@ -32,6 +32,11 @@ export class Renderer {
   _handleResize() {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
+    
+    // Update weapon canvas size proportionally
+    const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    this.weaponCanvas.width = GameConfig.CANVAS.WEAPON_WIDTH * scale;
+    this.weaponCanvas.height = GameConfig.CANVAS.WEAPON_HEIGHT * scale;
   }
 
   /**
