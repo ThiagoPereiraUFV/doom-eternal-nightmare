@@ -214,6 +214,9 @@ export const GameConfig = {
       ambientIntensity: 1.8,
       fogDensity:       0.04,
       flashlightIntensity: 5.0,
+      // Gameplay
+      autoReload:   true,
+      availableGuns: ['pistol', 'shotgun', 'rifle'],
     },
     MEDIUM: {
       id: "medium",
@@ -233,6 +236,9 @@ export const GameConfig = {
       ambientIntensity: 1.2,
       fogDensity:       0.06,
       flashlightIntensity: 3.5,
+      // Gameplay
+      autoReload:   true,
+      availableGuns: ['pistol', 'shotgun', 'rifle'],
     },
     HARD: {
       id: "hard",
@@ -252,6 +258,9 @@ export const GameConfig = {
       ambientIntensity: 0.7,
       fogDensity:       0.09,
       flashlightIntensity: 2.2,
+      // Gameplay
+      autoReload:   false,
+      availableGuns: ['pistol', 'shotgun'],
     },
     IMPOSSIBLE: {
       id: "impossible",
@@ -271,6 +280,9 @@ export const GameConfig = {
       ambientIntensity: 0.3,
       fogDensity:       0.14,
       flashlightIntensity: 1.4,
+      // Gameplay
+      autoReload:   false,
+      availableGuns: ['pistol'],
     },
     // Custom difficulty — defaults mirror MEDIUM; overridden at runtime by the UI
     CUSTOM: {
@@ -291,6 +303,9 @@ export const GameConfig = {
       ambientIntensity: 1.2,
       fogDensity:       0.06,
       flashlightIntensity: 3.5,
+      // Gameplay
+      autoReload:   true,
+      availableGuns: ['pistol', 'shotgun', 'rifle'],
     },
   },
 

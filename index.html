@@ -3,13 +3,21 @@
 
 	<head>
 		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>Doom - Eternal Nightmare</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+		<title>DOOM - Eternal Nightmare</title>
 		<meta name="description" content="A retro-style first-person shooter game inspired by classic titles like Doom.">
 		<meta name="author" content="ThiagoPereiraUFV">
 		<meta name="keywords" content="Doom, FPS, Retro Game, First-Person Shooter, JavaScript Game, Canvas Game">
-		<link rel="icon" type="image/svg+xml"
-			href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23000'/%3E%3Cpath d='M50 15 L65 45 L95 45 L70 65 L80 95 L50 75 L20 95 L30 65 L5 45 L35 45 Z' fill='%23ff0000' stroke='%23ff0000' stroke-width='2'/%3E%3Ccircle cx='50' cy='50' r='8' fill='%23000'/%3E%3C/svg%3E">
+		<meta name="theme-color" content="#ff0033">
+		<meta name="mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		<meta name="apple-mobile-web-app-title" content="DOOM">
+		<!-- PWA manifest -->
+		<link rel="manifest" href="manifest.json">
+		<!-- Icons -->
+		<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+		<link rel="apple-touch-icon" href="icons/icon-192.png">
 		<link rel="stylesheet" href="style.css">
 		<script src="src/data/sprites.js"></script>
 
@@ -169,6 +177,8 @@
 						<span id="diff-stat-ammo">🔹 ×1.0</span>
 						<span id="diff-stat-enemies">☠ 50 enemies</span>
 						<span id="diff-stat-light">💡 Normal</span>
+						<span id="diff-stat-autoreload">🔄 Auto-reload: On</span>
+						<span id="diff-stat-guns">🔫 All guns</span>
 					</div>
 				</div>
 
@@ -227,6 +237,16 @@
 					<div class="cs-row"><label>Ambient light <span class="cs-val" id="cs-amb-val">1.20</span></label><input type="range" id="cs-amb" min="0.1" max="3" step="0.05" value="1.2"></div>
 					<div class="cs-row"><label>Fog density <span class="cs-val" id="cs-fog-val">0.06</span></label><input type="range" id="cs-fog" min="0.01" max="0.3" step="0.005" value="0.06"></div>
 					<div class="cs-row"><label>Flashlight <span class="cs-val" id="cs-flash-val">3.50</span></label><input type="range" id="cs-flash" min="0" max="8" step="0.1" value="3.5"></div>
+					<!-- Gameplay -->
+					<div class="cs-group-label">GAMEPLAY</div>
+					<div class="cs-row cs-row-check"><label>Auto reload</label><input type="checkbox" id="cs-autoreload" checked></div>
+					<div class="cs-row cs-row-check"><label>Available guns</label>
+						<span class="cs-gun-checks">
+							<label><input type="checkbox" id="cs-gun-pistol" checked> Pistol</label>
+							<label><input type="checkbox" id="cs-gun-shotgun" checked> Shotgun</label>
+							<label><input type="checkbox" id="cs-gun-rifle" checked> Rifle</label>
+						</span>
+					</div>
 				</div>
 				<div class="custom-modal-actions">
 					<button id="cs-apply">APPLY</button>
@@ -279,8 +299,15 @@
 			</div>
 		</div>
 
-		<!-- Old monolithic game file (kept as backup) -->
-		<!-- <script src="game.js"></script> -->
+		<!-- Service Worker registration -->
+	<script>
+		if ('serviceWorker' in navigator) {
+			window.addEventListener('load', () => {
+				navigator.serviceWorker.register('./sw.js')
+					.catch((err) => console.warn('SW registration failed:', err));
+			});
+		}
+	</script>
 
 	<script type="module">
 		// Difficulty selector UI logic (runs independently of game module)
@@ -297,14 +324,22 @@
 			easy: "Bright", medium: "Normal", hard: "Dark", impossible: "Pitch black", custom: "Custom",
 		};
 
+		function gunsLabel(guns) {
+			if (!guns || guns.length === 3) return 'All guns';
+			if (guns.length === 0) return 'None';
+			return guns.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(' + ');
+		}
+
 		function updateStats(diffId) {
 			const d = STATS[diffId];
 			if (!d) return;
-			document.getElementById("diff-stat-health").textContent  = `❤ ${d.maxHealth} HP`;
-			document.getElementById("diff-stat-stamina").textContent = `⚡ ${d.maxStamina} stamina`;
-			document.getElementById("diff-stat-ammo").textContent    = `🔹 ×${d.ammoMultiplier.toFixed(2)} ammo`;
-			document.getElementById("diff-stat-enemies").textContent = `☠ ${d.enemyCount} enemies`;
-			document.getElementById("diff-stat-light").textContent   = `💡 ${LIGHT_LABEL[diffId]}`;
+			document.getElementById("diff-stat-health").textContent     = `❤ ${d.maxHealth} HP`;
+			document.getElementById("diff-stat-stamina").textContent    = `⚡ ${d.maxStamina} stamina`;
+			document.getElementById("diff-stat-ammo").textContent       = `🔹 ×${d.ammoMultiplier.toFixed(2)} ammo`;
+			document.getElementById("diff-stat-enemies").textContent    = `☠ ${d.enemyCount} enemies`;
+			document.getElementById("diff-stat-light").textContent      = `💡 ${LIGHT_LABEL[diffId]}`;
+			document.getElementById("diff-stat-autoreload").textContent = `🔄 Auto-reload: ${d.autoReload ? 'On' : 'Off'}`;
+			document.getElementById("diff-stat-guns").textContent       = `🔫 ${gunsLabel(d.availableGuns)}`;
 		}
 
 		// ── Custom modal logic ──────────────────────────────────────
@@ -350,6 +385,13 @@
 			c.ambientIntensity    = parseFloat(document.getElementById("cs-amb").value);
 			c.fogDensity          = parseFloat(document.getElementById("cs-fog").value);
 			c.flashlightIntensity = parseFloat(document.getElementById("cs-flash").value);
+			c.autoReload = document.getElementById("cs-autoreload").checked;
+			const guns = [];
+			if (document.getElementById("cs-gun-pistol").checked)  guns.push('pistol');
+			if (document.getElementById("cs-gun-shotgun").checked) guns.push('shotgun');
+			if (document.getElementById("cs-gun-rifle").checked)   guns.push('rifle');
+			// At least one gun must be selected
+			c.availableGuns = guns.length > 0 ? guns : ['pistol'];
 			STATS.custom = c;
 			updateStats("custom");
 			modal.classList.add("hidden");

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#0a0000"/>
+  <!-- Outer red circle -->
+  <circle cx="256" cy="256" r="230" fill="#0a0000" stroke="#ff0033" stroke-width="6" opacity="0.8"/>
+  <!-- Pentagram star (DOOM style) — shifted up to make room for text -->
+  <path d="M256 72 L298 178 L420 178 L325 248 L360 360 L256 292 L152 360 L187 248 L92 178 L214 178 Z"
+        fill="#ff0033" stroke="#cc0000" stroke-width="3"/>
+  <!-- Dark center -->
+  <circle cx="256" cy="234" r="38" fill="#0a0000"/>
+  <!-- Inner red dot -->
+  <circle cx="256" cy="234" r="20" fill="#ff0033" opacity="0.9"/>
+  <!-- DOOM text — well inside the circle -->
+  <text x="256" y="434" font-family="Arial Black, sans-serif" font-size="48" font-weight="900"
+        fill="#ff0033" text-anchor="middle" letter-spacing="8">DOOM</text>
+</svg>

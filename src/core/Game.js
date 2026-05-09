@@ -453,17 +453,17 @@ export class Game {
     this.player.stamina    = diff.maxStamina;
     this.player.maxStamina = diff.maxStamina;
 
-    // Add weapons with difficulty-adjusted ammo
+    // Add weapons — only those allowed by difficulty
     const ammoMult = diff.ammoMultiplier;
-    const pistol  = WeaponFactory.create("pistol");
-    const shotgun = WeaponFactory.create("shotgun");
-    const rifle   = WeaponFactory.create("rifle");
-    pistol.reserveAmmo  = Math.round(GameConfig.WEAPONS.PISTOL.reserveAmmo  * ammoMult);
-    shotgun.reserveAmmo = Math.round(GameConfig.WEAPONS.SHOTGUN.reserveAmmo * ammoMult);
-    rifle.reserveAmmo   = Math.round(GameConfig.WEAPONS.RIFLE.reserveAmmo   * ammoMult);
-    this.player.addWeapon(pistol);
-    this.player.addWeapon(shotgun);
-    this.player.addWeapon(rifle);
+    const availableGuns = diff.availableGuns ?? ['pistol', 'shotgun', 'rifle'];
+    for (const type of ['pistol', 'shotgun', 'rifle']) {
+      if (availableGuns.includes(type)) {
+        const weapon = WeaponFactory.create(type);
+        const configKey = type.toUpperCase();
+        weapon.reserveAmmo = Math.round(GameConfig.WEAPONS[configKey].reserveAmmo * ammoMult);
+        this.player.addWeapon(weapon);
+      }
+    }
 
     // Create enemies
     this._spawnEnemies();
@@ -607,6 +607,12 @@ export class Game {
       if (leftHeld || touchHeld) {
         this._doShoot();
       }
+    }
+
+    // ── Auto reload ──────────────────────────────────────────────
+    if (this.difficulty.autoReload && weapon &&
+        weapon.currentMagazine === 0 && !weapon.isReloading && weapon.reserveAmmo > 0) {
+      this.player.reload();
     }
 
     // ── ADS ─────────────────────────────────────────────────────

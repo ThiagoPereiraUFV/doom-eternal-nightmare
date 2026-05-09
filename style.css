@@ -26,12 +26,17 @@ body {
 	overflow: hidden;
 	font-family: 'Rajdhani', sans-serif;
 	color: #fff;
-	height: 100vh;
-	width: 100vw;
+	height: 100dvh;
+	width: 100dvw;
 	position: fixed;
 	top: 0;
 	left: 0;
 	touch-action: none;
+	/* Safe area insets for notched/punched devices */
+	padding-top: env(safe-area-inset-top);
+	padding-right: env(safe-area-inset-right);
+	padding-bottom: env(safe-area-inset-bottom);
+	padding-left: env(safe-area-inset-left);
 }
 
 /* Effects */
@@ -87,11 +92,7 @@ body {
 	z-index: 600;
 }
 
-@media (hover: none) and (pointer: coarse) {
-	#touch-controls {
-		display: block;
-	}
-}
+
 
 #touch-look-zone {
 	position: absolute;
@@ -461,7 +462,7 @@ body {
 }
 
 .loading-content {
-	width: 600px;
+	width: min(600px, 90vw);
 	text-align: center;
 }
 
@@ -516,14 +517,18 @@ body {
 	background: radial-gradient(circle at center, #1a0505 0%, #000000 100%);
 	z-index: 1000;
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	justify-content: center;
+	overflow-x: hidden;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
 }
 
 .start-content {
 	text-align: center;
 	max-width: 800px;
 	width: 100%;
+	padding: 40px 20px;
 }
 
 .game-title {
@@ -531,7 +536,7 @@ body {
 	font-size: 100px;
 	font-weight: 900;
 	color: #fff;
-	margin-bottom: 10px;
+	margin-bottom: 14px;
 	text-shadow: 4px 4px 0px #ff0000;
 	letter-spacing: 5px;
 }
@@ -541,7 +546,8 @@ body {
 	font-size: 24px;
 	color: #ff0000;
 	letter-spacing: 10px;
-	margin-top: -10px;
+	margin-top: 0;
+	padding-top: 12px;
 	text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
 }
 
@@ -842,6 +848,38 @@ body {
 	background: #3388ff;
 	cursor: pointer;
 	border: none;
+}
+
+.cs-row-check {
+	align-items: flex-start;
+	flex-wrap: wrap;
+}
+
+.cs-row-check > label:first-child {
+	flex: 0 0 200px;
+}
+
+.cs-gun-checks {
+	display: flex;
+	gap: 14px;
+	flex-wrap: wrap;
+}
+
+.cs-gun-checks label {
+	font-size: 12px;
+	color: #ccc;
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	cursor: pointer;
+	flex: unset;
+}
+
+.cs-row input[type="checkbox"] {
+	accent-color: #3388ff;
+	width: 15px;
+	height: 15px;
+	cursor: pointer;
 }
 
 .custom-modal-actions {
@@ -1328,7 +1366,7 @@ body {
 }
 
 /* Responsive Design - Mobile Portrait */
-@media screen and (max-width: 768px) and (orientation: portrait) {
+@media screen and (max-width: 768px) {
 	#hud {
 		padding: 10px;
 	}
@@ -1394,18 +1432,46 @@ body {
 		display: none;
 	}
 
+	.start-content {
+		padding: 16px 16px;
+	}
+
 	.game-title {
 		font-size: 48px;
+		margin-bottom: 10px;
 	}
 
 	.subtitle {
-		font-size: 14px;
+		font-size: 13px;
 		letter-spacing: 4px;
+		margin-top: 0;
+	}
+
+	.difficulty-section {
+		margin: 10px 0 0;
+	}
+
+	.difficulty-label {
+		margin-bottom: 8px;
+	}
+
+	.difficulty-stats {
+		margin-top: 8px;
+		padding: 6px 10px;
+	}
+
+	.menu-box {
+		margin: 18px 0;
 	}
 
 	.menu-item {
-		font-size: 24px;
-		padding: 12px 30px;
+		font-size: 20px;
+		padding: 11px 24px;
+	}
+
+	.controls-card {
+		padding: 14px 16px;
+		margin-top: 14px;
 	}
 
 	.features-grid {
@@ -1512,15 +1578,26 @@ body {
 
 	.game-title {
 		font-size: 36px;
+		margin-bottom: 8px;
 	}
 
 	.subtitle {
-		font-size: 12px;
+		font-size: 11px;
+		letter-spacing: 3px;
+		margin-top: 0;
+	}
+
+	.menu-box {
+		margin: 12px 0;
 	}
 
 	.menu-item {
-		font-size: 20px;
-		padding: 10px 25px;
+		font-size: 18px;
+		padding: 10px 20px;
+	}
+
+	.controls-card {
+		padding: 10px 12px;
 	}
 
 	.loading-logo {
