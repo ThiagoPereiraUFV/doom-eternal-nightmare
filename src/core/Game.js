@@ -325,11 +325,11 @@ export class Game {
   _showControlSelection() {
     const startScreen = document.getElementById("startScreen");
     const controlScreen = document.getElementById("controlSelectionScreen");
-    
+
     if (startScreen) {
       startScreen.style.display = "none";
     }
-    
+
     if (controlScreen) {
       controlScreen.classList.add("show");
     }
@@ -345,14 +345,14 @@ export class Game {
       console.error(`Invalid control type: ${type}. Must be one of: ${GameConfig.INPUT.VALID_CONTROL_TYPES.join(', ')}`);
       return;
     }
-    
+
     this.controlType = type;
-    
+
     const controlScreen = document.getElementById("controlSelectionScreen");
     if (controlScreen) {
       controlScreen.classList.remove("show");
     }
-    
+
     this.startGame();
   }
 
@@ -395,7 +395,7 @@ export class Game {
     const pauseMenu = document.getElementById("pauseMenu");
     pauseMenu.style.display = "flex";
     pauseMenu.classList.add("show");
-    
+
     if (this.controlType === 'keyboard') {
       document.exitPointerLock();
     }
@@ -412,11 +412,11 @@ export class Game {
     pauseMenu.style.display = "none";
     this.stateManager.setState(GameStates.PLAYING);
     this.audioSystem.startMusic();
-    
+
     if (this.controlType === 'keyboard') {
       this.canvas.requestPointerLock();
     }
-    
+
     this.lastFrameTime = performance.now(); // Reset frame time to prevent jump
   }
 
@@ -621,13 +621,13 @@ export class Game {
       const movement = this.touchInputManager.getMovement();
       forward = movement.forward;
       strafe = movement.strafe;
-      
+
       // Handle look delta from touch
       const lookDelta = this.touchInputManager.getLookDelta();
       if (lookDelta.x !== 0) {
         this.player.angle += lookDelta.x * GameConfig.INPUT.TOUCH_SENSITIVITY;
       }
-      
+
       // Sprint is always off for touch (can be added as button if needed)
       this.player.isSprinting = false;
     }
@@ -800,11 +800,11 @@ export class Game {
     this.stateManager.setState(GameStates.GAME_OVER);
     this.audioSystem.stopAmbience();
     this.audioSystem.stopMusic();
-    
+
     if (this.controlType === 'keyboard') {
       document.exitPointerLock();
     }
-    
+
     this.touchInputManager.disable();
 
     setTimeout(() => {
@@ -820,11 +820,11 @@ export class Game {
     this.stateManager.setState(GameStates.VICTORY);
     this.audioSystem.stopAmbience();
     this.audioSystem.stopMusic();
-    
+
     if (this.controlType === 'keyboard') {
       document.exitPointerLock();
     }
-    
+
     this.touchInputManager.disable();
 
     setTimeout(() => {
