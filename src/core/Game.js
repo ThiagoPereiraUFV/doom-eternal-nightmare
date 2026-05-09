@@ -38,7 +38,8 @@ export class Game {
       this.resourceManager,
     );
 
-    // Control type ('keyboard' or 'touch')
+    // Control type — auto-detected from device capabilities
+    // Same media query used by CSS to show touch controls
     this.controlType = null;
 
     // Game state
@@ -106,29 +107,22 @@ export class Game {
       el.addEventListener("touchstart", (e) => { e.preventDefault(); fn(); }, { passive: false });
     };
 
-    // Control selection
-    const keyboardBtn = document.getElementById('control-keyboard');
-    const touchBtn = document.getElementById('control-touch');
-
-    _bindTap(keyboardBtn, () => this._selectControl('keyboard'));
-    _bindTap(touchBtn, () => this._selectControl('touch'));
-
-    // Start game button — use both onclick and touchstart for mobile compatibility
+    // Start game button — directly starts game, controls are auto-detected
     const startBtn = document.getElementById("start-btn");
     if (startBtn) {
-      _bindTap(startBtn, () => this._showControlSelection());
+      _bindTap(startBtn, () => this.startGame());
     } else {
       // Fallback: tap anywhere on start screen, but NOT on diff buttons or controls card
       const startScreen = document.getElementById("startScreen");
       if (startScreen) {
         startScreen.onclick = (e) => {
           if (e.target.closest(".diff-btn, .controls-card, #controls-desktop, #controls-touch")) return;
-          this._showControlSelection();
+          this.startGame();
         };
         startScreen.addEventListener("touchstart", (e) => {
           if (e.target.closest(".diff-btn, .controls-card, #controls-desktop, #controls-touch")) return;
           e.preventDefault();
-          this._showControlSelection();
+          this.startGame();
         }, { passive: false });
       }
     }
@@ -288,6 +282,9 @@ export class Game {
     const diffId = (sel?.dataset?.diff ?? "medium").toUpperCase();
     this.difficulty = GameConfig.DIFFICULTY[diffId] ?? GameConfig.DIFFICULTY.MEDIUM;
 
+    // Auto-detect control type from device capabilities
+    this.controlType = this._detectControlType();
+
     // Resume audio context (required for browser autoplay policies)
     this.audioSystem.resume();
 
@@ -316,41 +313,11 @@ export class Game {
   }
 
   /**
-   * Show control selection screen
+   * Detect control type from device capabilities
    * @private
    */
-  _showControlSelection() {
-    const startScreen = document.getElementById("startScreen");
-    const controlScreen = document.getElementById("controlSelectionScreen");
-
-    if (startScreen) {
-      startScreen.style.display = "none";
-    }
-
-    if (controlScreen) {
-      controlScreen.classList.add("show");
-    }
-  }
-
-  /**
-   * Select control type
-   * @private
-   */
-  _selectControl(type) {
-    // Validate control type
-    if (!GameConfig.INPUT.VALID_CONTROL_TYPES.includes(type)) {
-      console.error(`Invalid control type: ${type}. Must be one of: ${GameConfig.INPUT.VALID_CONTROL_TYPES.join(', ')}`);
-      return;
-    }
-
-    this.controlType = type;
-
-    const controlScreen = document.getElementById("controlSelectionScreen");
-    if (controlScreen) {
-      controlScreen.classList.remove("show");
-    }
-
-    this.startGame();
+  _detectControlType() {
+    return window.matchMedia('(hover: none) and (pointer: coarse)').matches ? 'touch' : 'keyboard';
   }
 
   /**
@@ -366,8 +333,9 @@ export class Game {
     this.enemiesKilled = 0;
     this.bloodSplatters = [];
 
-    // Show control selection again
-    this._showControlSelection();
+    // Show start screen again
+    const startScreen = document.getElementById("startScreen");
+    if (startScreen) startScreen.style.display = "flex";
   }
 
   /**

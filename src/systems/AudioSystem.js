@@ -266,11 +266,6 @@ export class AudioSystem {
   startMusic() {
     if (this.isMusicPlaying) return;
 
-    console.log(
-      "Starting music...",
-      "Audio context state:",
-      this.audioContext.state,
-    );
     this.isMusicPlaying = true;
     this._playMusicLoop();
   }
@@ -292,8 +287,6 @@ export class AudioSystem {
 
     const now = this.audioContext.currentTime;
     const duration = 8; // 8-second loop
-
-    console.log("Playing music loop at", now);
 
     // Bass drone
     this._createBassLine(now, duration);
