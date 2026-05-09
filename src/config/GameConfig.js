@@ -24,6 +24,12 @@ export const GameConfig = {
     STAMINA_RECOVERY: 0.3,
   },
 
+  // Input configuration
+  INPUT: {
+    TOUCH_SENSITIVITY: 0.003,
+    VALID_CONTROL_TYPES: ['keyboard', 'touch'],
+  },
+
   // Rendering
   RENDERING: {
     FOV: Math.PI / 3,
