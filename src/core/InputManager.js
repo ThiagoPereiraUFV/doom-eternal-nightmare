@@ -36,6 +36,107 @@ export class InputManager {
 
     // Context menu prevention
     this.canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    // Touch events (mobile)
+    this._setupTouchListeners();
+  }
+
+  // ─── Touch Controls ──────────────────────────────────────────────
+  _setupTouchListeners() {
+    this._joystick = {
+      active: false, id: null,
+      origin: { x: 0, y: 0 },
+    };
+    this._lookTouch = {
+      active: false, id: null,
+      last: { x: 0, y: 0 },
+    };
+
+    document.addEventListener("touchstart",  (e) => this._onTouchStart(e),  { passive: false });
+    document.addEventListener("touchmove",   (e) => this._onTouchMove(e),   { passive: false });
+    document.addEventListener("touchend",    (e) => this._onTouchEnd(e),    { passive: false });
+    document.addEventListener("touchcancel", (e) => this._onTouchEnd(e),    { passive: false });
+  }
+
+  _onTouchStart(e) {
+    for (const t of e.changedTouches) {
+      // Never intercept touches on interactive UI elements — let click fire
+      const el = t.target;
+      const tag = (el?.tagName ?? "").toUpperCase();
+      if (tag === "BUTTON" || tag === "A") continue;
+      // Also skip if the touch is on any element inside an overlay / menu
+      if (el?.closest(".overlay-screen, #startScreen, #pauseMenu, .menu-item, .pause-menu-item, #start-btn")) continue;
+
+      const inLeftZone =
+        t.clientX < window.innerWidth * 0.40 &&
+        t.clientY > window.innerHeight * 0.45;
+
+      if (inLeftZone && !this._joystick.active) {
+        e.preventDefault();
+        this._joystick.active = true;
+        this._joystick.id     = t.identifier;
+        this._joystick.origin = { x: t.clientX, y: t.clientY };
+        this._updateJoystick(0, 0);
+      } else if (!inLeftZone && !this._lookTouch.active) {
+        e.preventDefault();
+        this._lookTouch.active = true;
+        this._lookTouch.id     = t.identifier;
+        this._lookTouch.last   = { x: t.clientX, y: t.clientY };
+      }
+    }
+  }
+
+  _onTouchMove(e) {
+    e.preventDefault();
+    for (const t of e.changedTouches) {
+      if (t.identifier === this._joystick.id) {
+        const dx   = t.clientX - this._joystick.origin.x;
+        const dy   = t.clientY - this._joystick.origin.y;
+        const maxR = 55;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const cdx  = dist > maxR ? (dx / dist) * maxR : dx;
+        const cdy  = dist > maxR ? (dy / dist) * maxR : dy;
+
+        const thr = 14;
+        this.keys["w"] = cdy < -thr;
+        this.keys["s"] = cdy >  thr;
+        this.keys["a"] = cdx < -thr;
+        this.keys["d"] = cdx >  thr;
+
+        this._updateJoystick(cdx, cdy);
+
+      } else if (t.identifier === this._lookTouch.id) {
+        const dx = t.clientX - this._lookTouch.last.x;
+        const dy = t.clientY - this._lookTouch.last.y;
+        this._lookTouch.last = { x: t.clientX, y: t.clientY };
+        this.eventManager.emit("touchlook", { dx, dy });
+      }
+    }
+  }
+
+  _onTouchEnd(e) {
+    for (const t of e.changedTouches) {
+      if (t.identifier === this._joystick.id) {
+        this._joystick.active = false;
+        this._joystick.id     = null;
+        this.keys["w"] = false;
+        this.keys["s"] = false;
+        this.keys["a"] = false;
+        this.keys["d"] = false;
+        this._updateJoystick(0, 0);
+      } else if (t.identifier === this._lookTouch.id) {
+        this._lookTouch.active = false;
+        this._lookTouch.id     = null;
+      }
+    }
+  }
+
+  /** Move the knob visual relative to joystick base center. */
+  _updateJoystick(dx, dy) {
+    const knob = document.getElementById("touch-joystick-knob");
+    if (knob) {
+      knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    }
   }
 
   /**

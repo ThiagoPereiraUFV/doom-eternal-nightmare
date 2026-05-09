@@ -140,14 +140,17 @@ export class Renderer {
     };
 
     this._wMat = {
-      dark:   lam(0x1a1a1a),
-      metal:  lam(0x3a3a3a),
-      bright: lam(0x888888),
-      wood:   lam(0x5c3317),
-      glass:  new THREE.MeshLambertMaterial({
+      dark:     lam(0x1c1c1c),          // polymer frame / receiver
+      metal:    lam(0x38393b),          // blued steel / iron
+      bright:   lam(0x8c9098),          // stainless / bare barrel
+      steel:    lam(0xb0b8be),          // polished steel / muzzle crown
+      wood:     lam(0x5c3317),          // walnut stock
+      tan:      lam(0x8b7355),          // desert tan / furniture
+      glass:    new THREE.MeshLambertMaterial({
         color: 0x334466, transparent: true, opacity: 0.7,
       }),
-      rubber: lam(0x111111),
+      rubber:   lam(0x0f0f0f),          // grip panels / stippling
+      red:      bas(0xcc1100),          // laser / dot
     };
   }
 
@@ -435,6 +438,7 @@ export class Renderer {
     this.weaponGroup.clear();
     const m = this._wMat;
 
+    // Helper: add a BoxGeometry mesh to weaponGroup
     const addBox = (w, h, d, mat, px, py, pz, rx = 0, ry = 0, rz = 0) => {
       const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
       mesh.position.set(px, py, pz);
@@ -442,9 +446,10 @@ export class Renderer {
       this.weaponGroup.add(mesh);
       return mesh;
     };
+    // Helper: add a CylinderGeometry mesh (rx rotates barrel to horizontal)
     const addCyl = (rt, rb, h, mat, px, py, pz, rx = 0) => {
       const mesh = new THREE.Mesh(
-        new THREE.CylinderGeometry(rt, rb, h, 10),
+        new THREE.CylinderGeometry(rt, rb, h, 12),
         mat,
       );
       mesh.position.set(px, py, pz);
@@ -455,32 +460,112 @@ export class Renderer {
 
     const ltype = (type ?? "").toLowerCase();
 
+    // ─── PISTOL — Glock-style polymer striker pistol ───────────────
     if (ltype === "pistol") {
-      addBox(0.064, 0.074, 0.29, m.dark,   0,  0,      0);
-      addCyl(0.027, 0.027, 0.19, m.bright, 0,  0,     -0.2,  Math.PI / 2);
-      addBox(0.06,  0.15,  0.088,m.rubber, 0, -0.112,  0.08,  0.18);
-      addBox(0.01,  0.017, 0.01, m.bright, 0,  0.044, -0.12);
-      addBox(0.046, 0.013, 0.01, m.bright, 0,  0.044,  0.1);
+      // Slide: flat-top, wider than frame, runs full length
+      addBox(0.072, 0.052, 0.310, m.metal,  0,        0.006,  -0.018);
+      // Slide serration grooves (rear half — visible grip ridges)
+      addBox(0.076, 0.056, 0.004, m.dark,   0,        0.006,   0.085);
+      addBox(0.076, 0.056, 0.004, m.dark,   0,        0.006,   0.065);
+      addBox(0.076, 0.056, 0.004, m.dark,   0,        0.006,   0.045);
+      // Barrel — stainless, protruding forward of slide
+      addCyl(0.019, 0.019, 0.095, m.steel,  0,        0.003,  -0.218, Math.PI / 2);
+      // Barrel bushing collar ring
+      addCyl(0.026, 0.026, 0.009, m.bright, 0,        0.003,  -0.176, Math.PI / 2);
+      // Frame / receiver — polymer, slightly narrower and lower
+      addBox(0.062, 0.036, 0.260, m.dark,   0,       -0.034,  -0.005);
+      // Dust cover (forward frame section below barrel)
+      addBox(0.060, 0.024, 0.044, m.dark,   0,       -0.034,  -0.140);
+      // Trigger guard — thin loop approximation
+      addBox(0.058, 0.007, 0.082, m.dark,   0,       -0.057,   0.018);  // bottom rail
+      addBox(0.058, 0.024, 0.007, m.dark,   0,       -0.047,  -0.022);  // front vertical
+      // Trigger — small finger-shaped tab
+      addBox(0.008, 0.022, 0.013, m.bright, 0,       -0.048,   0.013);
+      // Grip — backstrap angled rearward
+      addBox(0.058, 0.116, 0.090, m.rubber, 0,       -0.111,   0.091,  0.20);
+      // Magazine floor plate (protrudes slightly below grip)
+      addBox(0.052, 0.008, 0.072, m.metal,  0,       -0.172,   0.086,  0.20);
+      // Front sight post
+      addBox(0.006, 0.013, 0.005, m.steel,  0,        0.038,  -0.175);
+      // Rear sight U-notch
+      addBox(0.024, 0.009, 0.005, m.steel,  0,        0.036,   0.085);
+
       this.weaponGroup.position.set(0.14, -0.14, -0.33);
       this.weaponGroup.rotation.y = -0.08;
+
+    // ─── SHOTGUN — Mossberg 500 pump-action ───────────────────────
     } else if (ltype === "shotgun") {
-      addCyl(0.03,  0.03,  0.6,  m.bright, -0.038, 0,  -0.27, Math.PI / 2);
-      addCyl(0.03,  0.03,  0.6,  m.bright,  0.038, 0,  -0.27, Math.PI / 2);
-      addBox(0.082, 0.009, 0.6,  m.metal,   0,  0.033, -0.27);
-      addBox(0.102, 0.084, 0.2,  m.dark,    0,  0,      0.02);
-      addBox(0.074, 0.074, 0.33, m.wood,    0, -0.02,   0.22, -0.08);
-      addBox(0.094, 0.05,  0.12, m.wood,    0, -0.022, -0.13);
+      // Main barrel — single wide bore tube
+      addCyl(0.034, 0.034, 0.640, m.bright, 0,        0.040,  -0.260, Math.PI / 2);
+      // Barrel rib (flat sight rib on top of barrel)
+      addBox(0.012, 0.006, 0.640, m.steel,  0,        0.074,  -0.260);
+      // Front bead sight (tiny sphere approximated as small box)
+      addBox(0.012, 0.012, 0.012, m.steel,  0,        0.082,  -0.580);
+      // Magazine tube (below barrel, runs most of barrel length)
+      addCyl(0.022, 0.022, 0.530, m.metal,  0,        0.006,  -0.205, Math.PI / 2);
+      // Pump forend — wider, textured section on magazine tube
+      addCyl(0.030, 0.030, 0.130, m.wood,   0,        0.006,  -0.310, Math.PI / 2);
+      addBox(0.064, 0.030, 0.120, m.wood,   0,        0.005,  -0.310);  // flat bottom grip surface
+      // Receiver — the action housing
+      addBox(0.100, 0.096, 0.200, m.dark,   0,        0.010,   0.030);
+      // Ejection port (bright slit on right of receiver)
+      addBox(0.006, 0.038, 0.090, m.bright, 0.052,    0.022,   0.018);
+      // Safety button on top of receiver
+      addBox(0.018, 0.010, 0.018, m.metal,  0,        0.062,   0.010);
+      // Stock — straight Monte Carlo style
+      addBox(0.076, 0.076, 0.310, m.wood,   0,        0.006,   0.235, -0.07);
+      // Recoil pad (rubber end of stock)
+      addBox(0.078, 0.082, 0.014, m.rubber, 0,        0.005,   0.394, -0.07);
+      // Trigger guard + trigger
+      addBox(0.060, 0.008, 0.090, m.metal,  0,       -0.046,   0.050);
+      addBox(0.010, 0.026, 0.012, m.metal,  0,       -0.040,   0.042);
+
       this.weaponGroup.position.set(0.17, -0.18, -0.34);
       this.weaponGroup.rotation.y = -0.09;
+
+    // ─── RIFLE — AR-15 / M4 carbine ──────────────────────────────
     } else if (ltype === "rifle") {
-      addBox(0.064, 0.074, 0.44, m.dark,   0,  0,      0);
-      addCyl(0.02,  0.02,  0.54, m.bright, 0,  0.012, -0.41, Math.PI / 2);
-      addBox(0.058, 0.058, 0.26, m.metal,  0,  0.006, -0.24);
-      addBox(0.044, 0.128, 0.068,m.dark,   0, -0.102,  0.03,  0.08);
-      addBox(0.054, 0.068, 0.23, m.dark,   0, -0.008,  0.22);
-      addBox(0.06,  0.05,  0.088,m.dark,   0,  0.062, -0.05);
-      addBox(0.044, 0.036, 0.007,m.glass,  0,  0.062, -0.09);
-      addBox(0.044, 0.118, 0.075,m.rubber, 0, -0.092,  0.08, -0.12);
+      // Barrel — free-floating, government profile (thicker at chamber)
+      addCyl(0.018, 0.016, 0.560, m.bright, 0,        0.010,  -0.430, Math.PI / 2);
+      addCyl(0.022, 0.018, 0.060, m.bright, 0,        0.010,  -0.180, Math.PI / 2);  // barrel step
+      // Flash hider / A2 birdcage (3 slots)
+      addCyl(0.024, 0.024, 0.044, m.metal,  0,        0.010,  -0.685, Math.PI / 2);
+      addBox(0.006, 0.050, 0.044, m.dark,   0,        0.010,  -0.685);  // slot cut
+      // Handguard — M-LOK / KeyMod profile (5-sided approximation)
+      addBox(0.058, 0.058, 0.300, m.dark,   0,        0.010,  -0.270);
+      addBox(0.062, 0.014, 0.300, m.metal,  0,        0.042,  -0.270);  // top rail
+      addBox(0.062, 0.014, 0.300, m.dark,   0,       -0.042,  -0.270);  // bottom rail
+      // M-LOK slots (decorative cuts)
+      addBox(0.064, 0.010, 0.030, m.metal,  0,        0.010,  -0.200);
+      addBox(0.064, 0.010, 0.030, m.metal,  0,        0.010,  -0.310);
+      // Upper receiver — flat top with Picatinny rail
+      addBox(0.068, 0.062, 0.200, m.dark,   0,        0.010,   0.000);
+      addBox(0.072, 0.012, 0.200, m.metal,  0,        0.048,   0.000);  // top rail
+      // Charging handle (small T-handle at rear of upper)
+      addBox(0.042, 0.016, 0.020, m.metal,  0,        0.050,   0.090);
+      addBox(0.008, 0.032, 0.008, m.metal,  0,        0.058,   0.090);  // T-part
+      // Carry handle / rear iron sight (low profile BUIS)
+      addBox(0.030, 0.030, 0.032, m.metal,  0,        0.072,  -0.005);
+      addBox(0.006, 0.012, 0.005, m.steel,  0,        0.090,  -0.005);  // aperture
+      // Lower receiver
+      addBox(0.068, 0.058, 0.160, m.dark,   0,       -0.026,   0.025);
+      // Trigger guard
+      addBox(0.060, 0.007, 0.080, m.metal,  0,       -0.062,   0.055);
+      addBox(0.060, 0.024, 0.007, m.metal,  0,       -0.052,   0.019);
+      // Pistol grip — A2 style, angled
+      addBox(0.046, 0.110, 0.072, m.rubber, 0,       -0.096,   0.072,  0.20);
+      // Magazine — 30-round STANAG, slight forward tilt
+      addBox(0.050, 0.140, 0.072, m.dark,   0,       -0.096,  -0.018, -0.05);
+      addBox(0.052, 0.010, 0.064, m.metal,  0,       -0.168,  -0.018, -0.05);  // mag floor plate
+      // Buffer tube / stock — collapsible
+      addBox(0.044, 0.044, 0.200, m.metal,  0,       -0.008,   0.135);
+      // Stock — 6-position collapsible style
+      addBox(0.072, 0.072, 0.120, m.dark,   0,       -0.006,   0.230);
+      addBox(0.076, 0.014, 0.120, m.rubber, 0,       -0.038,   0.230);  // cheekweld
+      // Front sight post (gas block / FSB style)
+      addBox(0.018, 0.018, 0.018, m.metal,  0,        0.010,  -0.420);
+      addBox(0.006, 0.016, 0.005, m.steel,  0,        0.025,  -0.420);  // post
+
       this.weaponGroup.position.set(0.19, -0.155, -0.34);
       this.weaponGroup.rotation.y = -0.09;
     }
@@ -575,7 +660,7 @@ export class Renderer {
   }
 
   /**
-   * Update weapon model and animate bob / recoil.
+   * Update weapon model and animate bob / recoil / reload.
    * @param {Player} player
    */
   renderWeapon(player) {
@@ -598,13 +683,56 @@ export class Renderer {
     };
     const [bx, by, bz] = bases[ltype] ?? [0.14, -0.14, -0.33];
 
+    // ── Reload animation ─────────────────────────────────────────
+    // reloadTime is in ms; reloadStartTime is Date.now() epoch ms
+    let reloadOffsetY   = 0;
+    let reloadTiltZ     = 0;
+    let reloadTiltX     = 0;
+    let reloadOffsetZ   = 0;
+
+    if (weapon.isReloading && weapon.reloadTime > 0) {
+      const elapsed  = Date.now() - weapon.reloadStartTime;          // ms
+      const progress = Math.min(elapsed / weapon.reloadTime, 1.0);   // 0 → 1
+
+      // Phase 0–35 %: weapon drops + tilts (eject / mag out)
+      // Phase 35–65 %: held low and tilted (magazine swap)
+      // Phase 65–100 %: rises back + un-tilts and snaps (chamber)
+      const easeIn  = (x) => x * x;
+      const easeOut = (x) => 1 - (1 - x) * (1 - x);
+
+      if (progress < 0.35) {
+        const p = easeIn(progress / 0.35);
+        reloadOffsetY = -0.22 * p;
+        reloadTiltZ   =  0.55 * p;   // tilt weapon outward
+        reloadOffsetZ =  0.06 * p;   // pull slightly toward player
+        reloadTiltX   =  0.3  * p;   // angle barrel down
+      } else if (progress < 0.65) {
+        reloadOffsetY = -0.22;
+        reloadTiltZ   =  0.55;
+        reloadOffsetZ =  0.06;
+        reloadTiltX   =  0.3;
+      } else {
+        const p = easeOut((progress - 0.65) / 0.35);
+        reloadOffsetY = -0.22 * (1 - p);
+        reloadTiltZ   =  0.55  * (1 - p);
+        reloadOffsetZ =  0.06  * (1 - p);
+        reloadTiltX   =  0.3   * (1 - p);
+        // Overshoot snap at the very end
+        if (p > 0.85) {
+          const snap = Math.sin((p - 0.85) / 0.15 * Math.PI) * 0.04;
+          reloadOffsetY += snap;
+        }
+      }
+    }
+
+    // ── Apply all transforms ─────────────────────────────────────
     this.weaponGroup.position.set(
       bx + Math.cos(t * 3) * bob * 0.006,
-      by + Math.sin(t * 6) * bob * 0.01,
-      bz + recoil * 0.05,
+      by + Math.sin(t * 6) * bob * 0.01 + reloadOffsetY,
+      bz + recoil * 0.05 + reloadOffsetZ,
     );
-    this.weaponGroup.rotation.x = recoil * 0.12;
-    this.weaponGroup.rotation.z = Math.sin(t * 3) * bob * 0.015;
+    this.weaponGroup.rotation.x = recoil * 0.12 + reloadTiltX;
+    this.weaponGroup.rotation.z = Math.sin(t * 3) * bob * 0.015 + reloadTiltZ;
   }
 
   /**

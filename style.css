@@ -66,6 +66,113 @@ body {
 	z-index: 10;
 }
 
+/* ─── Touch Controls ─────────────────────────────────────────────── */
+#touch-controls {
+	display: none; /* shown only on touch devices */
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	z-index: 600;
+}
+
+@media (hover: none) and (pointer: coarse) {
+	#touch-controls {
+		display: block;
+	}
+}
+
+#touch-look-zone {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 60%;
+	height: 100%;
+	pointer-events: auto;
+	/* transparent — just a touch capture area */
+}
+
+#touch-joystick-base {
+	position: absolute;
+	bottom: 90px;
+	left: 60px;
+	width: 130px;
+	height: 130px;
+	border-radius: 50%;
+	border: 2px solid rgba(255, 255, 255, 0.25);
+	background: rgba(255, 255, 255, 0.06);
+	pointer-events: auto;
+	touch-action: none;
+}
+
+#touch-joystick-knob {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 54px;
+	height: 54px;
+	border-radius: 50%;
+	background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.55), rgba(255,255,255,0.18));
+	border: 2px solid rgba(255, 255, 255, 0.4);
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+	transition: transform 0.05s ease-out;
+}
+
+#touch-fire {
+	position: absolute;
+	bottom: 65px;
+	right: 50px;
+	width: 110px;
+	height: 110px;
+	border-radius: 50%;
+	background: radial-gradient(circle at 40% 40%, rgba(220, 30, 30, 0.6), rgba(140, 0, 0, 0.5));
+	border: 3px solid rgba(255, 50, 50, 0.7);
+	color: #fff;
+	font-family: 'Orbitron', sans-serif;
+	font-size: 14px;
+	font-weight: 700;
+	letter-spacing: 1px;
+	pointer-events: auto;
+	touch-action: none;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+	box-shadow: 0 0 18px rgba(255, 0, 0, 0.35);
+}
+
+#touch-fire:active {
+	background: radial-gradient(circle at 40% 40%, rgba(255, 80, 80, 0.75), rgba(200, 20, 20, 0.65));
+	transform: scale(0.94);
+}
+
+#touch-reload {
+	position: absolute;
+	bottom: 195px;
+	right: 70px;
+	width: 74px;
+	height: 74px;
+	border-radius: 50%;
+	background: rgba(0, 140, 220, 0.35);
+	border: 2px solid rgba(50, 170, 255, 0.65);
+	color: #fff;
+	font-family: 'Orbitron', sans-serif;
+	font-size: 13px;
+	font-weight: 700;
+	pointer-events: auto;
+	touch-action: none;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+	box-shadow: 0 0 12px rgba(0, 150, 255, 0.25);
+}
+
+#touch-reload:active {
+	background: rgba(0, 180, 255, 0.5);
+	transform: scale(0.92);
+}
+/* ── end touch controls ─────────────────────────────────────────── */
+
 #crosshair {
 	position: absolute;
 	top: 50%;
@@ -404,12 +511,80 @@ body {
 	font-size: 14px;
 }
 
-.controls-preview {
-	color: #666;
+.controls-card {
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 0, 0, 0.25);
+	border-top: 2px solid #ff0033;
+	padding: 22px 30px;
+	margin-top: 24px;
+	text-align: left;
+}
+
+.controls-card-title {
+	font-family: 'Orbitron', sans-serif;
+	font-size: 11px;
+	letter-spacing: 3px;
+	color: #ff0033;
+	margin-bottom: 16px;
+}
+
+.controls-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px 28px;
+}
+
+.ctrl-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.ctrl-key {
+	font-family: 'Orbitron', sans-serif;
+	font-size: 10px;
+	letter-spacing: 1px;
+	color: #fff;
+	background: rgba(255, 255, 255, 0.1);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	padding: 4px 8px;
+	min-width: 80px;
+	text-align: center;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.ctrl-key.ctrl-icon {
 	font-size: 14px;
-	border-top: 1px solid #333;
-	padding-top: 20px;
-	display: inline-block;
+	min-width: 44px;
+	padding: 4px 6px;
+}
+
+.ctrl-key.ctrl-red {
+	color: #ff5555;
+	border-color: rgba(255, 50, 50, 0.5);
+	background: rgba(200, 20, 20, 0.2);
+}
+
+.ctrl-key.ctrl-blue {
+	color: #55aaff;
+	border-color: rgba(50, 150, 255, 0.5);
+	background: rgba(20, 80, 200, 0.2);
+}
+
+.ctrl-desc {
+	color: #999;
+	font-size: 13px;
+}
+
+/* Desktop: show keyboard card, hide touch card */
+#controls-desktop { display: block; }
+#controls-touch   { display: none;  }
+
+/* Touch devices: show touch card, hide keyboard card */
+@media (hover: none) and (pointer: coarse) {
+	#controls-desktop { display: none;  }
+	#controls-touch   { display: block; }
 }
 
 /* Overlay Screens */

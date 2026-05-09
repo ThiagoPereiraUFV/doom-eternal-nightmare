@@ -36,9 +36,16 @@
 		<div id="muzzleFlash"></div>
 		<div id="crosshair"></div>
 
-		<div id="hud">
-			<div class="hud-bottom-left">
-				<div class="stat-card health-card">
+	<!-- Touch controls (shown only on touch devices via CSS media query) -->
+	<div id="touch-controls">
+		<div id="touch-joystick-base">
+			<div id="touch-joystick-knob"></div>
+		</div>
+		<div id="touch-look-zone"></div>
+		<button id="touch-fire">FIRE</button>
+		<button id="touch-reload">R</button>
+		<button id="touch-jump" style="display:none"></button>
+	</div>
 					<div class="stat-icon">
 						<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"
 							stroke-linecap="round" stroke-linejoin="round">
@@ -126,23 +133,29 @@
 					<div class="menu-item active" id="start-btn">INITIATE MISSION</div>
 				</div>
 
-				<div class="features-grid">
-					<div class="feature-item">
-						<h3>REALISTIC GORE</h3>
-						<p>Persistent blood & physics</p>
-					</div>
-					<div class="feature-item">
-						<h3>ADVANCED BALLISTICS</h3>
-						<p>Shell ejection & recoil</p>
-					</div>
-					<div class="feature-item">
-						<h3>DYNAMIC LIGHTING</h3>
-						<p>Bloom & atmosphere</p>
+				<!-- Controls reference — keyboard on desktop, touch on mobile -->
+				<div class="controls-card" id="controls-desktop">
+					<div class="controls-card-title">KEYBOARD &amp; MOUSE</div>
+					<div class="controls-grid">
+						<div class="ctrl-row"><span class="ctrl-key">W A S D</span><span class="ctrl-desc">Move</span></div>
+						<div class="ctrl-row"><span class="ctrl-key">MOUSE</span><span class="ctrl-desc">Aim / Look</span></div>
+						<div class="ctrl-row"><span class="ctrl-key">LMB</span><span class="ctrl-desc">Shoot</span></div>
+						<div class="ctrl-row"><span class="ctrl-key">R</span><span class="ctrl-desc">Reload</span></div>
+						<div class="ctrl-row"><span class="ctrl-key">SHIFT</span><span class="ctrl-desc">Sprint</span></div>
+						<div class="ctrl-row"><span class="ctrl-key">1 2 3</span><span class="ctrl-desc">Pistol / Shotgun / Rifle</span></div>
+						<div class="ctrl-row"><span class="ctrl-key">Q / E</span><span class="ctrl-desc">Prev / Next weapon</span></div>
+						<div class="ctrl-row"><span class="ctrl-key">P</span><span class="ctrl-desc">Pause</span></div>
 					</div>
 				</div>
 
-				<div class="controls-preview">
-					WASD to Move • Mouse to Look • Click to Shoot
+				<div class="controls-card" id="controls-touch">
+					<div class="controls-card-title">TOUCH SCREEN</div>
+					<div class="controls-grid">
+						<div class="ctrl-row"><span class="ctrl-key ctrl-icon">◉</span><span class="ctrl-desc">Left thumb joystick — Move</span></div>
+						<div class="ctrl-row"><span class="ctrl-key ctrl-icon">👆</span><span class="ctrl-desc">Drag right side — Aim / Look</span></div>
+						<div class="ctrl-row"><span class="ctrl-key ctrl-icon ctrl-red">FIRE</span><span class="ctrl-desc">Shoot</span></div>
+						<div class="ctrl-row"><span class="ctrl-key ctrl-icon ctrl-blue">R</span><span class="ctrl-desc">Reload</span></div>
+					</div>
 				</div>
 			</div>
 		</div>

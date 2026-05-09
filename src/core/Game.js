@@ -87,18 +87,22 @@ export class Game {
    * @private
    */
   _setupEventListeners() {
-    // Start game button
+    // Start game button — use both onclick and touchstart for mobile compatibility
     const startBtn = document.getElementById("start-btn");
+    const _bindTap = (el, fn) => {
+      if (!el) return;
+      el.onclick = fn;
+      el.addEventListener("touchstart", (e) => { e.preventDefault(); fn(); }, { passive: false });
+    };
     if (startBtn) {
-      startBtn.onclick = () => this.startGame();
+      _bindTap(startBtn, () => this.startGame());
     } else {
-      document.getElementById("startScreen").onclick = () => this.startGame();
+      _bindTap(document.getElementById("startScreen"), () => this.startGame());
     }
 
     // Restart buttons
-    document.getElementById("gameOverScreen").onclick = () =>
-      this.restartGame();
-    document.getElementById("victoryScreen").onclick = () => this.restartGame();
+    _bindTap(document.getElementById("gameOverScreen"), () => this.restartGame());
+    _bindTap(document.getElementById("victoryScreen"),  () => this.restartGame());
 
     // Mouse movement (setup once)
     document.addEventListener("mousemove", (e) => {
@@ -107,11 +111,45 @@ export class Game {
       }
     });
 
+    // Touch look — works without pointer lock (mobile)
+    this.eventManager.on("touchlook", ({ dx }) => {
+      if (this.stateManager.is(GameStates.PLAYING) && this.player) {
+        this.player.angle += dx * 0.007;
+      }
+    });
+
     // Pause menu buttons
     const pauseResume = document.getElementById("pause-resume");
     const pauseExit = document.getElementById("pause-exit");
-    if (pauseResume) pauseResume.onclick = () => this.resumeGame();
-    if (pauseExit) pauseExit.onclick = () => this.exitToMenu();
+    if (pauseResume) _bindTap(pauseResume, () => this.resumeGame());
+    if (pauseExit)   _bindTap(pauseExit,   () => this.exitToMenu());
+
+    // ── Touch buttons (mobile) ───────────────────────────────────
+    const touchFire = document.getElementById("touch-fire");
+    if (touchFire) {
+      touchFire.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (this.stateManager.is(GameStates.PLAYING) && this.player) {
+          this.player.shoot({
+            enemies: this.enemies,
+            map: this.map,
+            audioSystem: this.audioSystem,
+            eventManager: this.eventManager,
+          });
+          this.renderer.triggerMuzzleFlash();
+        }
+      }, { passive: false });
+    }
+
+    const touchReload = document.getElementById("touch-reload");
+    if (touchReload) {
+      touchReload.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.player?.reload();
+      }, { passive: false });
+    }
 
     // Weapon switching and pause
     this.eventManager.on("keydown", (key) => {
@@ -190,8 +228,10 @@ export class Game {
     // Resume audio context (required for browser autoplay policies)
     this.audioSystem.resume();
 
-    // Request pointer lock
-    this.canvas.requestPointerLock();
+    // Request pointer lock (desktop only — silently ignored on mobile)
+    if (!navigator.maxTouchPoints) {
+      this.canvas.requestPointerLock();
+    }
 
     // Initialize game world
     this._initializeWorld();
