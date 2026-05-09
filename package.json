@@ -1,9 +1,19 @@
 {
+  "type": "module",
   "scripts": {
     "generate-icons": "node scripts/generate-icons.js",
-    "generate-sw": "node scripts/generate-sw.js"
+    "generate-sw": "node scripts/generate-sw.js",
+    "lint:js": "eslint src/**/*.js scripts/**/*.js sw.js",
+    "lint:css": "stylelint style.css",
+    "lint:html": "htmlhint index.html",
+    "lint": "yarn lint:js && yarn lint:css && yarn lint:html",
+    "validate": "yarn lint"
   },
   "devDependencies": {
-    "sharp": "^0.34.5"
+    "eslint": "^10.3.0",
+    "htmlhint": "^1.9.2",
+    "sharp": "^0.34.5",
+    "stylelint": "^17.11.0",
+    "stylelint-config-standard": "^40.0.0"
   }
 }
