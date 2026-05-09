@@ -129,6 +129,36 @@
 			<div class="start-content">
 				<h1 class="game-title">DOOM <span class="subtitle">ETERNAL NIGHTMARE</span></h1>
 
+				<!-- Difficulty selector -->
+				<div class="difficulty-section">
+					<div class="difficulty-label">SELECT DIFFICULTY</div>
+					<div class="difficulty-row">
+						<button class="diff-btn" data-diff="easy">
+							<span class="diff-name">EASY</span>
+							<span class="diff-sub">More ammo · Forgiving</span>
+						</button>
+						<button class="diff-btn selected" data-diff="medium">
+							<span class="diff-name">MEDIUM</span>
+							<span class="diff-sub">Balanced challenge</span>
+						</button>
+						<button class="diff-btn" data-diff="hard">
+							<span class="diff-name">HARD</span>
+							<span class="diff-sub">Scarce ammo · Tougher</span>
+						</button>
+						<button class="diff-btn diff-impossible" data-diff="impossible">
+							<span class="diff-name">IMPOSSIBLE</span>
+							<span class="diff-sub">One mistake — dead</span>
+						</button>
+					</div>
+					<div class="difficulty-stats" id="diff-stats">
+						<span id="diff-stat-health">❤ 100</span>
+						<span id="diff-stat-stamina">⚡ 100</span>
+						<span id="diff-stat-ammo">🔹 ×1.0</span>
+						<span id="diff-stat-enemies">☠ 50 enemies</span>
+						<span id="diff-stat-light">💡 Normal</span>
+					</div>
+				</div>
+
 				<div class="menu-box">
 					<div class="menu-item active" id="start-btn">INITIATE MISSION</div>
 				</div>
@@ -189,6 +219,42 @@
 
 		<!-- Old monolithic game file (kept as backup) -->
 		<!-- <script src="game.js"></script> -->
-	</body>
 
+	<script type="module">
+		// Difficulty selector UI logic (runs independently of game module)
+		import { GameConfig } from "./src/config/GameConfig.js";
+
+		const STATS = {
+			easy:       GameConfig.DIFFICULTY.EASY,
+			medium:     GameConfig.DIFFICULTY.MEDIUM,
+			hard:       GameConfig.DIFFICULTY.HARD,
+			impossible: GameConfig.DIFFICULTY.IMPOSSIBLE,
+		};
+		const LIGHT_LABEL = {
+			easy: "Bright", medium: "Normal", hard: "Dark", impossible: "Pitch black",
+		};
+
+		function updateStats(diffId) {
+			const d = STATS[diffId];
+			if (!d) return;
+			document.getElementById("diff-stat-health").textContent  = `❤ ${d.maxHealth} HP`;
+			document.getElementById("diff-stat-stamina").textContent = `⚡ ${d.maxStamina} stamina`;
+			document.getElementById("diff-stat-ammo").textContent    = `🔹 ×${d.ammoMultiplier.toFixed(2)} ammo`;
+			document.getElementById("diff-stat-enemies").textContent = `☠ ${d.enemyCount} enemies`;
+			document.getElementById("diff-stat-light").textContent   = `💡 ${LIGHT_LABEL[diffId]}`;
+		}
+
+		document.querySelectorAll(".diff-btn").forEach(btn => {
+			const activate = () => {
+				document.querySelectorAll(".diff-btn").forEach(b => b.classList.remove("selected"));
+				btn.classList.add("selected");
+				updateStats(btn.dataset.diff);
+			};
+			btn.addEventListener("click", activate);
+			btn.addEventListener("touchstart", (e) => { e.stopPropagation(); activate(); }, { passive: true });
+		});
+
+		// Init with default
+		updateStats("medium");
+	</script>
 </html>

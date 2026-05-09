@@ -182,6 +182,92 @@ export const GameConfig = {
     MUSIC_LOOP_DURATION: 8, // seconds
   },
 
+  // Difficulty presets
+  // Each key overrides the corresponding base config at game start.
+  DIFFICULTY: {
+    EASY: {
+      id: "easy",
+      label: "EASY",
+      description: "More ammo, forgiving combat",
+      // Player
+      maxHealth:      150,
+      maxStamina:     150,
+      staminaDrain:   0.25,
+      staminaRecovery:0.5,
+      // Weapons — ammo multiplier applied to reserveAmmo
+      ammoMultiplier: 2.0,
+      // Enemies
+      enemyCount:     25,
+      enemyHealthMult:0.6,
+      enemySpeedMult: 0.75,
+      enemyDamage:    6,
+      // Map
+      fillRatio:      0.45,   // fewer walls → more open
+      smoothIterations:4,
+      // Lighting
+      ambientIntensity: 1.8,
+      fogDensity:       0.04,
+      flashlightIntensity: 5.0,
+    },
+    MEDIUM: {
+      id: "medium",
+      label: "MEDIUM",
+      description: "Balanced challenge",
+      maxHealth:      100,
+      maxStamina:     100,
+      staminaDrain:   0.5,
+      staminaRecovery:0.3,
+      ammoMultiplier: 1.0,
+      enemyCount:     50,
+      enemyHealthMult:1.0,
+      enemySpeedMult: 1.0,
+      enemyDamage:    10,
+      fillRatio:      0.55,
+      smoothIterations:3,
+      ambientIntensity: 1.2,
+      fogDensity:       0.06,
+      flashlightIntensity: 3.5,
+    },
+    HARD: {
+      id: "hard",
+      label: "HARD",
+      description: "Scarce ammo, tougher enemies",
+      maxHealth:      75,
+      maxStamina:     75,
+      staminaDrain:   0.8,
+      staminaRecovery:0.2,
+      ammoMultiplier: 0.6,
+      enemyCount:     80,
+      enemyHealthMult:1.5,
+      enemySpeedMult: 1.25,
+      enemyDamage:    16,
+      fillRatio:      0.62,
+      smoothIterations:2,
+      ambientIntensity: 0.7,
+      fogDensity:       0.09,
+      flashlightIntensity: 2.2,
+    },
+    IMPOSSIBLE: {
+      id: "impossible",
+      label: "IMPOSSIBLE",
+      description: "One mistake and you're dead",
+      maxHealth:      40,
+      maxStamina:     50,
+      staminaDrain:   1.2,
+      staminaRecovery:0.1,
+      ammoMultiplier: 0.35,
+      enemyCount:     120,
+      enemyHealthMult:2.2,
+      enemySpeedMult: 1.6,
+      enemyDamage:    25,
+      fillRatio:      0.68,
+      smoothIterations:1,
+      ambientIntensity: 0.3,
+      fogDensity:       0.14,
+      flashlightIntensity: 1.4,
+    },
+  },
+
   // 3D Weapon rendering
   WEAPON_3D: {
     POSITION_X_RATIO: 0.65,

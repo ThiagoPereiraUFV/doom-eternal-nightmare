@@ -44,6 +44,9 @@ export class Game {
     this.enemiesKilled = 0;
     this.totalEnemies = 0;
 
+    // Difficulty (default to MEDIUM)
+    this.difficulty = GameConfig.DIFFICULTY.MEDIUM;
+
     // Timing
     this.lastFrameTime = 0;
     this.animationFrameId = null;
@@ -225,6 +228,11 @@ export class Game {
    * Start new game
    */
   startGame() {
+    // Read selected difficulty from UI
+    const sel = document.querySelector(".diff-btn.selected");
+    const diffId = (sel?.dataset?.diff ?? "medium").toUpperCase();
+    this.difficulty = GameConfig.DIFFICULTY[diffId] ?? GameConfig.DIFFICULTY.MEDIUM;
+
     // Resume audio context (required for browser autoplay policies)
     this.audioSystem.resume();
 
@@ -344,29 +352,48 @@ export class Game {
    * @private
    */
   _initializeWorld() {
-    // Generate map
+    const diff = this.difficulty;
+
+    // Generate map with difficulty-adjusted maze complexity
     const spawnX = GameConfig.PLAYER.SPAWN_X;
     const spawnY = GameConfig.PLAYER.SPAWN_Y;
-    this.map = MapGenerator.generateSpawnMap(spawnX, spawnY);
+    this.map = MapGenerator.generateSpawnMap(spawnX, spawnY, {
+      fillRatio:        diff.fillRatio,
+      smoothIterations: diff.smoothIterations,
+    });
 
-    // Create player
+    // Create player with difficulty-adjusted stats
     this.player = new Player(
       spawnX,
       spawnY,
       this.eventManager,
       this.audioSystem,
     );
+    this.player.health     = diff.maxHealth;
+    this.player.maxHealth  = diff.maxHealth;
+    this.player.stamina    = diff.maxStamina;
+    this.player.maxStamina = diff.maxStamina;
 
-    // Add weapons
-    this.player.addWeapon(WeaponFactory.create("pistol"));
-    this.player.addWeapon(WeaponFactory.create("shotgun"));
-    this.player.addWeapon(WeaponFactory.create("rifle"));
+    // Add weapons with difficulty-adjusted ammo
+    const ammoMult = diff.ammoMultiplier;
+    const pistol  = WeaponFactory.create("pistol");
+    const shotgun = WeaponFactory.create("shotgun");
+    const rifle   = WeaponFactory.create("rifle");
+    pistol.reserveAmmo  = Math.round(GameConfig.WEAPONS.PISTOL.reserveAmmo  * ammoMult);
+    shotgun.reserveAmmo = Math.round(GameConfig.WEAPONS.SHOTGUN.reserveAmmo * ammoMult);
+    rifle.reserveAmmo   = Math.round(GameConfig.WEAPONS.RIFLE.reserveAmmo   * ammoMult);
+    this.player.addWeapon(pistol);
+    this.player.addWeapon(shotgun);
+    this.player.addWeapon(rifle);
 
     // Create enemies
     this._spawnEnemies();
 
     // Build 3D map geometry from tile data
     this.renderer.buildMap(this.map);
+
+    // Apply difficulty lighting
+    this.renderer.applyDifficultyLighting(diff);
 
     this._updateHUD();
   }
@@ -377,7 +404,8 @@ export class Game {
    */
   _spawnEnemies() {
     this.enemies = [];
-    const enemyCount = GameConfig.ENEMY.DEFAULT_SPAWN_COUNT;
+    const diff = this.difficulty;
+    const enemyCount = diff.enemyCount;
     const types = Object.keys(GameConfig.ENEMY.TYPES);
 
     for (let i = 0; i < enemyCount; i++) {
@@ -397,6 +425,11 @@ export class Game {
           const type =
             types[Math.floor(Math.random() * types.length)].toLowerCase();
           const enemy = EnemyFactory.create(type, pos.x, pos.y);
+          // Scale enemy stats by difficulty
+          enemy.health    = Math.round(enemy.maxHealth * diff.enemyHealthMult);
+          enemy.maxHealth = enemy.health;
+          enemy.speed     = enemy.speed * diff.enemySpeedMult;
+          enemy.damage    = diff.enemyDamage;
           this.enemies.push(enemy);
         }
       }

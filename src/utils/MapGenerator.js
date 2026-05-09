@@ -41,9 +41,9 @@ export class MapGenerator {
    * @param {number} playerY - Player spawn Y
    * @returns {Array<Array<number>>} Generated map
    */
-  static generateSpawnMap(playerX = 3, playerY = 3) {
+  static generateSpawnMap(playerX = 3, playerY = 3, options = {}) {
     const size = GameConfig.MAP.SPAWN_SIZE;
-    let map = this.generate(size, size);
+    let map = this.generate(size, size, options);
 
     // Create safe zone around player spawn
     const safeZone = GameConfig.MAP.SPAWN_SAFE_ZONE;

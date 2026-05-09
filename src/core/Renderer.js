@@ -80,7 +80,8 @@ export class Renderer {
 
   _setupLighting() {
     // Dungeon ambient — dim but visible
-    this.scene.add(new THREE.AmbientLight(0x334455, 1.2));
+    this._ambientLight = new THREE.AmbientLight(0x334455, 1.2);
+    this.scene.add(this._ambientLight);
 
     // Player flashlight — follows camera each frame
     this.playerLight = new THREE.SpotLight(0xfff0dd, 3.5, 18, Math.PI * 0.28, 0.4, 1.2);
@@ -93,6 +94,22 @@ export class Renderer {
     const wDir = new THREE.DirectionalLight(0xffeedd, 1.6);
     wDir.position.set(1, 2, 2);
     this.weaponScene.add(wDir);
+  }
+
+  /**
+   * Apply difficulty-based lighting settings.
+   * @param {{ ambientIntensity: number, fogDensity: number, flashlightIntensity: number }} diff
+   */
+  applyDifficultyLighting(diff) {
+    if (this._ambientLight) {
+      this._ambientLight.intensity = diff.ambientIntensity;
+    }
+    if (this.scene.fog) {
+      this.scene.fog.density = diff.fogDensity;
+    }
+    if (this.playerLight) {
+      this.playerLight.intensity = diff.flashlightIntensity;
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════
