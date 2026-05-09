@@ -171,6 +171,32 @@ body {
 	background: rgba(0, 180, 255, 0.5);
 	transform: scale(0.92);
 }
+
+#touch-ads {
+	position: absolute;
+	bottom: 195px;
+	right: 175px;
+	width: 74px;
+	height: 74px;
+	border-radius: 50%;
+	background: rgba(180, 140, 0, 0.3);
+	border: 2px solid rgba(255, 200, 50, 0.55);
+	color: #fff;
+	font-family: 'Orbitron', sans-serif;
+	font-size: 11px;
+	font-weight: 700;
+	pointer-events: auto;
+	touch-action: none;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+	box-shadow: 0 0 12px rgba(220, 180, 0, 0.2);
+}
+
+#touch-ads.active, #touch-ads:active {
+	background: rgba(255, 200, 50, 0.4);
+	border-color: rgba(255, 220, 80, 0.9);
+	transform: scale(0.95);
+}
 /* ── end touch controls ─────────────────────────────────────────── */
 
 #crosshair {
@@ -178,13 +204,62 @@ body {
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
-	width: 4px;
-	height: 4px;
-	background: #0f0;
-	border-radius: 50%;
-	box-shadow: 0 0 4px #0f0;
+	width: 0;
+	height: 0;
 	z-index: 100;
 	pointer-events: none;
+	/* CSS custom property controls spread — updated by JS */
+	--ch-gap: 8px;
+	--ch-len: 14px;
+	--ch-thick: 2px;
+	--ch-color: rgba(255, 255, 255, 0.85);
+}
+
+/* Crosshair lines */
+.ch-line {
+	position: absolute;
+	background: var(--ch-color);
+	filter: drop-shadow(0 0 2px rgba(0,0,0,0.9));
+	transition: transform 0.08s ease-out, width 0.08s ease-out, height 0.08s ease-out;
+}
+
+.ch-top, .ch-bottom {
+	width: var(--ch-thick);
+	height: var(--ch-len);
+	left: calc(var(--ch-thick) / -2);
+}
+.ch-left, .ch-right {
+	height: var(--ch-thick);
+	width: var(--ch-len);
+	top: calc(var(--ch-thick) / -2);
+}
+.ch-top    { bottom: var(--ch-gap); }
+.ch-bottom { top:    var(--ch-gap); }
+.ch-left   { right:  var(--ch-gap); }
+.ch-right  { left:   var(--ch-gap); }
+
+/* Tiny center dot */
+.ch-center {
+	position: absolute;
+	width: 2px;
+	height: 2px;
+	background: var(--ch-color);
+	border-radius: 50%;
+	top: -1px;
+	left: -1px;
+	pointer-events: none;
+}
+
+/* ADS state — tighter crosshair, red tint */
+#crosshair.ads {
+	--ch-gap: 3px;
+	--ch-len: 10px;
+	--ch-color: rgba(255, 60, 60, 0.95);
+}
+
+/* Hit flash — brief white flare */
+#crosshair.hit-flash {
+	--ch-color: #fff;
 }
 
 /* HUD */
@@ -602,7 +677,7 @@ body {
 
 .difficulty-row {
 	display: grid;
-	grid-template-columns: repeat(4, 1fr);
+	grid-template-columns: repeat(5, 1fr);
 	gap: 10px;
 }
 
@@ -639,6 +714,155 @@ body {
 	border-color: #ff4400;
 	border-top-color: #ff4400;
 	box-shadow: 0 0 20px rgba(255, 40, 0, 0.4);
+}
+
+/* Custom difficulty button */
+.diff-btn.diff-custom.selected {
+	background: rgba(0, 80, 180, 0.28);
+	border-color: #3388ff;
+	border-top-color: #3388ff;
+	box-shadow: 0 0 16px rgba(50, 120, 255, 0.3);
+}
+
+.diff-btn.diff-custom.selected .diff-name {
+	color: #66aaff;
+}
+
+/* ─── Custom difficulty modal ──────────────────────────────────────── */
+.custom-modal {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.75);
+	z-index: 2000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	backdrop-filter: blur(4px);
+}
+
+.custom-modal.hidden {
+	display: none;
+}
+
+.custom-modal-box {
+	background: #0d0d0f;
+	border: 1px solid rgba(50, 136, 255, 0.4);
+	box-shadow: 0 0 40px rgba(50, 136, 255, 0.15);
+	padding: 28px 32px;
+	width: min(540px, 94vw);
+	max-height: 90vh;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.custom-modal-title {
+	font-family: 'Orbitron', sans-serif;
+	font-size: 14px;
+	letter-spacing: 4px;
+	color: #3388ff;
+	text-align: center;
+	margin-bottom: 4px;
+}
+
+.custom-sliders {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.cs-group-label {
+	font-family: 'Orbitron', sans-serif;
+	font-size: 9px;
+	letter-spacing: 3px;
+	color: #555;
+	margin-top: 8px;
+	padding-bottom: 4px;
+	border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.cs-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.cs-row label {
+	font-size: 12px;
+	color: #aaa;
+	flex: 0 0 200px;
+	display: flex;
+	gap: 6px;
+	align-items: center;
+}
+
+.cs-val {
+	color: #fff;
+	font-weight: 700;
+	min-width: 48px;
+	text-align: right;
+	margin-left: auto;
+}
+
+.cs-row input[type="range"] {
+	flex: 1;
+	-webkit-appearance: none;
+	appearance: none;
+	height: 3px;
+	background: rgba(50, 136, 255, 0.3);
+	border-radius: 2px;
+	outline: none;
+	cursor: pointer;
+}
+
+.cs-row input[type="range"]::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+	background: #3388ff;
+	cursor: pointer;
+}
+
+.cs-row input[type="range"]::-moz-range-thumb {
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+	background: #3388ff;
+	cursor: pointer;
+	border: none;
+}
+
+.custom-modal-actions {
+	display: flex;
+	gap: 12px;
+	justify-content: flex-end;
+	margin-top: 8px;
+}
+
+.custom-modal-actions button {
+	font-family: 'Orbitron', sans-serif;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 2px;
+	padding: 10px 24px;
+	border: none;
+	cursor: pointer;
+	transition: opacity 0.15s;
+}
+
+.custom-modal-actions button:hover { opacity: 0.8; }
+
+#cs-apply {
+	background: #3388ff;
+	color: #fff;
+}
+
+#cs-cancel {
+	background: rgba(255,255,255,0.08);
+	color: #999;
 }
 
 .diff-name {
@@ -681,9 +905,9 @@ body {
 	transition: color 0.3s;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 700px) {
 	.difficulty-row {
-		grid-template-columns: repeat(2, 1fr);
+		grid-template-columns: repeat(3, 1fr);
 	}
 	.difficulty-stats {
 		font-size: 11px;
@@ -691,6 +915,12 @@ body {
 	}
 	.start-content {
 		padding: 0 12px;
+	}
+}
+
+@media (max-width: 420px) {
+	.difficulty-row {
+		grid-template-columns: repeat(2, 1fr);
 	}
 }
 /* ── end difficulty ──────────────────────────────────────────────── */

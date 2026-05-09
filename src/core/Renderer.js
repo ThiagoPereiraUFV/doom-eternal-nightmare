@@ -112,6 +112,18 @@ export class Renderer {
     }
   }
 
+  /**
+   * Smoothly zoom camera FOV for ADS / hip-fire.
+   * @param {boolean} aiming - True = ADS, false = hip-fire
+   */
+  setADS(aiming) {
+    const target = aiming ? 42 : 75;
+    if (Math.abs(this.camera.fov - target) > 0.2) {
+      this.camera.fov += (target - this.camera.fov) * 0.18;
+      this.camera.updateProjectionMatrix();
+    }
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // Materials & Textures
   // ═══════════════════════════════════════════════════════════════

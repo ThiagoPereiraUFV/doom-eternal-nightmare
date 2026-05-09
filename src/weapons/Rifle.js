@@ -9,6 +9,7 @@ import { GameConfig } from "../config/GameConfig.js";
 export class Rifle extends Weapon {
   constructor() {
     super("RIFLE", GameConfig.WEAPONS.RIFLE);
+    this.isAutoFire = true; // fires continuously while shoot is held
   }
 
   /**

@@ -34,7 +34,13 @@
 		<canvas id="gameCanvas"></canvas>
 		<canvas id="weaponCanvas" style="display:none"></canvas>
 		<div id="muzzleFlash"></div>
-		<div id="crosshair"></div>
+		<div id="crosshair">
+		<div class="ch-line ch-top"></div>
+		<div class="ch-line ch-bottom"></div>
+		<div class="ch-line ch-left"></div>
+		<div class="ch-line ch-right"></div>
+		<div class="ch-center"></div>
+	</div>
 
 	<!-- Touch controls (shown only on touch devices via CSS media query) -->
 	<div id="touch-controls">
@@ -43,6 +49,7 @@
 		</div>
 		<div id="touch-look-zone"></div>
 		<button id="touch-fire">FIRE</button>
+		<button id="touch-ads">ADS</button>
 		<button id="touch-reload">R</button>
 		<button id="touch-jump" style="display:none"></button>
 	</div>
@@ -148,8 +155,10 @@
 						<button class="diff-btn diff-impossible" data-diff="impossible">
 							<span class="diff-name">IMPOSSIBLE</span>
 							<span class="diff-sub">One mistake — dead</span>
-						</button>
-					</div>
+						</button>					<button class="diff-btn diff-custom" data-diff="custom">
+						<span class="diff-name">CUSTOM</span>
+						<span class="diff-sub">Your rules</span>
+					</button>					</div>
 					<div class="difficulty-stats" id="diff-stats">
 						<span id="diff-stat-health">❤ 100</span>
 						<span id="diff-stat-stamina">⚡ 100</span>
@@ -186,6 +195,38 @@
 						<div class="ctrl-row"><span class="ctrl-key ctrl-icon ctrl-red">FIRE</span><span class="ctrl-desc">Shoot</span></div>
 						<div class="ctrl-row"><span class="ctrl-key ctrl-icon ctrl-blue">R</span><span class="ctrl-desc">Reload</span></div>
 					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Custom difficulty settings modal -->
+		<div id="custom-diff-modal" class="custom-modal hidden">
+			<div class="custom-modal-box">
+				<div class="custom-modal-title">CUSTOM SETTINGS</div>
+				<div class="custom-sliders">
+					<!-- Player -->
+					<div class="cs-group-label">PLAYER</div>
+					<div class="cs-row"><label>Health <span class="cs-val" id="cs-health-val">100</span></label><input type="range" id="cs-health" min="20" max="200" step="5" value="100"></div>
+					<div class="cs-row"><label>Stamina <span class="cs-val" id="cs-stamina-val">100</span></label><input type="range" id="cs-stamina" min="20" max="200" step="5" value="100"></div>
+					<!-- Weapons -->
+					<div class="cs-group-label">WEAPONS</div>
+					<div class="cs-row"><label>Ammo multiplier <span class="cs-val" id="cs-ammo-val">×1.00</span></label><input type="range" id="cs-ammo" min="0.1" max="4" step="0.05" value="1"></div>
+					<!-- Enemies -->
+					<div class="cs-group-label">ENEMIES</div>
+					<div class="cs-row"><label>Count <span class="cs-val" id="cs-enemies-val">50</span></label><input type="range" id="cs-enemies" min="5" max="200" step="5" value="50"></div>
+					<div class="cs-row"><label>Health mult <span class="cs-val" id="cs-ehp-val">×1.00</span></label><input type="range" id="cs-ehp" min="0.25" max="4" step="0.05" value="1"></div>
+					<div class="cs-row"><label>Speed mult <span class="cs-val" id="cs-espd-val">×1.00</span></label><input type="range" id="cs-espd" min="0.25" max="3" step="0.05" value="1"></div>
+					<div class="cs-row"><label>Damage <span class="cs-val" id="cs-edmg-val">10</span></label><input type="range" id="cs-edmg" min="1" max="50" step="1" value="10"></div>
+					<!-- Environment -->
+					<div class="cs-group-label">ENVIRONMENT</div>
+					<div class="cs-row"><label>Map density <span class="cs-val" id="cs-fill-val">0.55</span></label><input type="range" id="cs-fill" min="0.3" max="0.8" step="0.01" value="0.55"></div>
+					<div class="cs-row"><label>Ambient light <span class="cs-val" id="cs-amb-val">1.20</span></label><input type="range" id="cs-amb" min="0.1" max="3" step="0.05" value="1.2"></div>
+					<div class="cs-row"><label>Fog density <span class="cs-val" id="cs-fog-val">0.06</span></label><input type="range" id="cs-fog" min="0.01" max="0.3" step="0.005" value="0.06"></div>
+					<div class="cs-row"><label>Flashlight <span class="cs-val" id="cs-flash-val">3.50</span></label><input type="range" id="cs-flash" min="0" max="8" step="0.1" value="3.5"></div>
+				</div>
+				<div class="custom-modal-actions">
+					<button id="cs-apply">APPLY</button>
+					<button id="cs-cancel">CANCEL</button>
 				</div>
 			</div>
 		</div>
@@ -229,9 +270,10 @@
 			medium:     GameConfig.DIFFICULTY.MEDIUM,
 			hard:       GameConfig.DIFFICULTY.HARD,
 			impossible: GameConfig.DIFFICULTY.IMPOSSIBLE,
+			custom:     GameConfig.DIFFICULTY.CUSTOM,
 		};
 		const LIGHT_LABEL = {
-			easy: "Bright", medium: "Normal", hard: "Dark", impossible: "Pitch black",
+			easy: "Bright", medium: "Normal", hard: "Dark", impossible: "Pitch black", custom: "Custom",
 		};
 
 		function updateStats(diffId) {
@@ -244,14 +286,73 @@
 			document.getElementById("diff-stat-light").textContent   = `💡 ${LIGHT_LABEL[diffId]}`;
 		}
 
+		// ── Custom modal logic ──────────────────────────────────────
+		const modal   = document.getElementById("custom-diff-modal");
+		const csApply  = document.getElementById("cs-apply");
+		const csCancel = document.getElementById("cs-cancel");
+
+		// Slider definitions: [inputId, valueSpanId, formatter]
+		const sliders = [
+			["cs-health",  "cs-health-val",  v => `${v}`],
+			["cs-stamina", "cs-stamina-val", v => `${v}`],
+			["cs-ammo",    "cs-ammo-val",    v => `×${parseFloat(v).toFixed(2)}`],
+			["cs-enemies", "cs-enemies-val", v => `${v}`],
+			["cs-ehp",     "cs-ehp-val",     v => `×${parseFloat(v).toFixed(2)}`],
+			["cs-espd",    "cs-espd-val",    v => `×${parseFloat(v).toFixed(2)}`],
+			["cs-edmg",    "cs-edmg-val",    v => `${v}`],
+			["cs-fill",    "cs-fill-val",    v => `${parseFloat(v).toFixed(2)}`],
+			["cs-amb",     "cs-amb-val",     v => `${parseFloat(v).toFixed(2)}`],
+			["cs-fog",     "cs-fog-val",     v => `${parseFloat(v).toFixed(3)}`],
+			["cs-flash",   "cs-flash-val",   v => `${parseFloat(v).toFixed(2)}`],
+		];
+
+		sliders.forEach(([inputId, spanId, fmt]) => {
+			const input = document.getElementById(inputId);
+			const span  = document.getElementById(spanId);
+			input.addEventListener("input", () => { span.textContent = fmt(input.value); });
+		});
+
+		function openCustomModal() {
+			modal.classList.remove("hidden");
+		}
+
+		function applyCustom() {
+			const c = GameConfig.DIFFICULTY.CUSTOM;
+			c.maxHealth       = parseFloat(document.getElementById("cs-health").value);
+			c.maxStamina      = parseFloat(document.getElementById("cs-stamina").value);
+			c.ammoMultiplier  = parseFloat(document.getElementById("cs-ammo").value);
+			c.enemyCount      = parseInt(document.getElementById("cs-enemies").value, 10);
+			c.enemyHealthMult = parseFloat(document.getElementById("cs-ehp").value);
+			c.enemySpeedMult  = parseFloat(document.getElementById("cs-espd").value);
+			c.enemyDamage     = parseFloat(document.getElementById("cs-edmg").value);
+			c.fillRatio       = parseFloat(document.getElementById("cs-fill").value);
+			c.ambientIntensity    = parseFloat(document.getElementById("cs-amb").value);
+			c.fogDensity          = parseFloat(document.getElementById("cs-fog").value);
+			c.flashlightIntensity = parseFloat(document.getElementById("cs-flash").value);
+			STATS.custom = c;
+			updateStats("custom");
+			modal.classList.add("hidden");
+		}
+
+		csApply.addEventListener("click",  applyCustom);
+		csCancel.addEventListener("click", () => modal.classList.add("hidden"));
+		// Close on backdrop click
+		modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.add("hidden"); });
+
+		// ── Difficulty button wiring ────────────────────────────────
 		document.querySelectorAll(".diff-btn").forEach(btn => {
-			const activate = () => {
+			const activate = (e) => {
+				e?.stopPropagation();
 				document.querySelectorAll(".diff-btn").forEach(b => b.classList.remove("selected"));
 				btn.classList.add("selected");
-				updateStats(btn.dataset.diff);
+				if (btn.dataset.diff === "custom") {
+					openCustomModal();
+				} else {
+					updateStats(btn.dataset.diff);
+				}
 			};
-			btn.addEventListener("click", activate);
-			btn.addEventListener("touchstart", (e) => { e.stopPropagation(); activate(); }, { passive: true });
+			btn.addEventListener("click",      (e) => activate(e));
+			btn.addEventListener("touchstart",  (e) => { e.stopPropagation(); activate(e); }, { passive: true });
 		});
 
 		// Init with default

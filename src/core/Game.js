@@ -47,6 +47,10 @@ export class Game {
     // Difficulty (default to MEDIUM)
     this.difficulty = GameConfig.DIFFICULTY.MEDIUM;
 
+    // ADS (Aim Down Sights) state
+    this._isAiming = false;
+    this._touchAdsActive = false;
+
     // Timing
     this.lastFrameTime = 0;
     this.animationFrameId = null;
@@ -100,7 +104,19 @@ export class Game {
     if (startBtn) {
       _bindTap(startBtn, () => this.startGame());
     } else {
-      _bindTap(document.getElementById("startScreen"), () => this.startGame());
+      // Fallback: tap anywhere on start screen, but NOT on diff buttons or controls card
+      const startScreen = document.getElementById("startScreen");
+      if (startScreen) {
+        startScreen.onclick = (e) => {
+          if (e.target.closest(".diff-btn, .controls-card, #controls-desktop, #controls-touch")) return;
+          this.startGame();
+        };
+        startScreen.addEventListener("touchstart", (e) => {
+          if (e.target.closest(".diff-btn, .controls-card, #controls-desktop, #controls-touch")) return;
+          e.preventDefault();
+          this.startGame();
+        }, { passive: false });
+      }
     }
 
     // Restart buttons
@@ -130,19 +146,41 @@ export class Game {
     // ── Touch buttons (mobile) ───────────────────────────────────
     const touchFire = document.getElementById("touch-fire");
     if (touchFire) {
+      // touchstart = first shot; holding is handled by _updatePlayer auto-fire loop
       touchFire.addEventListener("touchstart", (e) => {
         e.preventDefault();
         e.stopPropagation();
+        this._touchFireActive = true;
         if (this.stateManager.is(GameStates.PLAYING) && this.player) {
-          this.player.shoot({
-            enemies: this.enemies,
-            map: this.map,
-            audioSystem: this.audioSystem,
-            eventManager: this.eventManager,
-          });
-          this.renderer.triggerMuzzleFlash();
+          this._doShoot();
         }
       }, { passive: false });
+      touchFire.addEventListener("touchend",    () => { this._touchFireActive = false; }, { passive: true });
+      touchFire.addEventListener("touchcancel", () => { this._touchFireActive = false; }, { passive: true });
+    }
+
+    const touchAds = document.getElementById("touch-ads");
+    if (touchAds) {
+      touchAds.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this._touchAdsActive = true;
+        this._isAiming = true;
+        touchAds.classList.add("active");
+        this._syncCrosshair();
+      }, { passive: false });
+      touchAds.addEventListener("touchend", () => {
+        this._touchAdsActive = false;
+        this._isAiming = false;
+        touchAds.classList.remove("active");
+        this._syncCrosshair();
+      }, { passive: true });
+      touchAds.addEventListener("touchcancel", () => {
+        this._touchAdsActive = false;
+        this._isAiming = false;
+        touchAds.classList.remove("active");
+        this._syncCrosshair();
+      }, { passive: true });
     }
 
     const touchReload = document.getElementById("touch-reload");
@@ -173,20 +211,23 @@ export class Game {
       if (lowerKey === "r") this.player?.reload();
     });
 
-    // Shooting via mousedown event
+    // Shooting via mousedown event (semi-auto weapons)
     this.eventManager.on("mousedown", (button) => {
-      if (
-        button === "left" &&
-        this.stateManager.is(GameStates.PLAYING) &&
-        this.player
-      ) {
-        this.player.shoot({
-          enemies: this.enemies,
-          map: this.map,
-          audioSystem: this.audioSystem,
-          eventManager: this.eventManager,
-        });
-        this.renderer.triggerMuzzleFlash();
+      if (!this.stateManager.is(GameStates.PLAYING) || !this.player) return;
+      if (button === "left") {
+        // Always fire on the initial press regardless of weapon type
+        this._doShoot();
+      }
+      if (button === "right") {
+        this._isAiming = true;
+        this._syncCrosshair();
+      }
+    });
+
+    this.eventManager.on("mouseup", (button) => {
+      if (button === "right") {
+        this._isAiming = false;
+        this._syncCrosshair();
       }
     });
 
@@ -502,6 +543,69 @@ export class Game {
     }
 
     this.player.move(forward, strafe, this.map, deltaTime);
+
+    // ── Auto-fire (rifle held) ──────────────────────────────────
+    const weapon = this.player.currentWeapon;
+    if (weapon?.isAutoFire) {
+      const leftHeld  = this.inputManager.isMouseButtonPressed("left");
+      const touchHeld = !!this._touchFireActive;
+      if (leftHeld || touchHeld) {
+        this._doShoot();
+      }
+    }
+
+    // ── ADS ─────────────────────────────────────────────────────
+    const aimingNow = this._isAiming ||
+      this.inputManager.isMouseButtonPressed("right") ||
+      !!this._touchAdsActive;
+    if (aimingNow !== this._lastAimState) {
+      this._isAiming = aimingNow;
+      this._syncCrosshair();
+      this._lastAimState = aimingNow;
+    }
+    this.renderer.setADS(this._isAiming);
+  }
+
+  /**
+   * Fire the current weapon once, trigger muzzle flash.
+   * @private
+   */
+  _doShoot() {
+    if (!this.stateManager.is(GameStates.PLAYING) || !this.player) return;
+    const result = this.player.shoot({
+      enemies: this.enemies,
+      map: this.map,
+      audioSystem: this.audioSystem,
+      eventManager: this.eventManager,
+    });
+    if (result?.success) {
+      this.renderer.triggerMuzzleFlash();
+      this._flashCrosshair();
+    }
+  }
+
+  /**
+   * Briefly flash the crosshair white on hit.
+   * @private
+   */
+  _flashCrosshair() {
+    const el = document.getElementById("crosshair");
+    if (!el) return;
+    el.classList.add("hit-flash");
+    clearTimeout(this._crosshairFlashTimer);
+    this._crosshairFlashTimer = setTimeout(() => {
+      el.classList.remove("hit-flash");
+    }, 60);
+  }
+
+  /**
+   * Sync crosshair CSS class with current aim state.
+   * @private
+   */
+  _syncCrosshair() {
+    const el = document.getElementById("crosshair");
+    if (!el) return;
+    el.classList.toggle("ads", !!this._isAiming);
   }
 
   /**
@@ -624,7 +728,7 @@ export class Game {
     document.exitPointerLock();
 
     setTimeout(() => {
-      document.getElementById("victoryScreen").classList.add("show");
+      document.getElementById("victoryScreen")?.classList.add("show");
     }, 500);
   }
 }

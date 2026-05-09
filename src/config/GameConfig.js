@@ -266,6 +266,26 @@ export const GameConfig = {
       fogDensity:       0.14,
       flashlightIntensity: 1.4,
     },
+    // Custom difficulty — defaults mirror MEDIUM; overridden at runtime by the UI
+    CUSTOM: {
+      id: "custom",
+      label: "CUSTOM",
+      description: "Your rules",
+      maxHealth:      100,
+      maxStamina:     100,
+      staminaDrain:   0.5,
+      staminaRecovery:0.3,
+      ammoMultiplier: 1.0,
+      enemyCount:     50,
+      enemyHealthMult:1.0,
+      enemySpeedMult: 1.0,
+      enemyDamage:    10,
+      fillRatio:      0.55,
+      smoothIterations:3,
+      ambientIntensity: 1.2,
+      fogDensity:       0.06,
+      flashlightIntensity: 3.5,
+    },
   },
 
   // 3D Weapon rendering
