@@ -1,7 +1,7 @@
 # GitHub Copilot Instructions
 
 ## Project Overview
-This is a DOOM-style raycasting game engine built with vanilla JavaScript. The engine features 3D rendering using raycasting techniques, AI-driven enemies, weapon systems, and procedural map generation.
+This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. The engine features true 3D rendering via Three.js (WebGL), AI-driven enemies, weapon systems, procedural map generation, mobile touch controls, and a procedural Web Audio API sound system.
 
 ## Architecture Patterns
 
@@ -105,31 +105,41 @@ This is a DOOM-style raycasting game engine built with vanilla JavaScript. The e
 
 ## Game Engine Specifics
 
-### Raycasting
-- RayCaster handles all ray-wall intersection logic
-- Maintain 60 FPS target; optimize ray calculations
-- Use fixed-point or integer math where possible for performance
+### Rendering (Three.js)
+- `Renderer` uses `THREE.WebGLRenderer` for true 3D first-person rendering
+- Scene uses `THREE.FogExp2`, `SpotLight` (player flashlight), and wall torch `PointLight`s
+- Enemies are 3D `THREE.Group` meshes tracked in `enemyMeshes` Map (enemy.id → Group)
+- Weapons render in a separate `weaponScene`/`weaponCamera` layered on top (no fog)
+- `RayCaster` handles ray-wall and ray-enemy intersection for **game logic** (shooting, line-of-sight), not for visual rendering
+- Window resize is handled via `_onResize()` which updates camera aspect and renderer size
+- Maintain 60 FPS target; profile Three.js draw calls and geometry as hot paths
 
 ### Entity Management
-- Player is a singleton managed by Game core
-- Enemies should be instantiated through EnemyFactory
+- Player is a singleton managed by Game core; tracks health, stamina, ADS (`isAiming`), head bob, recoil, and screen shake
+- Enemy types: `demon`, `zombie`, `ghost`, `brute` — defined in `GameConfig.ENEMY.TYPES`
+- Enemies are instantiated through `EnemyFactory.create(type, x, y, initialState)`; the factory shares a single `AIBehavior` instance per state across all enemies
 - All entities should have consistent update/render interface
 
 ### Weapons System
-- Weapons extend base Weapon class
-- Each weapon defines: damage, fireRate, ammo, spread
-- Use WeaponFactory for weapon instantiation
+- Weapons extend base `Weapon` abstract class (throws if instantiated directly)
+- Each weapon defines: `damage`, `magazineSize`, `reserveAmmo`, `fireRate`, `spread`, `recoil`, `screenShake`, `pellets`, `penetration`, `muzzleFlashIntensity`
+- Registered types: `pistol`, `shotgun`, `rifle` — add new types via `WeaponFactory.register()`
+- `fire(context)` receives `{ player, enemies, map, audioSystem, eventManager }` and performs an internal raycast to resolve hits
 - Keep weapon logic separate from player input handling
 
 ### Audio
-- AudioSystem manages all sound playback
-- Preload audio resources through ResourceManager
-- Use positional audio for spatial effects
+- `AudioSystem` is a singleton that generates all sounds **procedurally** via the Web Audio API
+- No audio files are loaded from disk; sounds are synthesized using oscillators and noise buffers
+- Internal helpers: `_noiseBurst()` for percussive/noise sounds, `_toneBurst()` for tonal sounds
+- Background music is routed through a dedicated `musicGain` node
+- Master volume is controlled via `masterGain`; default value is `0.3`
+- `AudioContext` is created on first instantiation (browser autoplay policy must be considered)
 
 ### Maps
-- MapGenerator creates procedural level layouts
-- Map data should be 2D arrays of tile types
-- Maintain wall/floor/ceiling texture references
+- MapGenerator creates procedural level layouts using cellular automata
+- Map data is a 2D array of integers: `0` = floor, `>0` = wall type
+- Wall types (1–4): CONCRETE, BRICK, METAL, STONE — assigned randomly during generation
+- `generateSpawnMap()` creates a safe open zone around the player spawn and carves corridors
 
 ## Performance Considerations
 - Minimize object creation in game loop (reuse objects/pools)
@@ -149,6 +159,7 @@ This is a DOOM-style raycasting game engine built with vanilla JavaScript. The e
 - AI logic isolated in `/ai`
 - Reusable utilities in `/utils`
 - Configuration centralized in `/config`
+- SVG sprite data in `/data/sprites.js` (loaded via script tag as `window.SVGSprites`)
 - Keep files focused and under 300 lines when possible
 
 ## Best Practices
