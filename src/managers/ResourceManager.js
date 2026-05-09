@@ -124,19 +124,11 @@ export class ResourceManager {
   /**
    * Create wall texture patterns
    * @private
+   * No-op: Three.js Renderer generates its own procedural textures;
+   * the 2D canvas pattern approach is no longer used.
    */
   _createWallPatterns() {
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-
-    if (!this.loadedSprites.walls.concrete?.img) return;
-
-    this.wallPatterns = {
-      1: ctx.createPattern(this.loadedSprites.walls.concrete.img, "repeat"),
-      2: ctx.createPattern(this.loadedSprites.walls.brick.img, "repeat"),
-      3: ctx.createPattern(this.loadedSprites.walls.metal.img, "repeat"),
-      4: ctx.createPattern(this.loadedSprites.walls.stone.img, "repeat"),
-    };
+    this.wallPatterns = {};
   }
 
   /**

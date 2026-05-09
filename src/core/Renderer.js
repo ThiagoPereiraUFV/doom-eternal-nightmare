@@ -1,423 +1,626 @@
 /**
- * Renderer System
- * Handles all rendering operations
- * Following SRP - only rendering logic
+ * Renderer System — Three.js 3D Edition
+ * True 3D rendering with instanced geometry, 3D enemy models,
+ * first-person weapon meshes, and dynamic lighting.
+ * Following SRP — only rendering logic.
  */
 
-import { GameConfig } from "../config/GameConfig.js";
-import { RayCaster } from "../utils/RayCaster.js";
+import * as THREE from "three";
 
 export class Renderer {
-  constructor(canvas, weaponCanvas, resourceManager) {
+  constructor(canvas, _weaponCanvas, _resourceManager) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext("2d");
-    this.weaponCanvas = weaponCanvas;
-    this.weaponCtx = weaponCanvas.getContext("2d");
-    this.resourceManager = resourceManager;
 
-    // Resize canvases
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-    this.weaponCanvas.width = GameConfig.CANVAS.WEAPON_WIDTH;
-    this.weaponCanvas.height = GameConfig.CANVAS.WEAPON_HEIGHT;
+    // ─── WebGL Renderer ───────────────────────────────────────────
+    this.renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      powerPreference: "high-performance",
+    });
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.shadowMap.enabled = false;
+    this.renderer.toneMapping = THREE.NoToneMapping;
 
-    // Handle window resize
-    window.addEventListener("resize", () => this._handleResize());
-  }
+    // ─── Main Scene ───────────────────────────────────────────────
+    this.scene = new THREE.Scene();
+    this.scene.fog = new THREE.FogExp2(0x0a0a18, 0.06);
 
-  /**
-   * Handle window resize
-   * @private
-   */
-  _handleResize() {
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-  }
-
-  /**
-   * Render the game world
-   * @param {Player} player - Player object
-   * @param {Array} enemies - Enemy array
-   * @param {Array} map - Game map
-   * @param {Array} bloodSplatters - Blood splatter effects
-   */
-  renderWorld(player, enemies, map, bloodSplatters = []) {
-    // Clear canvas
-    this.ctx.fillStyle = "#000";
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-    // Render ceiling and floor
-    this._renderCeilingFloor();
-
-    // Cast rays and render walls
-    const rays = RayCaster.castRays(player, map);
-    this._renderWalls(rays, player);
-
-    // Render blood splatters
-    this._renderBloodSplatters(bloodSplatters, player);
-
-    // Render enemies
-    this._renderEnemies(enemies, player, rays, map);
-
-    // Render effects
-    this._renderEffects(player);
-  }
-
-  /**
-   * Render ceiling and floor
-   * @private
-   */
-  _renderCeilingFloor() {
-    // Ceiling
-    this.ctx.fillStyle = "#1a1a1a";
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height / 2);
-
-    // Floor
-    this.ctx.fillStyle = "#0a0a0a";
-    this.ctx.fillRect(
-      0,
-      this.canvas.height / 2,
-      this.canvas.width,
-      this.canvas.height / 2,
+    // ─── First-Person Camera ──────────────────────────────────────
+    this.camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.05,
+      60,
     );
+    this.camera.rotation.order = "YXZ";
+
+    // ─── Weapon Scene (no fog, renders on top) ────────────────────
+    this.weaponScene = new THREE.Scene();
+    this.weaponCamera = new THREE.PerspectiveCamera(
+      55,
+      window.innerWidth / window.innerHeight,
+      0.01,
+      10,
+    );
+
+    // ─── Scene groups ─────────────────────────────────────────────
+    this.mapGroup = new THREE.Group();
+    this.scene.add(this.mapGroup);
+
+    this.enemiesGroup = new THREE.Group();
+    this.scene.add(this.enemiesGroup);
+
+    // ─── Enemy mesh tracking ──────────────────────────────────────
+    this.enemyMeshes = new Map(); // enemy.id -> THREE.Group
+
+    // ─── Weapon model ─────────────────────────────────────────────
+    this.weaponGroup = new THREE.Group();
+    this.weaponScene.add(this.weaponGroup);
+    this._currentWeaponType = null;
+
+    // ─── Wall torch lights ────────────────────────────────────────
+    this._wallLights = [];
+
+    // ─── Muzzle flash ─────────────────────────────────────────────
+    this.muzzleFlashLight = new THREE.PointLight(0xff9922, 0, 4);
+    this.muzzleFlashLight.position.set(0, 0, -0.5);
+    this.weaponScene.add(this.muzzleFlashLight);
+
+    // ─── Setup ────────────────────────────────────────────────────
+    this._setupLighting();
+    this._buildMaterials();
+
+    window.addEventListener("resize", () => this._onResize());
   }
 
-  /**
-   * Render walls from raycasting
-   * @private
-   */
-  _renderWalls(rays, player) {
-    const stripWidth = this.canvas.width / rays.length;
+  // ═══════════════════════════════════════════════════════════════
+  // Lighting
+  // ═══════════════════════════════════════════════════════════════
 
-    rays.forEach((ray, i) => {
-      if (!ray.hit) return;
+  _setupLighting() {
+    // Dungeon ambient — dim but visible
+    this.scene.add(new THREE.AmbientLight(0x334455, 1.2));
 
-      const correctedDistance = RayCaster.correctFishEye(
-        ray.distance,
-        ray.angle,
-        player.angle,
-      );
-      const wallHeight = RayCaster.calculateWallHeight(
-        correctedDistance,
-        this.canvas.height,
-      );
+    // Player flashlight — follows camera each frame
+    this.playerLight = new THREE.SpotLight(0xfff0dd, 3.5, 18, Math.PI * 0.28, 0.4, 1.2);
+    this.playerLight.position.set(0, 0.5, 0);
+    this.playerLight.target.position.set(0, 0.4, -1);
+    this.scene.add(this.playerLight);
+    this.scene.add(this.playerLight.target);
 
-      const stripX = i * stripWidth;
-      const stripY = (this.canvas.height - wallHeight) / 2;
-
-      // Light and shading calculations
-      const maxDistance = GameConfig.RENDERING.MAX_RENDER_DISTANCE;
-      const lightFalloff = Math.max(0.2, 1 - correctedDistance / maxDistance);
-      const orientationShade = ray.side === 0 ? 0.85 : 1.0;
-
-      // Get wall color based on type
-      const wallColors = {
-        1: { r: 120, g: 120, b: 120 }, // Concrete
-        2: { r: 150, g: 80, b: 60 }, // Brick
-        3: { r: 100, g: 100, b: 110 }, // Metal
-        4: { r: 110, g: 100, b: 90 }, // Stone
-      };
-
-      const baseColor = wallColors[ray.wallType] || wallColors[1];
-
-      // Apply shading
-      const finalR = baseColor.r * orientationShade * lightFalloff;
-      const finalG = baseColor.g * orientationShade * lightFalloff;
-      const finalB = baseColor.b * orientationShade * lightFalloff;
-
-      this.ctx.fillStyle = `rgb(${finalR}, ${finalG}, ${finalB})`;
-      this.ctx.fillRect(stripX, stripY, stripWidth, wallHeight);
-
-      // Atmospheric fog
-      const fogFactor = Math.max(0, 1 - correctedDistance / maxDistance);
-      const fogColor = { r: 40, g: 40, b: 60 };
-      this.ctx.fillStyle = `rgba(${fogColor.r}, ${fogColor.g}, ${fogColor.b}, ${
-        1 - fogFactor
-      })`;
-      this.ctx.fillRect(stripX, stripY, stripWidth, wallHeight);
-    });
+    this.weaponScene.add(new THREE.AmbientLight(0x666666, 1.2));
+    const wDir = new THREE.DirectionalLight(0xffeedd, 1.6);
+    wDir.position.set(1, 2, 2);
+    this.weaponScene.add(wDir);
   }
 
-  /**
-   * Render blood splatters
-   * @private
-   */
-  _renderBloodSplatters(splatters, player) {
-    const fov = GameConfig.RENDERING.FOV;
-    const maxDist = GameConfig.EFFECTS.BLOOD_RENDER_DISTANCE;
+  // ═══════════════════════════════════════════════════════════════
+  // Materials & Textures
+  // ═══════════════════════════════════════════════════════════════
 
-    for (const splatter of splatters) {
-      const dx = splatter.x - player.x;
-      const dy = splatter.y - player.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const angle = Math.atan2(dy, dx);
+  _buildMaterials() {
+    // MeshBasicMaterial — always full texture color, no lighting math needed
+    this._wallMats = {
+      concrete: new THREE.MeshBasicMaterial({ map: this._wallTex("concrete") }),
+      brick:    new THREE.MeshBasicMaterial({ map: this._wallTex("brick") }),
+      metal:    new THREE.MeshBasicMaterial({ map: this._wallTex("metal") }),
+      stone:    new THREE.MeshBasicMaterial({ map: this._wallTex("stone") }),
+    };
+    this._floorMat = new THREE.MeshBasicMaterial({ map: this._floorTex() });
+    this._ceilMat  = new THREE.MeshBasicMaterial({ color: 0x1a1a28 });
 
-      let angleDiff = angle - player.angle;
-      while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-      while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+    const lam = (hex, extra = {}) =>
+      new THREE.MeshLambertMaterial({ color: hex, ...extra });
+    const bas = (hex, extra = {}) =>
+      new THREE.MeshBasicMaterial({ color: hex, ...extra });
 
-      if (Math.abs(angleDiff) < fov / 2 + 0.5 && dist < maxDist) {
-        const perpDistance = dist * Math.cos(angleDiff);
-        const screenXRatio = angleDiff / fov + 0.5;
-        const size = (this.canvas.height / perpDistance) * splatter.size;
-        const screenX = screenXRatio * this.canvas.width;
-        const screenY = this.canvas.height / 2;
-
-        this.ctx.save();
-        this.ctx.globalAlpha = splatter.opacity * Math.min(1, 5 / perpDistance);
-        this.ctx.fillStyle = `rgb(${100 + Math.random() * 20}, 0, 0)`;
-        this.ctx.beginPath();
-        this.ctx.arc(screenX, screenY, size, 0, Math.PI * 2);
-        this.ctx.fill();
-        this.ctx.restore();
-      }
-    }
-  }
-
-  /**
-   * Render enemies
-   * @private
-   */
-  _renderEnemies(enemies, player, rays, map) {
-    const fov = GameConfig.RENDERING.FOV;
-    const rayCount = GameConfig.RENDERING.RAY_COUNT;
-
-    // Create depth buffer
-    const depthBuffer = rays.map((ray) => {
-      const corrected = RayCaster.correctFishEye(
-        ray.distance,
-        ray.angle,
-        player.angle,
-      );
-      return corrected;
-    });
-
-    // Sort enemies by distance
-    const sortedEnemies = enemies
-      .filter((e) => !e.isDead)
-      .map((enemy) => ({
-        enemy,
-        distance: player.distanceTo
-          ? player.distanceTo(enemy.x, enemy.y)
-          : Math.sqrt(
-              Math.pow(enemy.x - player.x, 2) + Math.pow(enemy.y - player.y, 2),
-            ),
-      }))
-      .sort((a, b) => b.distance - a.distance);
-
-    // Enemy type to sprite mapping
-    const spriteMap = {
-      demon: "imp",
-      zombie: "skeleton",
-      ghost: "ghost",
-      brute: "brute",
+    this._enemyMats = {
+      demon: {
+        body: lam(0xaa1100), head: lam(0xcc2200),
+        eye:  bas(0xff4400), horn: lam(0x330000),
+      },
+      zombie: {
+        body: lam(0x445533), head: lam(0x556644),
+        eye:  bas(0xff0000), horn: lam(0x222222),
+      },
+      ghost: {
+        body: new THREE.MeshLambertMaterial({
+          color: 0x5599cc, transparent: true, opacity: 0.6,
+          emissive: new THREE.Color(0x112233),
+        }),
+        head: lam(0x77bbee, { transparent: true, opacity: 0.65 }),
+        eye:  bas(0x00ffff, { transparent: true, opacity: 0.9 }),
+        horn: lam(0x334455),
+      },
+      brute: {
+        body: lam(0x664422), head: lam(0x775533),
+        eye:  bas(0xff2200), horn: lam(0x111111),
+      },
     };
 
-    for (const { enemy, distance } of sortedEnemies) {
-      const dx = enemy.x - player.x;
-      const dy = enemy.y - player.y;
-      const angle = Math.atan2(dy, dx);
+    this._wMat = {
+      dark:   lam(0x1a1a1a),
+      metal:  lam(0x3a3a3a),
+      bright: lam(0x888888),
+      wood:   lam(0x5c3317),
+      glass:  new THREE.MeshLambertMaterial({
+        color: 0x334466, transparent: true, opacity: 0.7,
+      }),
+      rubber: lam(0x111111),
+    };
+  }
 
-      let angleDiff = angle - player.angle;
-      while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-      while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+  _wallTex(type) {
+    const S = 256;
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = S;
+    const ctx = cv.getContext("2d");
+    const bases = { concrete: "#5a5a5a", brick: "#8b4513", metal: "#445566", stone: "#565548" };
+    ctx.fillStyle = bases[type];
+    ctx.fillRect(0, 0, S, S);
 
-      if (Math.abs(angleDiff) < fov / 2 + 0.5) {
-        const perpDistance = distance * Math.cos(angleDiff);
-
-        // Check occlusion
-        const screenXRatio = angleDiff / fov + 0.5;
-        const rayIndex = Math.floor(screenXRatio * rayCount);
-
-        if (
-          rayIndex >= 0 &&
-          rayIndex < rayCount &&
-          depthBuffer[rayIndex] < perpDistance
-        ) {
-          continue; // Behind wall
+    if (type === "brick") {
+      const bh = 28, bw = 56;
+      for (let row = 0; row < S / bh; row++) {
+        const off = (row % 2) * (bw / 2);
+        ctx.strokeStyle = "rgba(35,15,5,0.9)";
+        ctx.lineWidth = 3;
+        for (let col = -1; col <= S / bw + 1; col++)
+          ctx.strokeRect(col * bw + off + 1.5, row * bh + 1.5, bw - 3, bh - 3);
+      }
+      ctx.globalCompositeOperation = "multiply";
+      for (let row = 0; row < S / bh; row++) {
+        const off = (row % 2) * (bw / 2);
+        for (let col = -1; col <= S / bw + 1; col++) {
+          const v = 0.8 + Math.random() * 0.4;
+          ctx.fillStyle = `rgba(${~~(255 * v)},${~~(150 * v)},${~~(80 * v)},0.5)`;
+          ctx.fillRect(col * bw + off + 2, row * bh + 2, bw - 4, bh - 4);
         }
-
-        const spriteHeight = (this.canvas.height / perpDistance) * 0.8;
-        const spriteWidth = spriteHeight * 0.6;
-        const screenX = screenXRatio * this.canvas.width;
-        const screenY = (this.canvas.height - spriteHeight) / 2;
-
-        // Get sprite
-        const spriteName = spriteMap[enemy.type];
-        const sprite = this.resourceManager.getSprite("enemies", spriteName);
-
-        if (sprite?.img?.complete) {
-          const alpha = Math.min(1, 10 / perpDistance);
-          this.ctx.save();
-          this.ctx.globalAlpha = alpha;
-          this.ctx.drawImage(
-            sprite.img,
-            screenX - spriteWidth / 2,
-            screenY,
-            spriteWidth,
-            spriteHeight,
-          );
-
-          // Eye glow for chase state
-          if (enemy.currentState === "chase" && enemy.type !== "ghost") {
-            this.ctx.globalAlpha = alpha * 0.8;
-            const eyeY = screenY + spriteHeight * 0.25;
-            this.ctx.fillStyle = "#ffff00";
-            this.ctx.shadowBlur = 10;
-            this.ctx.shadowColor = "#ffff00";
-
-            this.ctx.beginPath();
-            this.ctx.arc(
-              screenX - spriteWidth * 0.15,
-              eyeY,
-              spriteWidth * 0.04,
-              0,
-              Math.PI * 2,
-            );
-            this.ctx.fill();
-            this.ctx.beginPath();
-            this.ctx.arc(
-              screenX + spriteWidth * 0.15,
-              eyeY,
-              spriteWidth * 0.04,
-              0,
-              Math.PI * 2,
-            );
-            this.ctx.fill();
-            this.ctx.shadowBlur = 0;
-          }
-
-          this.ctx.restore();
+      }
+      ctx.globalCompositeOperation = "source-over";
+    } else if (type === "concrete") {
+      ctx.strokeStyle = "rgba(0,0,0,0.18)"; ctx.lineWidth = 1;
+      for (let i = 0; i < 50; i++) {
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * S, Math.random() * S);
+        ctx.lineTo(Math.random() * S, Math.random() * S);
+        ctx.stroke();
+      }
+    } else if (type === "metal") {
+      ctx.strokeStyle = "rgba(0,0,0,0.5)"; ctx.lineWidth = 2;
+      for (let y = 0; y <= S; y += 64) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(S, y); ctx.stroke(); }
+      for (let x = 0; x <= S; x += 64) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, S); ctx.stroke(); }
+      ctx.fillStyle = "rgba(180,190,210,0.7)";
+      for (let y = 32; y < S; y += 64)
+        for (let x = 32; x < S; x += 64) {
+          ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
         }
+    } else if (type === "stone") {
+      ctx.strokeStyle = "rgba(20,18,10,0.9)"; ctx.lineWidth = 3;
+      for (let row = 0; row < 7; row++) {
+        const off = (row % 2) * 34;
+        for (let col = -1; col < 6; col++)
+          ctx.strokeRect(col * 54 + off + 3, row * 40 + 3, 48, 34);
+      }
+    }
 
-        // Health bar
-        const healthRatio = enemy.health / enemy.maxHealth;
-        if (healthRatio < 1) {
-          const barWidth = spriteWidth * 0.8;
-          const barHeight = 4;
-          const barX = screenX - barWidth / 2;
-          const barY = screenY - 15;
+    const id = ctx.getImageData(0, 0, S, S);
+    for (let i = 0; i < id.data.length; i += 4) {
+      const n = (Math.random() - 0.5) * 22;
+      id.data[i]   = Math.max(0, Math.min(255, id.data[i]   + n));
+      id.data[i+1] = Math.max(0, Math.min(255, id.data[i+1] + n));
+      id.data[i+2] = Math.max(0, Math.min(255, id.data[i+2] + n));
+    }
+    ctx.putImageData(id, 0, 0);
+    const tex = new THREE.CanvasTexture(cv);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+  }
 
-          this.ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-          this.ctx.fillRect(barX, barY, barWidth, barHeight);
+  _floorTex() {
+    const S = 256;
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = S;
+    const ctx = cv.getContext("2d");
+    ctx.fillStyle = "#2a2a28";
+    ctx.fillRect(0, 0, S, S);
+    const ts = 64;
+    ctx.strokeStyle = "rgba(0,0,0,0.65)"; ctx.lineWidth = 2;
+    for (let y = 0; y < S; y += ts)
+      for (let x = 0; x < S; x += ts)
+        ctx.strokeRect(x + 1, y + 1, ts - 2, ts - 2);
+    const id = ctx.getImageData(0, 0, S, S);
+    for (let i = 0; i < id.data.length; i += 4) {
+      const n = (Math.random() - 0.5) * 16;
+      id.data[i] = id.data[i+1] = id.data[i+2] =
+        Math.max(0, Math.min(255, id.data[i] + n));
+    }
+    ctx.putImageData(id, 0, 0);
+    const tex = new THREE.CanvasTexture(cv);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(4, 4);
+    return tex;
+  }
 
-          const healthColor =
-            healthRatio > 0.5 ? "#0f0" : healthRatio > 0.25 ? "#ff0" : "#f00";
-          this.ctx.fillStyle = healthColor;
-          this.ctx.fillRect(barX, barY, barWidth * healthRatio, barHeight);
+  // ═══════════════════════════════════════════════════════════════
+  // Map Geometry
+  // ═══════════════════════════════════════════════════════════════
+
+  /**
+   * Build instanced 3D geometry from a 2D tile map.
+   * Call once after map generation / regeneration.
+   * @param {number[][]} map
+   */
+  buildMap(map) {
+    this.mapGroup.clear();
+    for (const { light } of this._wallLights) this.scene.remove(light);
+    this._wallLights = [];
+
+    const rows = map.length;
+    const cols = map[0].length;
+    const WALL_H = 1.0;
+    const typeNames = ["", "concrete", "brick", "metal", "stone"];
+
+    // Floor
+    const floorMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(cols, rows),
+      this._floorMat,
+    );
+    floorMesh.rotation.x = -Math.PI / 2;
+    floorMesh.position.set(cols / 2, 0, rows / 2);
+    floorMesh.receiveShadow = true;
+    this.mapGroup.add(floorMesh);
+
+    // Ceiling
+    const ceilMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(cols, rows),
+      this._ceilMat,
+    );
+    ceilMesh.rotation.x = Math.PI / 2;
+    ceilMesh.position.set(cols / 2, WALL_H, rows / 2);
+    this.mapGroup.add(ceilMesh);
+
+    // Collect wall instances per type
+    const buckets = { concrete: [], brick: [], metal: [], stone: [] };
+    const dummy = new THREE.Object3D();
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const tile = map[row][col];
+        if (!tile) continue;
+        const name = typeNames[tile] || "concrete";
+        buckets[name].push({ col, row });
+
+        // Torch lights on ~3 % of walls
+        if (Math.random() < 0.03) {
+          const palette = [0xff6600, 0xff4400, 0xff8800, 0xffaa00];
+          const color = palette[Math.floor(Math.random() * palette.length)];
+          const light = new THREE.PointLight(color, 1.4, 5.5);
+          light.position.set(col + 0.5, WALL_H * 0.6, row + 0.5);
+          this.scene.add(light);
+          this._wallLights.push({ light, base: 1.4 });
         }
+      }
+    }
+
+    const baseGeo = new THREE.BoxGeometry(1, WALL_H, 1);
+    for (const [typeName, walls] of Object.entries(buckets)) {
+      if (!walls.length) continue;
+      const instanced = new THREE.InstancedMesh(
+        baseGeo,
+        this._wallMats[typeName],
+        walls.length,
+      );
+      instanced.castShadow = true;
+      instanced.receiveShadow = true;
+      walls.forEach(({ col, row }, i) => {
+        dummy.position.set(col + 0.5, WALL_H / 2, row + 0.5);
+        dummy.updateMatrix();
+        instanced.setMatrixAt(i, dummy.matrix);
+      });
+      instanced.instanceMatrix.needsUpdate = true;
+      this.mapGroup.add(instanced);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Enemy 3D Models
+  // ═══════════════════════════════════════════════════════════════
+
+  _createEnemyMesh(enemy) {
+    const g = new THREE.Group();
+    const mats = this._enemyMats[enemy.type] ?? this._enemyMats.demon;
+    const { body: bM, head: hM, eye: eM, horn: hornM } = mats;
+
+    const box = (w, h, d, mat, px, py, pz, rx = 0, ry = 0, rz = 0) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      m.position.set(px, py, pz);
+      m.rotation.set(rx, ry, rz);
+      m.castShadow = true;
+      g.add(m);
+      return m;
+    };
+    const sphere = (r, mat, px, py, pz, segs = 8) => {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, segs, segs), mat);
+      m.position.set(px, py, pz);
+      m.castShadow = true;
+      g.add(m);
+      return m;
+    };
+    const cone = (r, h, mat, px, py, pz, rz = 0) => {
+      const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 6), mat);
+      m.position.set(px, py, pz);
+      m.rotation.z = rz;
+      g.add(m);
+      return m;
+    };
+
+    if (enemy.type === "ghost") {
+      const body = sphere(0.24, bM, 0, 0.62, 0, 10);
+      sphere(0.06, eM, -0.1, 0.66, 0.2);
+      sphere(0.06, eM,  0.1, 0.66, 0.2);
+      const wisps = Array.from({ length: 3 }, (_, i) =>
+        sphere(0.1, bM,
+          Math.cos(i * 2.1) * 0.28, 0.36, Math.sin(i * 2.1) * 0.28, 6),
+      );
+      g.userData.animate = (t) => {
+        body.position.y = 0.62 + Math.sin(t * 1.8) * 0.1;
+        wisps.forEach((w, i) => {
+          w.position.x = Math.cos(t + i * 2.1) * 0.32;
+          w.position.z = Math.sin(t + i * 2.1) * 0.32;
+          w.position.y = 0.34 + Math.sin(t * 2.5 + i) * 0.08;
+        });
+      };
+    } else if (enemy.type === "brute") {
+      box(0.66, 0.74, 0.44, bM,     0,    0.49, 0);
+      box(0.5,  0.44, 0.44, hM,     0,    0.96, 0);
+      cone(0.08, 0.3, hornM,        -0.2, 1.26, 0, -0.3);
+      cone(0.08, 0.3, hornM,         0.2, 1.26, 0,  0.3);
+      const aL = box(0.23, 0.6, 0.23, bM, -0.48, 0.48, 0, 0, 0,  0.3);
+      const aR = box(0.23, 0.6, 0.23, bM,  0.48, 0.48, 0, 0, 0, -0.3);
+      const lL = box(0.26, 0.4, 0.26, bM, -0.18, 0.1, 0);
+      const lR = box(0.26, 0.4, 0.26, bM,  0.18, 0.1, 0);
+      sphere(0.09, eM, -0.15, 0.97, 0.23);
+      sphere(0.09, eM,  0.15, 0.97, 0.23);
+      g.userData.animate = (t) => {
+        lL.rotation.x = Math.sin(t * 3.5) * 0.4;
+        lR.rotation.x = Math.sin(t * 3.5 + Math.PI) * 0.4;
+        aL.rotation.x = Math.sin(t * 3.5 + Math.PI) * 0.25;
+        aR.rotation.x = Math.sin(t * 3.5) * 0.25;
+      };
+    } else if (enemy.type === "zombie") {
+      box(0.32, 0.64, 0.22, bM,  0,    0.46, 0);
+      box(0.3,  0.33, 0.3,  hM,  0,    0.87, 0);
+      const aL = box(0.14, 0.54, 0.14, bM, -0.26, 0.58,  0.12, -0.75, 0, 0);
+      const aR = box(0.14, 0.54, 0.14, bM,  0.26, 0.58,  0.12, -0.75, 0, 0);
+      const lL = box(0.15, 0.45, 0.15, bM, -0.1,  0.12, 0);
+      const lR = box(0.15, 0.45, 0.15, bM,  0.1,  0.12, 0);
+      sphere(0.058, eM, -0.1, 0.88, 0.17);
+      sphere(0.058, eM,  0.1, 0.88, 0.17);
+      g.userData.animate = (t) => {
+        lL.rotation.x = Math.sin(t * 3.5) * 0.35;
+        lR.rotation.x = Math.sin(t * 3.5 + Math.PI) * 0.35;
+        aL.rotation.x = -0.75 + Math.sin(t * 3.5) * 0.2;
+        aR.rotation.x = -0.75 + Math.sin(t * 3.5 + Math.PI) * 0.2;
+      };
+    } else {
+      // Demon (default)
+      box(0.44, 0.64, 0.34, bM,  0,    0.46, 0);
+      box(0.4,  0.36, 0.36, hM,  0,    0.84, 0);
+      cone(0.056, 0.2, hornM, -0.14, 1.03, 0, -0.35);
+      cone(0.056, 0.2, hornM,  0.14, 1.03, 0,  0.35);
+      const aL = box(0.17, 0.52, 0.17, bM, -0.33, 0.46, 0);
+      const aR = box(0.17, 0.52, 0.17, bM,  0.33, 0.46, 0);
+      const lL = box(0.17, 0.44, 0.17, bM, -0.14, 0.12, 0);
+      const lR = box(0.17, 0.44, 0.17, bM,  0.14, 0.12, 0);
+      sphere(0.068, eM, -0.12, 0.84, 0.2);
+      sphere(0.068, eM,  0.12, 0.84, 0.2);
+      g.userData.animate = (t) => {
+        lL.rotation.x = Math.sin(t * 4.5) * 0.44;
+        lR.rotation.x = Math.sin(t * 4.5 + Math.PI) * 0.44;
+        aL.rotation.x = Math.sin(t * 4.5 + Math.PI) * 0.3;
+        aR.rotation.x = Math.sin(t * 4.5) * 0.3;
+      };
+    }
+
+    return g;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Weapon 3D Models
+  // ═══════════════════════════════════════════════════════════════
+
+  _buildWeaponModel(type) {
+    this.weaponGroup.clear();
+    const m = this._wMat;
+
+    const addBox = (w, h, d, mat, px, py, pz, rx = 0, ry = 0, rz = 0) => {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      mesh.position.set(px, py, pz);
+      mesh.rotation.set(rx, ry, rz);
+      this.weaponGroup.add(mesh);
+      return mesh;
+    };
+    const addCyl = (rt, rb, h, mat, px, py, pz, rx = 0) => {
+      const mesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(rt, rb, h, 10),
+        mat,
+      );
+      mesh.position.set(px, py, pz);
+      mesh.rotation.x = rx;
+      this.weaponGroup.add(mesh);
+      return mesh;
+    };
+
+    const ltype = (type ?? "").toLowerCase();
+
+    if (ltype === "pistol") {
+      addBox(0.064, 0.074, 0.29, m.dark,   0,  0,      0);
+      addCyl(0.027, 0.027, 0.19, m.bright, 0,  0,     -0.2,  Math.PI / 2);
+      addBox(0.06,  0.15,  0.088,m.rubber, 0, -0.112,  0.08,  0.18);
+      addBox(0.01,  0.017, 0.01, m.bright, 0,  0.044, -0.12);
+      addBox(0.046, 0.013, 0.01, m.bright, 0,  0.044,  0.1);
+      this.weaponGroup.position.set(0.14, -0.14, -0.33);
+      this.weaponGroup.rotation.y = -0.08;
+    } else if (ltype === "shotgun") {
+      addCyl(0.03,  0.03,  0.6,  m.bright, -0.038, 0,  -0.27, Math.PI / 2);
+      addCyl(0.03,  0.03,  0.6,  m.bright,  0.038, 0,  -0.27, Math.PI / 2);
+      addBox(0.082, 0.009, 0.6,  m.metal,   0,  0.033, -0.27);
+      addBox(0.102, 0.084, 0.2,  m.dark,    0,  0,      0.02);
+      addBox(0.074, 0.074, 0.33, m.wood,    0, -0.02,   0.22, -0.08);
+      addBox(0.094, 0.05,  0.12, m.wood,    0, -0.022, -0.13);
+      this.weaponGroup.position.set(0.17, -0.18, -0.34);
+      this.weaponGroup.rotation.y = -0.09;
+    } else if (ltype === "rifle") {
+      addBox(0.064, 0.074, 0.44, m.dark,   0,  0,      0);
+      addCyl(0.02,  0.02,  0.54, m.bright, 0,  0.012, -0.41, Math.PI / 2);
+      addBox(0.058, 0.058, 0.26, m.metal,  0,  0.006, -0.24);
+      addBox(0.044, 0.128, 0.068,m.dark,   0, -0.102,  0.03,  0.08);
+      addBox(0.054, 0.068, 0.23, m.dark,   0, -0.008,  0.22);
+      addBox(0.06,  0.05,  0.088,m.dark,   0,  0.062, -0.05);
+      addBox(0.044, 0.036, 0.007,m.glass,  0,  0.062, -0.09);
+      addBox(0.044, 0.118, 0.075,m.rubber, 0, -0.092,  0.08, -0.12);
+      this.weaponGroup.position.set(0.19, -0.155, -0.34);
+      this.weaponGroup.rotation.y = -0.09;
+    }
+
+    this._currentWeaponType = ltype;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Enemy Mesh Management
+  // ═══════════════════════════════════════════════════════════════
+
+  _updateEnemyMeshes(enemies, t) {
+    const alive = new Set();
+
+    for (const enemy of enemies) {
+      if (enemy.isDead) continue;
+      alive.add(enemy.id);
+
+      if (!this.enemyMeshes.has(enemy.id)) {
+        const mesh = this._createEnemyMesh(enemy);
+        this.enemiesGroup.add(mesh);
+        this.enemyMeshes.set(enemy.id, mesh);
+      }
+
+      const mesh = this.enemyMeshes.get(enemy.id);
+      mesh.position.set(enemy.x, 0, enemy.y);
+      // Always face the camera (billboard-style Y rotation)
+      mesh.lookAt(this.camera.position.x, 0, this.camera.position.z);
+      if (mesh.userData.animate) mesh.userData.animate(t);
+    }
+
+    for (const [id, mesh] of this.enemyMeshes) {
+      if (!alive.has(id)) {
+        this.enemiesGroup.remove(mesh);
+        this.enemyMeshes.delete(id);
       }
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // Public Render API  (preserves original Game.js interface)
+  // ═══════════════════════════════════════════════════════════════
+
   /**
-   * Render visual effects (vignette, health effects)
-   * @private
+   * Render the full 3D world.
+   * @param {Player}   player
+   * @param {Enemy[]}  enemies
+   * @param {number[][]} _map      — kept for API compat; geometry built via buildMap()
+   * @param {Array}    _splatters  — placeholder
    */
-  _renderEffects(player) {
-    // Low health vignette
-    if (player.health < 40) {
-      const healthRatio = player.health / 100;
-      const vignetteOpacity = (1 - healthRatio) * 0.4;
+  renderWorld(player, enemies, _map, _splatters = []) {
+    const t = performance.now() / 1000;
 
-      const gradient = this.ctx.createRadialGradient(
-        this.canvas.width / 2,
-        this.canvas.height / 2,
-        this.canvas.height * 0.3,
-        this.canvas.width / 2,
-        this.canvas.height / 2,
-        this.canvas.height * 0.8,
+    // Sync camera to player
+    // angle=0 → facing +X → rotation.y must be -PI/2
+    // angle=PI/2 → facing +Z → rotation.y must be -PI
+    // Formula: rotation.y = -PI/2 - player.angle
+    this.camera.position.set(player.x, 0.5, player.y);
+    this.camera.rotation.y = -Math.PI / 2 - player.angle;
+    this.camera.rotation.x = 0;
+
+    // Move flashlight with player — forward dir = (cos(angle), 0, sin(angle))
+    if (this.playerLight) {
+      const dx = Math.cos(player.angle);
+      const dz = Math.sin(player.angle);
+      this.playerLight.position.set(player.x, 0.5, player.y);
+      this.playerLight.target.position.set(
+        player.x + dx * 8,
+        0.4,
+        player.y + dz * 8,
       );
-
-      gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
-      gradient.addColorStop(1, `rgba(80, 0, 0, ${vignetteOpacity})`);
-
-      this.ctx.fillStyle = gradient;
-      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      this.playerLight.target.updateMatrixWorld();
     }
 
-    // Standard vignette
-    const vignetteIntensity = GameConfig.EFFECTS.VIGNETTE_INTENSITY;
-    const gradient = this.ctx.createRadialGradient(
-      this.canvas.width / 2,
-      this.canvas.height / 2,
-      this.canvas.height * 0.2,
-      this.canvas.width / 2,
-      this.canvas.height / 2,
-      this.canvas.height * 0.7,
-    );
+    this._updateEnemyMeshes(enemies, t);
 
-    gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
-    gradient.addColorStop(1, `rgba(0, 0, 0, ${vignetteIntensity})`);
+    // Flicker torch lights
+    for (const { light, base } of this._wallLights) {
+      light.intensity =
+        base +
+        Math.sin(t * 7 + light.position.x * 17 + light.position.z * 5) * 0.35;
+    }
 
-    this.ctx.fillStyle = gradient;
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    // Main world render
+    this.renderer.render(this.scene, this.camera);
+
+    // Weapon render on top (depth clear preserves z-ordering)
+    this.renderer.autoClear = false;
+    this.renderer.clearDepth();
+    this.renderer.render(this.weaponScene, this.weaponCamera);
+    this.renderer.autoClear = true;
   }
 
   /**
-   * Render weapon
-   * @param {Player} player - Player object
+   * Update weapon model and animate bob / recoil.
+   * @param {Player} player
    */
   renderWeapon(player) {
-    this.weaponCtx.clearRect(
-      0,
-      0,
-      this.weaponCanvas.width,
-      this.weaponCanvas.height,
-    );
-
-    if (!player.currentWeapon) return;
-
     const weapon = player.currentWeapon;
-    const bob = Math.sin(player.headBob) * GameConfig.WEAPON_3D.BOB_INTENSITY;
-    const recoilOffset = player.recoilOffset;
+    if (!weapon) return;
 
-    const weaponX =
-      this.weaponCanvas.width * GameConfig.WEAPON_3D.POSITION_X_RATIO;
-    const weaponY =
-      this.weaponCanvas.height * GameConfig.WEAPON_3D.POSITION_Y_RATIO +
-      bob +
-      recoilOffset;
-
-    // Reload indicator
-    if (weapon.isReloading) {
-      this.weaponCtx.fillStyle = "#ff0";
-      this.weaponCtx.font = "24px monospace";
-      this.weaponCtx.fillText(
-        "RELOADING...",
-        this.weaponCanvas.width / 2 - 80,
-        50,
-      );
+    const ltype = (weapon.name ?? "").toLowerCase();
+    if (ltype !== this._currentWeaponType) {
+      this._buildWeaponModel(weapon.name);
     }
 
-    // Get weapon sprite
-    const weaponType = weapon.name.toLowerCase();
-    const sprite = this.resourceManager.getSprite("weapons", weaponType);
+    const t      = performance.now() / 1000;
+    const bob    = typeof player.headBob      === "number" ? Math.sin(player.headBob) : 0;
+    const recoil = typeof player.recoilOffset === "number" ? player.recoilOffset      : 0;
 
-    if (sprite?.img?.complete) {
-      let scale = GameConfig.WEAPON_3D.SCALE_PISTOL;
-      if (weaponType === "shotgun") scale = GameConfig.WEAPON_3D.SCALE_SHOTGUN;
-      if (weaponType === "rifle") scale = GameConfig.WEAPON_3D.SCALE_RIFLE;
+    const bases = {
+      pistol:  [0.14,  -0.14,  -0.33],
+      shotgun: [0.17,  -0.18,  -0.34],
+      rifle:   [0.19,  -0.155, -0.34],
+    };
+    const [bx, by, bz] = bases[ltype] ?? [0.14, -0.14, -0.33];
 
-      const spriteWidth = sprite.width * scale;
-      const spriteHeight = sprite.height * scale;
+    this.weaponGroup.position.set(
+      bx + Math.cos(t * 3) * bob * 0.006,
+      by + Math.sin(t * 6) * bob * 0.01,
+      bz + recoil * 0.05,
+    );
+    this.weaponGroup.rotation.x = recoil * 0.12;
+    this.weaponGroup.rotation.z = Math.sin(t * 3) * bob * 0.015;
+  }
 
-      this.weaponCtx.save();
-      this.weaponCtx.translate(weaponX, weaponY);
+  /**
+   * Briefly flash the muzzle light on weapon fire.
+   */
+  triggerMuzzleFlash() {
+    this.muzzleFlashLight.intensity = 5.0;
+    setTimeout(() => { this.muzzleFlashLight.intensity = 0; }, 90);
+  }
 
-      // Draw weapon
-      this.weaponCtx.filter = `brightness(${GameConfig.WEAPON_3D.BRIGHTNESS}) contrast(${GameConfig.WEAPON_3D.CONTRAST})`;
-      this.weaponCtx.drawImage(
-        sprite.img,
-        -spriteWidth * 0.5,
-        -spriteHeight * 0.8,
-        spriteWidth,
-        spriteHeight,
-      );
-
-      this.weaponCtx.restore();
-    }
+  _onResize() {
+    const w = window.innerWidth, h = window.innerHeight;
+    this.renderer.setSize(w, h);
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    this.weaponCamera.aspect = w / h;
+    this.weaponCamera.updateProjectionMatrix();
   }
 }
-
-export default Renderer;

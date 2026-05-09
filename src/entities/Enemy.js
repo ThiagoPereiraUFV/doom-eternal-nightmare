@@ -7,7 +7,10 @@
 import { GameConfig } from "../config/GameConfig.js";
 
 export class Enemy {
+  static _nextId = 0;
+
   constructor(type, x, y, config) {
+    this.id = ++Enemy._nextId;
     this.type = type;
     this.x = x;
     this.y = y;

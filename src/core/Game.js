@@ -145,6 +145,7 @@ export class Game {
           audioSystem: this.audioSystem,
           eventManager: this.eventManager,
         });
+        this.renderer.triggerMuzzleFlash();
       }
     });
 
@@ -323,6 +324,9 @@ export class Game {
 
     // Create enemies
     this._spawnEnemies();
+
+    // Build 3D map geometry from tile data
+    this.renderer.buildMap(this.map);
 
     this._updateHUD();
   }
