@@ -54,6 +54,20 @@ export class Renderer {
     // ─── Enemy mesh tracking ──────────────────────────────────────
     this.enemyMeshes = new Map(); // enemy.id -> THREE.Group
 
+    // ─── Death animation tracking ──────────────────────────────────
+    this._dyingEnemies = []; // {mesh, startTime, duration}
+
+    // ─── Blood particle system ─────────────────────────────────────
+    this._bloodParticles = [];  // {mesh, vel, life, maxLife}
+    this._bloodPoolGroup = new THREE.Group();
+    this.scene.add(this._bloodPoolGroup);
+
+    // ─── Shell casing system ───────────────────────────────────────
+    this._shells = []; // {mesh, vel, angVel, life, maxLife, bounced}
+
+    // ─── Explosion effects ─────────────────────────────────────────
+    this._explosionParticles = [];
+
     // ─── Weapon model ─────────────────────────────────────────────
     this.weaponGroup = new THREE.Group();
     this.weaponScene.add(this.weaponGroup);
@@ -67,9 +81,15 @@ export class Renderer {
     this.muzzleFlashLight.position.set(0, 0, -0.5);
     this.weaponScene.add(this.muzzleFlashLight);
 
+    // ─── Plasma muzzle flash (blue) ────────────────────────────────
+    this.plasmaMuzzleLight = new THREE.PointLight(0x00aaff, 0, 5);
+    this.plasmaMuzzleLight.position.set(0, 0, -0.5);
+    this.weaponScene.add(this.plasmaMuzzleLight);
+
     // ─── Setup ────────────────────────────────────────────────────
     this._setupLighting();
     this._buildMaterials();
+    this._initBloodPool();
 
     window.addEventListener("resize", () => this._onResize());
   }
@@ -181,6 +201,336 @@ export class Renderer {
       rubber:   lam(0x0f0f0f),          // grip panels / stippling
       red:      bas(0xcc1100),          // laser / dot
     };
+  }
+
+  _initBloodPool() {
+    // Pre-build blood/shell materials for reuse
+    this._bloodMat = new THREE.MeshBasicMaterial({ color: 0x880000, side: THREE.FrontSide });
+    this._bloodDarkMat = new THREE.MeshBasicMaterial({ color: 0x440000, side: THREE.FrontSide });
+    this._shellMat = new THREE.MeshLambertMaterial({ color: 0xd4a020 });
+    this._shellSpentMat = new THREE.MeshLambertMaterial({ color: 0x8a6010 });
+    this._plasmaSphereMat = new THREE.MeshBasicMaterial({ color: 0x00ccff, transparent: true, opacity: 0.9 });
+    this._explosionMat = new THREE.MeshBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.85 });
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Blood System
+  // ─────────────────────────────────────────────────────────────────
+
+  /**
+   * Spawn blood splatter at world position (called on enemy hit/death).
+   * @param {number} wx - World X
+   * @param {number} wy - World Y (map grid)
+   * @param {number} intensity - 1 = hit, 3 = death
+   */
+  spawnBlood(wx, wy, intensity = 1) {
+    const count = Math.round(8 * intensity + Math.random() * 6 * intensity);
+    for (let i = 0; i < count; i++) {
+      const size = 0.04 + Math.random() * 0.08 * intensity;
+      const geo = Math.random() < 0.5
+        ? new THREE.SphereGeometry(size, 4, 4)
+        : new THREE.BoxGeometry(size, size * 0.4, size);
+      const mat = Math.random() < 0.6 ? this._bloodMat : this._bloodDarkMat;
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(
+        wx + (Math.random() - 0.5) * 0.3,
+        0.45 + Math.random() * 0.3,
+        wy + (Math.random() - 0.5) * 0.3,
+      );
+      const speed = 0.04 + Math.random() * 0.12 * intensity;
+      const hAngle = Math.random() * Math.PI * 2;
+      const vAngle = Math.PI * 0.2 + Math.random() * Math.PI * 0.6;
+      this.scene.add(mesh);
+      this._bloodParticles.push({
+        mesh,
+        vel: new THREE.Vector3(
+          Math.cos(hAngle) * Math.sin(vAngle) * speed,
+          Math.cos(vAngle) * speed * 0.8,
+          Math.sin(hAngle) * Math.sin(vAngle) * speed,
+        ),
+        life: 0,
+        maxLife: 1.5 + Math.random() * 1.5,
+        stuck: false,
+      });
+    }
+
+    // Blood pool on floor
+    this._spawnBloodPool(wx, wy, intensity);
+
+    // Wall splatter: random sprays
+    if (intensity >= 2) {
+      this._spawnWallSplatter(wx, wy, intensity);
+    }
+  }
+
+  _spawnBloodPool(wx, wy, intensity) {
+    const geo = new THREE.CircleGeometry(0.1 + Math.random() * 0.15 * intensity, 8);
+    const pool = new THREE.Mesh(geo, this._bloodDarkMat);
+    pool.rotation.x = -Math.PI / 2;
+    pool.position.set(wx + (Math.random() - 0.5) * 0.4, 0.01, wy + (Math.random() - 0.5) * 0.4);
+    this._bloodPoolGroup.add(pool);
+    // Grow the pool over time
+    pool.userData.targetScale = 0.8 + intensity * 0.6;
+    pool.scale.set(0.1, 0.1, 0.1);
+  }
+
+  _spawnWallSplatter(wx, wy, intensity) {
+    const count = Math.round(4 * intensity);
+    for (let i = 0; i < count; i++) {
+      const geo = new THREE.PlaneGeometry(0.08 + Math.random() * 0.12, 0.06 + Math.random() * 0.1);
+      const splat = new THREE.Mesh(geo, this._bloodMat);
+      // Place on a nearby wall face at random height
+      const side = Math.floor(Math.random() * 4);
+      const offsets = [[0.5, 0, 0], [-0.5, 0, 0], [0, 0, 0.5], [0, 0, -0.5]];
+      const rotations = [[0, Math.PI / 2, 0], [0, -Math.PI / 2, 0], [0, 0, 0], [0, Math.PI, 0]];
+      const [ox, , oz] = offsets[side];
+      const [rx, ry, rz] = rotations[side];
+      splat.position.set(wx + ox, 0.2 + Math.random() * 0.6, wy + oz);
+      splat.rotation.set(rx, ry, rz);
+      this._bloodPoolGroup.add(splat);
+    }
+  }
+
+  _updateBloodParticles(dt) {
+    const gravity = -0.25;
+    const toRemove = [];
+
+    for (let i = 0; i < this._bloodParticles.length; i++) {
+      const p = this._bloodParticles[i];
+      p.life += dt;
+
+      if (p.stuck) {
+        // Blood pools grow
+        if (p.mesh.userData.growPool) {
+          p.mesh.scale.multiplyScalar(1 + dt * 0.5);
+          if (p.mesh.scale.x > p.mesh.userData.maxScale) p.mesh.userData.growPool = false;
+        }
+        // Fade after a while
+        if (p.life > p.maxLife) {
+          toRemove.push(i);
+          this.scene.remove(p.mesh);
+        }
+        continue;
+      }
+
+      p.vel.y += gravity * dt;
+      p.mesh.position.add(p.vel.clone().multiplyScalar(dt * 60));
+
+      if (p.mesh.position.y <= 0.01) {
+        p.mesh.position.y = 0.01;
+        p.mesh.rotation.x = -Math.PI / 2;
+        p.stuck = true;
+        p.life = 0;
+        p.maxLife = 8 + Math.random() * 10;
+        p.mesh.userData.growPool = true;
+        p.mesh.userData.maxScale = 2 + Math.random();
+      }
+    }
+
+    // Remove in reverse order
+    for (let i = toRemove.length - 1; i >= 0; i--) {
+      this._bloodParticles.splice(toRemove[i], 1);
+    }
+
+    // Grow blood pools
+    for (const child of this._bloodPoolGroup.children) {
+      if (child.userData.targetScale && child.scale.x < child.userData.targetScale) {
+        const s = child.scale.x + dt * 0.4;
+        child.scale.set(Math.min(s, child.userData.targetScale), Math.min(s, child.userData.targetScale), 1);
+      }
+    }
+
+    // Limit total blood particles for performance
+    if (this._bloodParticles.length > 200) {
+      const excess = this._bloodParticles.splice(0, this._bloodParticles.length - 200);
+      for (const p of excess) this.scene.remove(p.mesh);
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Shell Casing System
+  // ─────────────────────────────────────────────────────────────────
+
+  /**
+   * Eject a shell casing from the weapon position.
+   * @param {number} px - Player world X
+   * @param {number} py - Player world Y
+   * @param {number} angle - Player facing angle
+   * @param {'pistol'|'rifle'|'shotgun'} shellType
+   */
+  spawnShell(px, py, angle, shellType = "pistol") {
+    const isRifle = shellType === "rifle";
+    const isShotgun = shellType === "shotgun";
+    const r = isShotgun ? 0.018 : 0.011;
+    const h = isShotgun ? 0.07 : isRifle ? 0.055 : 0.04;
+    const geo = new THREE.CylinderGeometry(r, r * 0.85, h, 8);
+    const mat = Math.random() < 0.5 ? this._shellMat : this._shellSpentMat;
+    const mesh = new THREE.Mesh(geo, mat);
+
+    // Spawn near camera right side
+    const ejAngle = angle + Math.PI / 2;
+    mesh.position.set(px + Math.cos(ejAngle) * 0.2, 0.5, py + Math.sin(ejAngle) * 0.2);
+
+    // Random eject velocity (right + up + slightly forward)
+    const speed = 0.08 + Math.random() * 0.06;
+    this.scene.add(mesh);
+    this._shells.push({
+      mesh,
+      vel: new THREE.Vector3(
+        Math.cos(ejAngle) * speed + (Math.random() - 0.5) * 0.03,
+        0.06 + Math.random() * 0.04,
+        Math.sin(ejAngle) * speed + (Math.random() - 0.5) * 0.03,
+      ),
+      angVel: new THREE.Vector3(
+        (Math.random() - 0.5) * 15,
+        (Math.random() - 0.5) * 8,
+        (Math.random() - 0.5) * 15,
+      ),
+      life: 0,
+      maxLife: 4 + Math.random() * 3,
+      bounces: 0,
+      bounced: false,
+    });
+  }
+
+  _updateShells(dt) {
+    const gravity = -0.4;
+    const toRemove = [];
+
+    for (let i = 0; i < this._shells.length; i++) {
+      const s = this._shells[i];
+      s.life += dt;
+
+      if (s.bounced && s.vel.length() < 0.005) {
+        if (s.life > s.maxLife) {
+          toRemove.push(i);
+          this.scene.remove(s.mesh);
+        }
+        continue;
+      }
+
+      s.vel.y += gravity * dt;
+      s.mesh.position.add(s.vel.clone().multiplyScalar(dt * 60));
+      s.mesh.rotation.x += s.angVel.x * dt;
+      s.mesh.rotation.y += s.angVel.y * dt;
+      s.mesh.rotation.z += s.angVel.z * dt;
+
+      if (s.mesh.position.y <= 0.015) {
+        s.mesh.position.y = 0.015;
+        if (s.bounces < 3) {
+          s.vel.y = Math.abs(s.vel.y) * (0.3 + Math.random() * 0.25);
+          s.vel.x *= 0.6;
+          s.vel.z *= 0.6;
+          s.angVel.multiplyScalar(0.5);
+          s.bounces++;
+          s.bounced = true;
+        } else {
+          s.vel.set(0, 0, 0);
+          s.bounced = true;
+        }
+      }
+    }
+
+    for (let i = toRemove.length - 1; i >= 0; i--) {
+      this._shells.splice(toRemove[i], 1);
+    }
+
+    // Limit shells for performance
+    if (this._shells.length > 60) {
+      const excess = this._shells.splice(0, this._shells.length - 60);
+      for (const s of excess) this.scene.remove(s.mesh);
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Explosion Effect
+  // ─────────────────────────────────────────────────────────────────
+
+  spawnExplosion(wx, wy) {
+    const count = 20;
+    for (let i = 0; i < count; i++) {
+      const size = 0.08 + Math.random() * 0.18;
+      const geo = new THREE.SphereGeometry(size, 4, 4);
+      const mat = new THREE.MeshBasicMaterial({
+        color: i < count / 2 ? 0xff6600 : 0xffcc00,
+        transparent: true, opacity: 0.9,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(wx + (Math.random() - 0.5) * 0.5, 0.3 + Math.random() * 0.6, wy + (Math.random() - 0.5) * 0.5);
+      const speed = 0.08 + Math.random() * 0.15;
+      const ang = Math.random() * Math.PI * 2;
+      this.scene.add(mesh);
+      this._explosionParticles.push({
+        mesh, mat,
+        vel: new THREE.Vector3(Math.cos(ang) * speed, 0.05 + Math.random() * 0.1, Math.sin(ang) * speed),
+        life: 0, maxLife: 0.6 + Math.random() * 0.3,
+      });
+    }
+    // Large flash point light
+    const flash = new THREE.PointLight(0xff8800, 8, 12);
+    flash.position.set(wx, 0.5, wy);
+    this.scene.add(flash);
+    setTimeout(() => this.scene.remove(flash), 200);
+  }
+
+  _updateExplosions(dt) {
+    const toRemove = [];
+    for (let i = 0; i < this._explosionParticles.length; i++) {
+      const p = this._explosionParticles[i];
+      p.life += dt;
+      const ratio = p.life / p.maxLife;
+      p.vel.y -= 0.15 * dt;
+      p.mesh.position.add(p.vel.clone().multiplyScalar(dt * 60));
+      p.mat.opacity = Math.max(0, 0.9 - ratio * 0.9);
+      if (p.life >= p.maxLife) {
+        toRemove.push(i);
+        this.scene.remove(p.mesh);
+      }
+    }
+    for (let i = toRemove.length - 1; i >= 0; i--) {
+      this._explosionParticles.splice(toRemove[i], 1);
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Death animations
+  // ─────────────────────────────────────────────────────────────────
+
+  /**
+   * Start a death-fall animation for an enemy mesh.
+   * @param {THREE.Group} mesh
+   */
+  startDeathAnimation(mesh) {
+    if (!mesh) return;
+    this._dyingEnemies.push({
+      mesh,
+      startTime: performance.now() / 1000,
+      duration: 1.2,
+      startY: mesh.position.y,
+      rotDir: Math.random() < 0.5 ? 1 : -1,
+      rotAxis: Math.random() < 0.5 ? 'x' : 'z',
+    });
+  }
+
+  _updateDeathAnimations(t) {
+    const toRemove = [];
+    for (let i = 0; i < this._dyingEnemies.length; i++) {
+      const d = this._dyingEnemies[i];
+      const elapsed = t - d.startTime;
+      const progress = Math.min(elapsed / d.duration, 1.0);
+      const ease = progress * progress;
+
+      d.mesh.position.y = d.startY - ease * 0.55;
+      d.mesh.rotation[d.rotAxis] = d.rotDir * ease * (Math.PI / 2);
+      // Flatten to ground
+      if (progress >= 1.0) {
+        toRemove.push(i);
+        this.scene.remove(d.mesh);
+      }
+    }
+    for (let i = toRemove.length - 1; i >= 0; i--) {
+      this._dyingEnemies.splice(toRemove[i], 1);
+    }
   }
 
   _wallTex(type) {
@@ -373,89 +723,227 @@ export class Renderer {
       g.add(m);
       return m;
     };
-    const sphere = (r, mat, px, py, pz, segs = 8) => {
+    const sphere = (r, mat, px, py, pz, segs = 10) => {
       const m = new THREE.Mesh(new THREE.SphereGeometry(r, segs, segs), mat);
       m.position.set(px, py, pz);
       m.castShadow = true;
       g.add(m);
       return m;
     };
-    const cone = (r, h, mat, px, py, pz, rz = 0) => {
-      const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 6), mat);
+    const cone = (r, h, mat, px, py, pz, rx = 0, ry = 0, rz = 0) => {
+      const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 8), mat);
       m.position.set(px, py, pz);
-      m.rotation.z = rz;
+      m.rotation.set(rx, ry, rz);
+      g.add(m);
+      return m;
+    };
+    const cyl = (rt, rb, h, mat, px, py, pz, rx = 0, rz = 0) => {
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, 8), mat);
+      m.position.set(px, py, pz);
+      m.rotation.set(rx, 0, rz);
       g.add(m);
       return m;
     };
 
     if (enemy.type === "ghost") {
-      const body = sphere(0.24, bM, 0, 0.62, 0, 10);
-      sphere(0.06, eM, -0.1, 0.66, 0.2);
-      sphere(0.06, eM,  0.1, 0.66, 0.2);
-      const wisps = Array.from({ length: 3 }, (_, i) =>
-        sphere(0.1, bM,
-          Math.cos(i * 2.1) * 0.28, 0.36, Math.sin(i * 2.1) * 0.28, 6),
-      );
+      // Detailed ghost: ethereal form with trailing wisp tails
+      const body = sphere(0.26, bM, 0, 0.65, 0, 12);
+      // Face features
+      sphere(0.07, eM, -0.1, 0.70, 0.22);
+      sphere(0.07, eM,  0.1, 0.70, 0.22);
+      sphere(0.04, eM, -0.05, 0.63, 0.24);
+      sphere(0.04, eM,  0.05, 0.63, 0.24);
+      sphere(0.03, eM,  0.00, 0.63, 0.25); // mouth
+      // Trailing body segments
+      const seg1 = sphere(0.2, bM, 0, 0.42, 0, 10);
+      const seg2 = sphere(0.14, bM, 0, 0.24, 0, 8);
+      const seg3 = sphere(0.08, bM, 0, 0.11, 0, 6);
+      // Arm wisps
+      const wL = sphere(0.1, bM,  -0.34, 0.55, 0.05, 7);
+      const wR = sphere(0.1, bM,   0.34, 0.55, 0.05, 7);
+      const wL2 = sphere(0.07, bM, -0.44, 0.50, 0.08, 6);
+      const wR2 = sphere(0.07, bM,  0.44, 0.50, 0.08, 6);
       g.userData.animate = (t) => {
-        body.position.y = 0.62 + Math.sin(t * 1.8) * 0.1;
-        wisps.forEach((w, i) => {
-          w.position.x = Math.cos(t + i * 2.1) * 0.32;
-          w.position.z = Math.sin(t + i * 2.1) * 0.32;
-          w.position.y = 0.34 + Math.sin(t * 2.5 + i) * 0.08;
-        });
+        body.position.y = 0.65 + Math.sin(t * 1.8) * 0.1;
+        seg1.position.y = 0.42 + Math.sin(t * 1.8 + 0.3) * 0.08;
+        seg2.position.y = 0.24 + Math.sin(t * 1.8 + 0.6) * 0.06;
+        seg3.position.y = 0.11 + Math.sin(t * 1.8 + 0.9) * 0.04;
+        wL.position.set( -0.34 + Math.sin(t * 2.2) * 0.08, 0.55 + Math.cos(t * 2.2) * 0.06, 0.05);
+        wR.position.set(  0.34 + Math.sin(t * 2.2 + 1) * 0.08, 0.55 + Math.cos(t * 2.2 + 1) * 0.06, 0.05);
+        wL2.position.set(-0.44 + Math.sin(t * 2.6) * 0.1, 0.50 + Math.cos(t * 2.6) * 0.08, 0.08);
+        wR2.position.set( 0.44 + Math.sin(t * 2.6 + 1) * 0.1, 0.50 + Math.cos(t * 2.6 + 1) * 0.08, 0.08);
+        // Pulsing opacity
+        if (bM.transparent) bM.opacity = 0.5 + Math.sin(t * 2.2) * 0.15;
       };
+
     } else if (enemy.type === "brute") {
-      box(0.66, 0.74, 0.44, bM,     0,    0.49, 0);
-      box(0.5,  0.44, 0.44, hM,     0,    0.96, 0);
-      cone(0.08, 0.3, hornM,        -0.2, 1.26, 0, -0.3);
-      cone(0.08, 0.3, hornM,         0.2, 1.26, 0,  0.3);
-      const aL = box(0.23, 0.6, 0.23, bM, -0.48, 0.48, 0, 0, 0,  0.3);
-      const aR = box(0.23, 0.6, 0.23, bM,  0.48, 0.48, 0, 0, 0, -0.3);
-      const lL = box(0.26, 0.4, 0.26, bM, -0.18, 0.1, 0);
-      const lR = box(0.26, 0.4, 0.26, bM,  0.18, 0.1, 0);
-      sphere(0.09, eM, -0.15, 0.97, 0.23);
-      sphere(0.09, eM,  0.15, 0.97, 0.23);
+      // Massive detailed brute: huge torso, thick limbs, hunched
+      // Torso - multi-part for muscle definition
+      box(0.70, 0.45, 0.48, bM,   0,     0.68, 0);   // lower torso
+      box(0.64, 0.42, 0.44, bM,   0,     1.04, 0);   // upper torso
+      box(0.58, 0.22, 0.40, hM,   0,     1.36, 0);   // neck/trap area
+      // Pecs
+      box(0.30, 0.16, 0.18, bM,  -0.2,  1.08, -0.22);
+      box(0.30, 0.16, 0.18, bM,   0.2,  1.08, -0.22);
+      // Head - massive and brutish
+      sphere(0.26, hM,  0, 1.68, 0, 12);
+      sphere(0.18, hM,  0, 1.55, 0.18, 10); // jaw protrusion
+      // Eyes deep set
+      sphere(0.07, eM, -0.12, 1.72, 0.20, 8);
+      sphere(0.07, eM,  0.12, 1.72, 0.20, 8);
+      // Brow ridge
+      box(0.38, 0.06, 0.08, hornM, 0, 1.80, 0.16);
+      // Horns - curved with multiple segments
+      cone(0.06, 0.28, hornM, -0.22, 1.92, 0.04,  0, 0, -0.35);
+      cone(0.04, 0.14, hornM, -0.34, 2.08, 0.02,  0, 0, -0.55);
+      cone(0.06, 0.28, hornM,  0.22, 1.92, 0.04,  0, 0,  0.35);
+      cone(0.04, 0.14, hornM,  0.34, 2.08, 0.02,  0, 0,  0.55);
+      // Arms - massive, angled outward
+      const aUpperL = box(0.28, 0.55, 0.28, bM, -0.56, 0.96, 0, 0, 0,  0.28);
+      const aForeL  = box(0.24, 0.48, 0.24, bM, -0.70, 0.52, 0, 0, 0,  0.15);
+      const handL   = sphere(0.16, bM, -0.78, 0.24, 0, 7);
+      const aUpperR = box(0.28, 0.55, 0.28, bM,  0.56, 0.96, 0, 0, 0, -0.28);
+      const aForeR  = box(0.24, 0.48, 0.24, bM,  0.70, 0.52, 0, 0, 0, -0.15);
+      const handR   = sphere(0.16, bM,  0.78, 0.24, 0, 7);
+      // Legs - thick, short
+      const lL = box(0.30, 0.52, 0.30, bM, -0.24, 0.26, 0);
+      const lR = box(0.30, 0.52, 0.30, bM,  0.24, 0.26, 0);
+      // Feet
+      box(0.30, 0.10, 0.38, bM, -0.24, 0.02, -0.06);
+      box(0.30, 0.10, 0.38, bM,  0.24, 0.02, -0.06);
+      // Spinal ridge bumps
+      for (let i = 0; i < 5; i++) {
+        sphere(0.05, hornM, 0, 0.70 + i * 0.14, -0.24, 6);
+      }
       g.userData.animate = (t) => {
-        lL.rotation.x = Math.sin(t * 3.5) * 0.4;
-        lR.rotation.x = Math.sin(t * 3.5 + Math.PI) * 0.4;
-        aL.rotation.x = Math.sin(t * 3.5 + Math.PI) * 0.25;
-        aR.rotation.x = Math.sin(t * 3.5) * 0.25;
+        lL.rotation.x = Math.sin(t * 2.8) * 0.38;
+        lR.rotation.x = Math.sin(t * 2.8 + Math.PI) * 0.38;
+        aUpperL.rotation.x = Math.sin(t * 2.8 + Math.PI) * 0.22;
+        aUpperR.rotation.x = Math.sin(t * 2.8) * 0.22;
+        aForeL.rotation.x = Math.sin(t * 2.8) * 0.18;
+        aForeR.rotation.x = Math.sin(t * 2.8 + Math.PI) * 0.18;
+        handL.position.y = 0.24 + Math.sin(t * 2.8 + 0.5) * 0.04;
+        handR.position.y = 0.24 + Math.sin(t * 2.8 + Math.PI + 0.5) * 0.04;
       };
+
     } else if (enemy.type === "zombie") {
-      box(0.32, 0.64, 0.22, bM,  0,    0.46, 0);
-      box(0.3,  0.33, 0.3,  hM,  0,    0.87, 0);
-      const aL = box(0.14, 0.54, 0.14, bM, -0.26, 0.58,  0.12, -0.75, 0, 0);
-      const aR = box(0.14, 0.54, 0.14, bM,  0.26, 0.58,  0.12, -0.75, 0, 0);
-      const lL = box(0.15, 0.45, 0.15, bM, -0.1,  0.12, 0);
-      const lR = box(0.15, 0.45, 0.15, bM,  0.1,  0.12, 0);
-      sphere(0.058, eM, -0.1, 0.88, 0.17);
-      sphere(0.058, eM,  0.1, 0.88, 0.17);
+      // Detailed zombie: ragged clothes, visible wounds, lopsided walk
+      // Torso: tattered clothing layered look
+      box(0.36, 0.62, 0.24, bM,   0,   0.50, 0);    // main body
+      box(0.30, 0.20, 0.18, hM,   0,   0.82, 0.02); // shirt collar area
+      box(0.38, 0.12, 0.26, bM,   0,   0.32, 0);    // belt/waist
+      // Wound detail (darker patch)
+      box(0.14, 0.10, 0.04, hornM, -0.08, 0.58, -0.12);
+      // Head with rotted features
+      sphere(0.22, hM, 0, 0.95, 0, 10);
+      sphere(0.15, bM, 0, 0.85, 0.14, 8);  // sunken cheek
+      // Jaw detail
+      box(0.18, 0.07, 0.14, hornM, 0, 0.78, 0.16);
+      // Eyes sunken
+      sphere(0.048, eM, -0.09, 0.98, 0.18, 7);
+      sphere(0.048, eM,  0.09, 0.98, 0.18, 7);
+      // Exposed skull patches
+      sphere(0.05, hornM, -0.16, 1.04, -0.06, 5);
+      sphere(0.04, hornM,  0.18, 1.06, -0.04, 5);
+      // Arms: one outstretched, one hanging
+      const aUpperL = box(0.14, 0.52, 0.14, bM, -0.28, 0.62, 0.14, -0.9, 0, 0);
+      const aForeL  = box(0.12, 0.45, 0.12, bM, -0.28, 0.98, 0.38, -0.95, 0, 0.05);
+      const handL   = sphere(0.09, bM, -0.28, 1.20, 0.52, 6);
+      const aUpperR = box(0.14, 0.52, 0.14, bM,  0.28, 0.58, 0.04, 0.12, 0, 0.05);
+      const aForeR  = box(0.12, 0.45, 0.12, bM,  0.28, 0.18, 0.04, 0.06, 0, 0);
+      const handR   = sphere(0.09, bM, 0.28, -0.06, 0.04, 6);
+      // Legs: lopsided
+      const lL = box(0.16, 0.50, 0.16, bM, -0.12, 0.25, 0);
+      const lR = box(0.16, 0.50, 0.16, bM,  0.12, 0.25, 0);
+      // Feet with visible bones
+      box(0.14, 0.06, 0.22, bM, -0.12, 0.01, -0.04);
+      box(0.14, 0.06, 0.22, bM,  0.12, 0.01, -0.04);
+      sphere(0.045, hornM, -0.12, 0.06, -0.14, 5);  // toe bone
+      sphere(0.045, hornM,  0.12, 0.06, -0.14, 5);
       g.userData.animate = (t) => {
-        lL.rotation.x = Math.sin(t * 3.5) * 0.35;
-        lR.rotation.x = Math.sin(t * 3.5 + Math.PI) * 0.35;
-        aL.rotation.x = -0.75 + Math.sin(t * 3.5) * 0.2;
-        aR.rotation.x = -0.75 + Math.sin(t * 3.5 + Math.PI) * 0.2;
+        lL.rotation.x = Math.sin(t * 2.8) * 0.32;
+        lR.rotation.x = Math.sin(t * 2.8 + Math.PI) * 0.32;
+        // Lopsided gait: zombie lurches
+        aUpperL.rotation.x = -0.9 + Math.sin(t * 2.8) * 0.25;
+        aForeL.rotation.x  = -0.95 + Math.sin(t * 2.8 + 0.4) * 0.2;
+        aUpperR.rotation.x = 0.12 + Math.sin(t * 2.8 + Math.PI) * 0.1;
+        aForeR.rotation.x  = 0.06 + Math.sin(t * 2.8 + Math.PI + 0.3) * 0.08;
       };
+
     } else {
-      // Demon (default)
-      box(0.44, 0.64, 0.34, bM,  0,    0.46, 0);
-      box(0.4,  0.36, 0.36, hM,  0,    0.84, 0);
-      cone(0.056, 0.2, hornM, -0.14, 1.03, 0, -0.35);
-      cone(0.056, 0.2, hornM,  0.14, 1.03, 0,  0.35);
-      const aL = box(0.17, 0.52, 0.17, bM, -0.33, 0.46, 0);
-      const aR = box(0.17, 0.52, 0.17, bM,  0.33, 0.46, 0);
-      const lL = box(0.17, 0.44, 0.17, bM, -0.14, 0.12, 0);
-      const lR = box(0.17, 0.44, 0.17, bM,  0.14, 0.12, 0);
-      sphere(0.068, eM, -0.12, 0.84, 0.2);
-      sphere(0.068, eM,  0.12, 0.84, 0.2);
+      // ── Demon (default) ── More detailed: muscular, clawed, menacing
+      // Abdomen
+      box(0.42, 0.30, 0.32, bM,  0, 0.32, 0);
+      // Main torso - wider at chest
+      box(0.48, 0.42, 0.36, bM,  0, 0.60, 0);
+      // Chest muscle definition
+      box(0.20, 0.18, 0.14, bM, -0.16, 0.66, -0.18);
+      box(0.20, 0.18, 0.14, bM,  0.16, 0.66, -0.18);
+      // Shoulders - wide and spiked
+      sphere(0.16, bM, -0.36, 0.84, 0, 8);
+      sphere(0.16, bM,  0.36, 0.84, 0, 8);
+      // Shoulder spikes
+      cone(0.05, 0.18, hornM, -0.40, 0.98, 0, 0, 0, -0.4);
+      cone(0.05, 0.18, hornM,  0.40, 0.98, 0, 0, 0,  0.4);
+      // Head - angular and demonic
+      sphere(0.22, hM, 0, 1.06, 0, 10);
+      box(0.26, 0.10, 0.22, hM, 0, 0.92, 0.10); // heavy jaw
+      // Snout
+      box(0.16, 0.10, 0.14, hM, 0, 0.94, 0.20);
+      // Eyes - glowing with orbital ridge
+      box(0.20, 0.04, 0.06, hornM, 0, 1.12, 0.18); // brow ridge
+      sphere(0.055, eM, -0.09, 1.08, 0.21, 8);
+      sphere(0.055, eM,  0.09, 1.08, 0.21, 8);
+      // Horns - branched
+      cone(0.05, 0.22, hornM, -0.14, 1.22, 0, 0, 0, -0.4);
+      cone(0.04, 0.12, hornM, -0.22, 1.36, 0, 0, 0, -0.6);
+      cone(0.05, 0.22, hornM,  0.14, 1.22, 0, 0, 0,  0.4);
+      cone(0.04, 0.12, hornM,  0.22, 1.36, 0, 0, 0,  0.6);
+      // Spine ridge
+      for (let i = 0; i < 4; i++) {
+        cone(0.04, 0.12, hornM, 0, 0.40 + i * 0.16, -0.18, -0.4);
+      }
+      // Arms with forearm + hand
+      const aUpperL = box(0.18, 0.44, 0.18, bM, -0.36, 0.64, 0);
+      const aForeL  = box(0.16, 0.38, 0.16, bM, -0.36, 0.28, 0);
+      const clawL1  = box(0.04, 0.14, 0.04, hornM, -0.30, 0.06, -0.06, -0.3);
+      const clawL2  = box(0.04, 0.14, 0.04, hornM, -0.36, 0.05, -0.08, -0.3);
+      const clawL3  = box(0.04, 0.14, 0.04, hornM, -0.42, 0.06, -0.06, -0.3);
+      const aUpperR = box(0.18, 0.44, 0.18, bM,  0.36, 0.64, 0);
+      const aForeR  = box(0.16, 0.38, 0.16, bM,  0.36, 0.28, 0);
+      const clawR1  = box(0.04, 0.14, 0.04, hornM,  0.30, 0.06, -0.06, -0.3);
+      const clawR2  = box(0.04, 0.14, 0.04, hornM,  0.36, 0.05, -0.08, -0.3);
+      const clawR3  = box(0.04, 0.14, 0.04, hornM,  0.42, 0.06, -0.06, -0.3);
+      // Legs with digitigrade stance
+      const lL = box(0.20, 0.44, 0.20, bM, -0.18, 0.28, 0.04);
+      const lR = box(0.20, 0.44, 0.20, bM,  0.18, 0.28, 0.04);
+      // Lower legs angled back
+      const llL = box(0.16, 0.30, 0.16, bM, -0.18, 0.06, 0.10, 0.5);
+      const llR = box(0.16, 0.30, 0.16, bM,  0.18, 0.06, 0.10, 0.5);
+      // Feet/claws
+      box(0.18, 0.05, 0.28, bM, -0.18, -0.04, 0.04);
+      box(0.18, 0.05, 0.28, bM,  0.18, -0.04, 0.04);
       g.userData.animate = (t) => {
         lL.rotation.x = Math.sin(t * 4.5) * 0.44;
         lR.rotation.x = Math.sin(t * 4.5 + Math.PI) * 0.44;
-        aL.rotation.x = Math.sin(t * 4.5 + Math.PI) * 0.3;
-        aR.rotation.x = Math.sin(t * 4.5) * 0.3;
+        llL.rotation.x = 0.5 + Math.sin(t * 4.5) * 0.22;
+        llR.rotation.x = 0.5 + Math.sin(t * 4.5 + Math.PI) * 0.22;
+        aUpperL.rotation.x = Math.sin(t * 4.5 + Math.PI) * 0.32;
+        aUpperR.rotation.x = Math.sin(t * 4.5) * 0.32;
+        aForeL.rotation.x  = Math.sin(t * 4.5 + 0.5) * 0.2;
+        aForeR.rotation.x  = Math.sin(t * 4.5 + Math.PI + 0.5) * 0.2;
+        // Claw rattle
+        const clawSwing = Math.sin(t * 9) * 0.08;
+        clawL1.rotation.x = -0.3 + clawSwing;
+        clawL2.rotation.x = -0.3 + clawSwing * 0.8;
+        clawL3.rotation.x = -0.3 + clawSwing * 1.2;
+        clawR1.rotation.x = -0.3 - clawSwing;
+        clawR2.rotation.x = -0.3 - clawSwing * 0.8;
+        clawR3.rotation.x = -0.3 - clawSwing * 1.2;
       };
     }
 
+    g.userData.hitFlashTimer = 0;
     return g;
   }
 
@@ -597,6 +1085,177 @@ export class Renderer {
 
       this.weaponGroup.position.set(0.19, -0.155, -0.34);
       this.weaponGroup.rotation.y = -0.09;
+
+    // ─── SMG — MP5-style compact submachine gun ───────────────────
+    } else if (ltype === "smg") {
+      // Barrel — short, slightly threaded end
+      addCyl(0.014, 0.014, 0.220, m.bright, 0,  0.006, -0.220, Math.PI / 2);
+      addCyl(0.018, 0.018, 0.022, m.metal,  0,  0.006, -0.332, Math.PI / 2); // end cap
+      // Upper receiver
+      addBox(0.058, 0.058, 0.230, m.dark,   0,  0.012,  0.000);
+      addBox(0.062, 0.010, 0.230, m.metal,  0,  0.044,  0.000); // top rail
+      // Charging handle
+      addBox(0.016, 0.016, 0.020, m.metal,  0,  0.052,  0.055);
+      // Front sight tower
+      addBox(0.010, 0.032, 0.012, m.metal,  0,  0.044, -0.210);
+      addBox(0.004, 0.010, 0.004, m.steel,  0,  0.060, -0.210);
+      // Rear diopter sight
+      addBox(0.022, 0.014, 0.010, m.metal,  0,  0.044,  0.090);
+      // Lower receiver
+      addBox(0.056, 0.044, 0.200, m.dark,   0, -0.020,  0.010);
+      // Trigger group
+      addBox(0.052, 0.008, 0.070, m.metal,  0, -0.050,  0.042);
+      addBox(0.010, 0.022, 0.010, m.bright, 0, -0.044,  0.034);
+      // Handguard — polymer ribbed
+      addBox(0.048, 0.048, 0.140, m.dark,   0, -0.008, -0.140);
+      addBox(0.050, 0.010, 0.140, m.metal,  0,  0.028, -0.140); // rib top
+      // Magazine — box mag, forward-tilted
+      addBox(0.044, 0.130, 0.058, m.dark,   0, -0.074, -0.044, -0.08);
+      addBox(0.046, 0.008, 0.050, m.metal,  0, -0.136, -0.044, -0.08);
+      // Stock — folding polymer
+      addBox(0.040, 0.040, 0.180, m.dark,   0, -0.005,  0.170);
+      addBox(0.042, 0.038, 0.060, m.rubber, 0, -0.005,  0.270);
+      // Pistol grip
+      addBox(0.044, 0.095, 0.066, m.rubber, 0, -0.072,  0.068,  0.18);
+      addBox(0.046, 0.008, 0.058, m.metal,  0, -0.120,  0.064,  0.18);
+
+      this.weaponGroup.position.set(0.13, -0.14, -0.30);
+      this.weaponGroup.rotation.y = -0.08;
+
+    // ─── SNIPER — Bolt-action precision rifle (Remington 700 style) ───
+    } else if (ltype === "sniper") {
+      // Long heavy barrel with fluted profile
+      addCyl(0.018, 0.015, 0.720, m.bright, 0,  0.014, -0.520, Math.PI / 2);
+      addCyl(0.024, 0.020, 0.080, m.bright, 0,  0.014, -0.180, Math.PI / 2); // barrel step near receiver
+      // Muzzle brake — slotted
+      addCyl(0.026, 0.026, 0.050, m.metal,  0,  0.014, -0.876, Math.PI / 2);
+      addBox(0.006, 0.036, 0.050, m.dark,   0,  0.014, -0.876); // slot
+      // Barrel flutes (visual)
+      for (let fi = 0; fi < 5; fi++) {
+        addBox(0.006, 0.022, 0.560, m.metal, 0, 0.014 + Math.sin(fi * 1.26) * 0.012, -0.460);
+      }
+      // Receiver — large action body
+      addBox(0.078, 0.082, 0.240, m.dark,   0,  0.016,  0.010);
+      addBox(0.082, 0.012, 0.240, m.metal,  0,  0.064,  0.010); // flat top rail
+      // Scope base rings
+      addBox(0.090, 0.018, 0.036, m.metal,  0,  0.074, -0.050);
+      addBox(0.090, 0.018, 0.036, m.metal,  0,  0.074,  0.060);
+      // Scope body — large magnification scope
+      addCyl(0.030, 0.030, 0.310, m.dark,   0,  0.100,  0.005, Math.PI / 2);
+      addCyl(0.024, 0.024, 0.120, m.dark,   0,  0.100, -0.190, Math.PI / 2); // objective bell
+      addCyl(0.034, 0.034, 0.080, m.dark,   0,  0.100, -0.240, Math.PI / 2); // obj bell flare
+      addCyl(0.024, 0.024, 0.080, m.dark,   0,  0.100,  0.200, Math.PI / 2); // eyepiece
+      addCyl(0.028, 0.028, 0.036, m.dark,   0,  0.100,  0.245, Math.PI / 2); // eyepiece flare
+      // Turrets on scope
+      addCyl(0.012, 0.012, 0.032, m.metal,  0,  0.130,  0.002, 0);          // elevation
+      addCyl(0.012, 0.012, 0.032, m.metal,  0,  0.100,  0.002, 0, Math.PI / 2); // windage
+      // Bolt handle — round knob
+      addBox(0.010, 0.062, 0.010, m.metal,  0.044, 0.048,  0.030);
+      addCyl(0.016, 0.016, 0.020, m.metal,  0.044, 0.014,  0.030);
+      // Trigger guard
+      addBox(0.062, 0.008, 0.090, m.metal,  0, -0.050,  0.060);
+      addBox(0.062, 0.026, 0.008, m.metal,  0, -0.040,  0.022);
+      // Trigger
+      addBox(0.008, 0.026, 0.010, m.bright, 0, -0.046,  0.054);
+      // Stock — walnut classic stock
+      addBox(0.068, 0.072, 0.340, m.wood,   0, -0.010,  0.250, -0.04);
+      // Pistol grip area of stock
+      addBox(0.060, 0.100, 0.100, m.wood,   0, -0.066,  0.092,  0.14);
+      // Monte Carlo comb
+      addBox(0.066, 0.040, 0.180, m.wood,   0,  0.024,  0.310, -0.03);
+      // Recoil pad
+      addBox(0.070, 0.082, 0.018, m.rubber, 0, -0.010,  0.424, -0.04);
+      // Forend / handstop
+      addBox(0.058, 0.058, 0.220, m.wood,   0, -0.008, -0.260);
+      // Swivel studs
+      addBox(0.010, 0.020, 0.010, m.metal,  0, -0.038, -0.120);
+      addBox(0.010, 0.020, 0.010, m.metal,  0, -0.040,  0.180);
+      // Front sight (flip-up BUIS)
+      addBox(0.020, 0.022, 0.010, m.metal,  0,  0.080, -0.840);
+
+      this.weaponGroup.position.set(0.22, -0.16, -0.38);
+      this.weaponGroup.rotation.y = -0.09;
+
+    // ─── GRENADE LAUNCHER — M79 thumper style ────────────────────
+    } else if (ltype === "grenade_launcher") {
+      // Barrel — wide bore, break-action
+      addCyl(0.040, 0.038, 0.480, m.bright, 0,  0.020, -0.310, Math.PI / 2);
+      // Barrel rib
+      addBox(0.010, 0.008, 0.480, m.steel,  0,  0.062, -0.310);
+      // Muzzle flare (wide open bore)
+      addCyl(0.046, 0.040, 0.020, m.bright, 0,  0.020, -0.550, Math.PI / 2);
+      // Receiver / action body
+      addBox(0.100, 0.100, 0.200, m.dark,   0,  0.020,  0.042);
+      // Hinge pin and barrel latch
+      addCyl(0.010, 0.010, 0.106, m.metal,  0,  0.020, -0.062, 0, Math.PI / 2);
+      addBox(0.040, 0.024, 0.024, m.metal,  0,  0.066, -0.040);
+      // Sight ramp
+      addBox(0.020, 0.060, 0.010, m.metal,  0,  0.082, -0.280);
+      addBox(0.006, 0.014, 0.005, m.steel,  0,  0.098, -0.280);
+      // Trigger guard
+      addBox(0.068, 0.008, 0.090, m.metal,  0, -0.044,  0.052);
+      addBox(0.068, 0.026, 0.008, m.metal,  0, -0.034,  0.018);
+      // Trigger
+      addBox(0.010, 0.030, 0.010, m.bright, 0, -0.040,  0.044);
+      // Stock — short, pistol-grip
+      addBox(0.078, 0.084, 0.290, m.wood,   0,  0.014,  0.242, -0.06);
+      addBox(0.080, 0.084, 0.018, m.rubber, 0,  0.014,  0.397, -0.06);
+      // Pistol grip — large for single shot control
+      addBox(0.058, 0.120, 0.086, m.rubber, 0, -0.076,  0.078,  0.24);
+      addBox(0.060, 0.010, 0.078, m.metal,  0, -0.138,  0.076,  0.24);
+      // Forend
+      addBox(0.070, 0.080, 0.160, m.wood,   0,  0.020, -0.210);
+      // Extra: grenade shell visible in chamber (partially)
+      addCyl(0.038, 0.038, 0.060, new THREE.MeshLambertMaterial({ color: 0x556633 }),
+             0, 0.020, -0.040, Math.PI / 2);
+
+      this.weaponGroup.position.set(0.18, -0.18, -0.36);
+      this.weaponGroup.rotation.y = -0.09;
+
+    // ─── PLASMA GUN — Sci-fi energy weapon ───────────────────────
+    } else if (ltype === "plasma") {
+      // Main body — sleek futuristic housing
+      addBox(0.090, 0.080, 0.380, m.dark,   0,  0.004,  0.000);
+      // Side panels — energy cell indicators
+      addBox(0.010, 0.068, 0.280, new THREE.MeshLambertMaterial({ color: 0x001133 }),
+             -0.050, 0.004, -0.040);
+      addBox(0.010, 0.068, 0.280, new THREE.MeshLambertMaterial({ color: 0x001133 }),
+              0.050, 0.004, -0.040);
+      // Plasma emitter barrel — glowing coil
+      addCyl(0.030, 0.026, 0.200, m.dark,   0,  0.004, -0.290, Math.PI / 2);
+      addCyl(0.034, 0.034, 0.020, m.dark,   0,  0.004, -0.392, Math.PI / 2); // emitter lip
+      // Plasma coil rings (glowing blue)
+      const plasmaRingMat = new THREE.MeshBasicMaterial({ color: 0x00aaff });
+      for (let ri = 0; ri < 4; ri++) {
+        addCyl(0.036, 0.036, 0.006, plasmaRingMat, 0, 0.004, -0.200 - ri * 0.040, Math.PI / 2);
+      }
+      // Energy core — central glowing orb area
+      addBox(0.070, 0.060, 0.100, new THREE.MeshLambertMaterial({ color: 0x003366 }),
+             0,  0.004,  0.060);
+      // Power cell bulge
+      addCyl(0.028, 0.028, 0.080, new THREE.MeshLambertMaterial({ color: 0x0044aa }),
+             0,  0.004,  0.050, 0);
+      // Top rail / sighting bar
+      addBox(0.010, 0.012, 0.360, m.metal,  0,  0.048,  0.000);
+      // Rear targeting reticle
+      addBox(0.030, 0.014, 0.008, m.metal,  0,  0.048,  0.168);
+      // Pistol grip — angular
+      addBox(0.050, 0.110, 0.072, m.rubber, 0, -0.072,  0.090,  0.16);
+      addBox(0.052, 0.010, 0.064, m.dark,   0, -0.128,  0.088,  0.16);
+      // Trigger guard
+      addBox(0.058, 0.008, 0.084, m.dark,   0, -0.046,  0.058);
+      addBox(0.010, 0.026, 0.010, new THREE.MeshBasicMaterial({ color: 0x0088ff }),
+             0, -0.044,  0.050); // glowing trigger
+      // Side status LEDs
+      const ledMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
+      addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.100);
+      addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.060);
+      addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.020);
+      addBox(0.004, 0.008, 0.008, new THREE.MeshBasicMaterial({ color: 0xff4400 }),
+             -0.046, 0.028, -0.020); // red warning LED
+
+      this.weaponGroup.position.set(0.15, -0.145, -0.32);
+      this.weaponGroup.rotation.y = -0.08;
     }
 
     this._currentWeaponType = ltype;
@@ -610,7 +1269,16 @@ export class Renderer {
     const alive = new Set();
 
     for (const enemy of enemies) {
-      if (enemy.isDead) continue;
+      if (enemy.isDead) {
+        // Trigger death animation for newly dead enemies
+        if (this.enemyMeshes.has(enemy.id)) {
+          const mesh = this.enemyMeshes.get(enemy.id);
+          this.enemyMeshes.delete(enemy.id);
+          this.enemiesGroup.remove(mesh);
+          this.startDeathAnimation(mesh);
+        }
+        continue;
+      }
       alive.add(enemy.id);
 
       if (!this.enemyMeshes.has(enemy.id)) {
@@ -624,6 +1292,24 @@ export class Renderer {
       // Always face the camera (billboard-style Y rotation)
       mesh.lookAt(this.camera.position.x, 0, this.camera.position.z);
       if (mesh.userData.animate) mesh.userData.animate(t);
+
+      // Hit flash: briefly turn red when recently damaged
+      if (mesh.userData.hitFlashTimer > 0) {
+        mesh.userData.hitFlashTimer -= 0.016;
+        const intensity = Math.min(1, mesh.userData.hitFlashTimer * 5);
+        mesh.traverse((child) => {
+          if (child.isMesh && child.material && child.material.emissive) {
+            child.material.emissive.setRGB(intensity * 0.8, 0, 0);
+          }
+        });
+      } else if (mesh.userData.hitFlashTimer < 0) {
+        mesh.userData.hitFlashTimer = 0;
+        mesh.traverse((child) => {
+          if (child.isMesh && child.material && child.material.emissive) {
+            child.material.emissive.setRGB(0, 0, 0);
+          }
+        });
+      }
     }
 
     for (const [id, mesh] of this.enemyMeshes) {
@@ -632,6 +1318,15 @@ export class Renderer {
         this.enemyMeshes.delete(id);
       }
     }
+  }
+
+  /**
+   * Trigger a hit flash on an enemy mesh (called from Game on enemyDamaged).
+   * @param {string|number} enemyId
+   */
+  triggerHitFlash(enemyId) {
+    const mesh = this.enemyMeshes.get(enemyId);
+    if (mesh) mesh.userData.hitFlashTimer = 0.25;
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -671,6 +1366,14 @@ export class Renderer {
 
     this._updateEnemyMeshes(enemies, t);
 
+    // Update particle systems
+    const dt = Math.min(1 / 30, (t - (this._lastT || t)));
+    this._lastT = t;
+    this._updateBloodParticles(dt);
+    this._updateShells(dt);
+    this._updateExplosions(dt);
+    this._updateDeathAnimations(t);
+
     // Flicker torch lights
     for (const { light, base } of this._wallLights) {
       light.intensity =
@@ -706,9 +1409,13 @@ export class Renderer {
     const recoil = typeof player.recoilOffset === "number" ? player.recoilOffset      : 0;
 
     const bases = {
-      pistol:  [0.14,  -0.14,  -0.33],
-      shotgun: [0.17,  -0.18,  -0.34],
-      rifle:   [0.19,  -0.155, -0.34],
+      pistol:           [0.14,  -0.14,  -0.33],
+      shotgun:          [0.17,  -0.18,  -0.34],
+      rifle:            [0.19,  -0.155, -0.34],
+      smg:              [0.13,  -0.14,  -0.30],
+      sniper:           [0.22,  -0.16,  -0.38],
+      grenade_launcher: [0.18,  -0.18,  -0.36],
+      plasma:           [0.15,  -0.145, -0.32],
     };
     const [bx, by, bz] = bases[ltype] ?? [0.14, -0.14, -0.33];
 
@@ -766,10 +1473,18 @@ export class Renderer {
 
   /**
    * Briefly flash the muzzle light on weapon fire.
+   * @param {string} [weaponName] - weapon type for color selection
    */
-  triggerMuzzleFlash() {
-    this.muzzleFlashLight.intensity = 5.0;
-    setTimeout(() => { this.muzzleFlashLight.intensity = 0; }, 90);
+  triggerMuzzleFlash(weaponName) {
+    const lname = (weaponName ?? "").toLowerCase();
+    if (lname === "plasma") {
+      this.plasmaMuzzleLight.intensity = 6.0;
+      setTimeout(() => { this.plasmaMuzzleLight.intensity = 0; }, 80);
+    } else {
+      const intensity = lname === "sniper" ? 8.0 : lname === "grenade_launcher" ? 7.0 : 5.0;
+      this.muzzleFlashLight.intensity = intensity;
+      setTimeout(() => { this.muzzleFlashLight.intensity = 0; }, 90);
+    }
   }
 
   _onResize() {

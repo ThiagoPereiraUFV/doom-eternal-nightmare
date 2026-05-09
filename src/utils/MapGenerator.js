@@ -29,6 +29,12 @@ export class MapGenerator {
       map = this._smoothMap(map, wallThreshold);
     }
 
+    // Carve distinct rooms for more interesting layouts
+    map = this._carveRooms(map, width, height);
+
+    // Add columns at junctions for detail
+    map = this._addColumns(map, width, height);
+
     // Assign wall types
     map = this._assignWallTypes(map);
 
@@ -43,7 +49,7 @@ export class MapGenerator {
    */
   static generateSpawnMap(playerX = 3, playerY = 3, options = {}) {
     const size = GameConfig.MAP.SPAWN_SIZE;
-    let map = this.generate(size, size, options);
+    const map = this.generate(size, size, options);
 
     // Create safe zone around player spawn
     const safeZone = GameConfig.MAP.SPAWN_SAFE_ZONE;
@@ -156,6 +162,75 @@ export class MapGenerator {
       }
     }
 
+    return map;
+  }
+
+  /**
+   * Carve explicit rectangular rooms into the CA map for open combat areas.
+   * @private
+   */
+  static _carveRooms(map, width, height) {
+    const roomCount = 6 + Math.floor(Math.random() * 6);
+    for (let i = 0; i < roomCount; i++) {
+      // Random room size: 4–10 wide, 4–8 tall
+      const rw = 4 + Math.floor(Math.random() * 7);
+      const rh = 4 + Math.floor(Math.random() * 5);
+      const rx = 2 + Math.floor(Math.random() * (width  - rw - 4));
+      const ry = 2 + Math.floor(Math.random() * (height - rh - 4));
+
+      for (let y = ry; y < ry + rh; y++) {
+        for (let x = rx; x < rx + rw; x++) {
+          if (y > 0 && y < height - 1 && x > 0 && x < width - 1) {
+            map[y][x] = 0;
+          }
+        }
+      }
+
+      // Connect room to a random cardinal direction with a corridor
+      const midX = rx + Math.floor(rw / 2);
+      const midY = ry + Math.floor(rh / 2);
+      const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+      const [dx, dy] = dirs[Math.floor(Math.random() * dirs.length)];
+      const corrLen = 3 + Math.floor(Math.random() * 6);
+      for (let s = 0; s < corrLen; s++) {
+        const cx = midX + dx * (Math.floor(rw / 2) + s);
+        const cy = midY + dy * (Math.floor(rh / 2) + s);
+        if (cy > 0 && cy < height - 1 && cx > 0 && cx < width - 1) {
+          map[cy][cx] = 0;
+          // 2-wide corridor
+          const px = cx + (dx === 0 ? 1 : 0);
+          const py = cy + (dy === 0 ? 1 : 0);
+          if (py > 0 && py < height - 1 && px > 0 && px < width - 1) {
+            map[py][px] = 0;
+          }
+        }
+      }
+    }
+    return map;
+  }
+
+  /**
+   * Add isolated wall columns (1×1) at open floor locations for cover/detail.
+   * @private
+   */
+  static _addColumns(map, width, height) {
+    const colCount = 8 + Math.floor(Math.random() * 12);
+    let placed = 0;
+    let attempts = 0;
+    while (placed < colCount && attempts < 400) {
+      attempts++;
+      const x = 3 + Math.floor(Math.random() * (width  - 6));
+      const y = 3 + Math.floor(Math.random() * (height - 6));
+      // Only place on open floor cells surrounded by open space (don't block corridors)
+      if (map[y][x] !== 0) continue;
+      const openNeighbors = [[-1,0],[1,0],[0,-1],[0,1]].filter(([dx,dy]) => {
+        const nx = x + dx, ny = y + dy;
+        return ny >= 0 && ny < height && nx >= 0 && nx < width && map[ny][nx] === 0;
+      }).length;
+      if (openNeighbors < 3) continue; // needs breathing room around it
+      map[y][x] = 1; // concrete pillar
+      placed++;
+    }
     return map;
   }
 

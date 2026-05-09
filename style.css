@@ -238,6 +238,7 @@ body {
 	height: var(--ch-len);
 	left: calc(var(--ch-thick) / -2);
 }
+
 .ch-left, .ch-right {
 	height: var(--ch-thick);
 	width: var(--ch-len);
@@ -339,7 +340,7 @@ body {
 	font-size: 24px;
 	font-weight: bold;
 	margin-bottom: 5px;
-	text-shadow: 0 0 10px currentColor;
+	text-shadow: 0 0 10px currentcolor;
 }
 
 .health-card .stat-value {
@@ -362,7 +363,7 @@ body {
 	height: 100%;
 	width: 100%;
 	transition: width 0.2s ease-out;
-	box-shadow: 0 0 10px currentColor;
+	box-shadow: 0 0 10px currentcolor;
 }
 
 #health-bar {
@@ -537,7 +538,7 @@ body {
 	font-weight: 900;
 	color: #fff;
 	margin-bottom: 14px;
-	text-shadow: 4px 4px 0px #ff0000;
+	text-shadow: 4px 4px 0 #ff0000;
 	letter-spacing: 5px;
 }
 
@@ -739,6 +740,17 @@ body {
 	box-shadow: 0 0 16px rgba(50, 120, 255, 0.3);
 }
 
+.diff-name {
+	font-family: 'Orbitron', sans-serif;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 1.5px;
+}
+
+.diff-btn.selected .diff-name {
+	color: #ff4455;
+}
+
 .diff-btn.diff-custom.selected .diff-name {
 	color: #66aaff;
 }
@@ -822,7 +834,6 @@ body {
 
 .cs-row input[type="range"] {
 	flex: 1;
-	-webkit-appearance: none;
 	appearance: none;
 	height: 3px;
 	background: rgba(50, 136, 255, 0.3);
@@ -832,7 +843,6 @@ body {
 }
 
 .cs-row input[type="range"]::-webkit-slider-thumb {
-	-webkit-appearance: none;
 	appearance: none;
 	width: 14px;
 	height: 14px;
@@ -863,16 +873,6 @@ body {
 	display: flex;
 	gap: 14px;
 	flex-wrap: wrap;
-}
-
-.cs-gun-checks label {
-	font-size: 12px;
-	color: #ccc;
-	display: flex;
-	align-items: center;
-	gap: 5px;
-	cursor: pointer;
-	flex: unset;
 }
 
 .cs-row input[type="checkbox"] {
@@ -912,17 +912,6 @@ body {
 	color: #999;
 }
 
-.diff-name {
-	font-family: 'Orbitron', sans-serif;
-	font-size: 11px;
-	font-weight: 700;
-	letter-spacing: 1.5px;
-}
-
-.diff-btn.selected .diff-name {
-	color: #ff4455;
-}
-
 .diff-btn.diff-impossible.selected .diff-name {
 	color: #ff6633;
 }
@@ -952,20 +941,22 @@ body {
 	transition: color 0.3s;
 }
 
-@media (max-width: 700px) {
+@media (width <= 700px) {
 	.difficulty-row {
 		grid-template-columns: repeat(3, 1fr);
 	}
+
 	.difficulty-stats {
 		font-size: 11px;
 		gap: 10px;
 	}
+
 	.start-content {
 		padding: 0 12px;
 	}
 }
 
-@media (max-width: 420px) {
+@media (width <= 420px) {
 	.difficulty-row {
 		grid-template-columns: repeat(2, 1fr);
 	}
@@ -993,7 +984,7 @@ body {
 
 .overlay-content {
 	text-align: center;
-	animation: slideUp 0.5s ease-out;
+	animation: slide-up 0.5s ease-out;
 }
 
 .game-over-title {
@@ -1084,7 +1075,6 @@ body {
 }
 
 @keyframes pulse {
-
 	0%,
 	100% {
 		opacity: 1;
@@ -1095,7 +1085,7 @@ body {
 	}
 }
 
-@keyframes slideUp {
+@keyframes slide-up {
 	from {
 		transform: translateY(50px);
 		opacity: 0;
@@ -1236,7 +1226,7 @@ body {
 }
 
 /* Responsive Design - Tablets and Smaller Desktops */
-@media screen and (max-width: 1024px) {
+@media screen and (width <= 1024px) {
 	.hud-bottom-left,
 	.hud-bottom-right {
 		bottom: 20px;
@@ -1301,7 +1291,7 @@ body {
 }
 
 /* Responsive Design - Mobile Landscape */
-@media screen and (max-width: 768px) and (orientation: landscape) {
+@media screen and (width <= 768px) and (orientation: landscape) {
 	#hud {
 		padding: 15px;
 	}
@@ -1366,7 +1356,7 @@ body {
 }
 
 /* Responsive Design - Mobile Portrait */
-@media screen and (max-width: 768px) {
+@media screen and (width <= 768px) {
 	#hud {
 		padding: 10px;
 	}
@@ -1433,7 +1423,7 @@ body {
 	}
 
 	.start-content {
-		padding: 16px 16px;
+		padding: 16px;
 	}
 
 	.game-title {
@@ -1548,7 +1538,7 @@ body {
 }
 
 /* Very Small Screens */
-@media screen and (max-width: 480px) {
+@media screen and (width <= 480px) {
 	.stat-card {
 		width: 150px;
 		padding: 5px;

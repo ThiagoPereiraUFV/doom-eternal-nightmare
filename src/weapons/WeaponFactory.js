@@ -7,6 +7,10 @@
 import { Pistol } from "./Pistol.js";
 import { Shotgun } from "./Shotgun.js";
 import { Rifle } from "./Rifle.js";
+import { SMG } from "./SMG.js";
+import { SniperRifle } from "./SniperRifle.js";
+import { GrenadeL } from "./GrenadeL.js";
+import { PlasmaGun } from "./PlasmaGun.js";
 
 export class WeaponFactory {
   static _weaponTypes = new Map();
@@ -18,6 +22,10 @@ export class WeaponFactory {
     this.register("pistol", Pistol);
     this.register("shotgun", Shotgun);
     this.register("rifle", Rifle);
+    this.register("smg", SMG);
+    this.register("sniper", SniperRifle);
+    this.register("grenade_launcher", GrenadeL);
+    this.register("plasma", PlasmaGun);
   }
 
   /**

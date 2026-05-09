@@ -94,9 +94,29 @@ export class AudioSystem {
   // ─── Weapon-type metadata ────────────────────────────────────────
   _getWeaponSoundProfile(weaponName) {
     const n = (weaponName ?? "").toLowerCase();
-    if (n === "shotgun") return { body: 0.9, snap: 100, snapQ: 0.8, tail: 0.55, tailFreq: 90 };
-    if (n === "rifle")   return { body: 0.55, snap: 220, snapQ: 1.8, tail: 0.28, tailFreq: 160 };
-    /* pistol default */ return { body: 0.7,  snap: 160, snapQ: 1.2, tail: 0.38, tailFreq: 110 };
+    if (n === "shotgun")          return { body: 0.9, snap: 100, snapQ: 0.8, tail: 0.55, tailFreq: 90 };
+    if (n === "rifle")            return { body: 0.55, snap: 220, snapQ: 1.8, tail: 0.28, tailFreq: 160 };
+    if (n === "smg")              return { body: 0.40, snap: 240, snapQ: 2.0, tail: 0.20, tailFreq: 180 };
+    if (n === "sniper")           return { body: 1.0,  snap: 180, snapQ: 1.0, tail: 0.70, tailFreq: 80  };
+    if (n === "grenade_launcher") return { body: 1.0,  snap: 60,  snapQ: 0.5, tail: 0.80, tailFreq: 50  };
+    /* pistol default */          return { body: 0.7,  snap: 160, snapQ: 1.2, tail: 0.38, tailFreq: 110 };
+  }
+
+  /** Simple convolver reverb — convolves a signal with exponential noise impulse */
+  _createReverb(seconds = 0.8, decay = 2.0) {
+    const ctx    = this.audioContext;
+    const sr     = ctx.sampleRate;
+    const length = sr * seconds;
+    const buf    = ctx.createBuffer(2, length, sr);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < length; i++) {
+        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+      }
+    }
+    const conv = ctx.createConvolver();
+    conv.buffer = buf;
+    return conv;
   }
 
   /**
@@ -113,27 +133,89 @@ export class AudioSystem {
 
       // ── Gunshot ─────────────────────────────────────────────────
       case "shoot": {
-        const p = this._getWeaponSoundProfile(options.weaponName);
+        const wn = (options.weaponName ?? "").toLowerCase();
 
+        // ── Plasma: sci-fi zap ───────────────────────────────────
+        if (wn === "plasma") {
+          this._toneBurst({ type: "sawtooth", freq: 440, freqEnd: 180,
+            vol: 0.35, attack: 0, decay: 0.12, dur: 0.16 });
+          this._noiseBurst({ freq: 3200, q: 4, filterType: "bandpass",
+            vol: 0.25, attack: 0, decay: 0.06, dur: 0.10 });
+          this._toneBurst({ type: "sine", freq: 880, freqEnd: 220,
+            vol: 0.20, attack: 0, decay: 0.18, dur: 0.22 });
+          break;
+        }
+
+        // ── Sniper: long deep crack with echo ───────────────────
+        if (wn === "sniper") {
+          this._noiseBurst({ freq: 50, q: 0.4, filterType: "lowpass",
+            vol: 1.0, attack: 0, decay: 0.22, dur: 0.28 });
+          this._noiseBurst({ freq: 3500, q: 0.5, filterType: "highpass",
+            vol: 0.5, attack: 0, decay: 0.04, dur: 0.06 });
+          this._noiseBurst({ freq: 120, q: 2, filterType: "bandpass",
+            vol: 0.65, attack: 0.01, decay: 0.55, dur: 0.65 });
+          this._toneBurst({ type: "sine", freq: 38, freqEnd: 18,
+            vol: 0.40, decay: 0.30, dur: 0.36 });
+          // Echo 1
+          setTimeout(() => this._noiseBurst({ freq: 80, q: 1, filterType: "lowpass",
+            vol: 0.22, attack: 0, decay: 0.30, dur: 0.38 }), 140);
+          // Echo 2
+          setTimeout(() => this._noiseBurst({ freq: 70, q: 1, filterType: "lowpass",
+            vol: 0.10, attack: 0, decay: 0.25, dur: 0.32 }), 300);
+          break;
+        }
+
+        // ── Grenade launcher: deep hollow thump ─────────────────
+        if (wn === "grenade_launcher") {
+          this._noiseBurst({ freq: 35, q: 0.4, filterType: "lowpass",
+            vol: 1.0, attack: 0, decay: 0.30, dur: 0.36 });
+          this._toneBurst({ type: "sine", freq: 55, freqEnd: 28,
+            vol: 0.45, attack: 0.01, decay: 0.28, dur: 0.34 });
+          this._noiseBurst({ freq: 120, q: 1.5, filterType: "bandpass",
+            vol: 0.40, attack: 0, decay: 0.20, dur: 0.28 });
+          break;
+        }
+
+        // ── Standard: pistol/shotgun/rifle/SMG ──────────────────
+        const p = this._getWeaponSoundProfile(wn);
         // Low-end body thump
         this._noiseBurst({ freq: 55, q: 0.5, filterType: "lowpass",
           vol: p.body, attack: 0, decay: 0.18, dur: 0.22 });
-
         // Mid crack / snap
         this._noiseBurst({ freq: p.snap, q: p.snapQ, filterType: "bandpass",
           vol: 0.5, attack: 0, decay: 0.08, dur: 0.12 });
-
         // High transient click (the actual mechanical "crack")
         this._noiseBurst({ freq: 2800, q: 0.6, filterType: "highpass",
           vol: 0.35, attack: 0, decay: 0.025, dur: 0.04 });
-
         // Resonant tail / room reverb illusion
         this._noiseBurst({ freq: p.tailFreq, q: 3, filterType: "bandpass",
           vol: p.tail, attack: 0.01, decay: 0.35, dur: 0.45 });
-
         // Sub thump
         this._toneBurst({ type: "sine", freq: 42, freqEnd: 22,
           vol: 0.3, decay: 0.18, dur: 0.22 });
+        break;
+      }
+
+      // ── Explosion (grenade) ──────────────────────────────────────
+      case "explosion": {
+        // Deep concussive boom
+        this._noiseBurst({ freq: 30, q: 0.3, filterType: "lowpass",
+          vol: 1.0, attack: 0, decay: 0.60, dur: 0.80 });
+        this._toneBurst({ type: "sine", freq: 45, freqEnd: 15,
+          vol: 0.55, attack: 0, decay: 0.55, dur: 0.70 });
+        // Shrapnel sizzle
+        this._noiseBurst({ freq: 2000, q: 0.8, filterType: "highpass",
+          vol: 0.35, attack: 0, decay: 0.20, dur: 0.30 });
+        // Secondary rumble
+        setTimeout(() => {
+          this._noiseBurst({ freq: 60, q: 0.5, filterType: "lowpass",
+            vol: 0.30, attack: 0.02, decay: 0.40, dur: 0.50 });
+        }, 80);
+        // Debris fall
+        setTimeout(() => {
+          this._noiseBurst({ freq: 300, q: 1, filterType: "bandpass",
+            vol: 0.15, attack: 0.05, decay: 0.30, dur: 0.40 });
+        }, 200);
         break;
       }
 
@@ -147,13 +229,59 @@ export class AudioSystem {
         // Low body resonance
         this._toneBurst({ type: "sine", freq: 85, freqEnd: 50,
           vol: 0.2, decay: 0.14, dur: 0.18 });
+        // Occasional wet splat
+        if (Math.random() < 0.4) {
+          this._noiseBurst({ freq: 350, q: 3, filterType: "bandpass",
+            vol: 0.12, attack: 0.01, decay: 0.08, dur: 0.12 });
+        }
+        break;
+      }
+
+      // ── Plasma hit ───────────────────────────────────────────────
+      case "plasma_hit": {
+        this._noiseBurst({ freq: 1200, q: 2, filterType: "bandpass",
+          vol: 0.30, attack: 0, decay: 0.14, dur: 0.20 });
+        this._toneBurst({ type: "sine", freq: 660, freqEnd: 200,
+          vol: 0.20, attack: 0, decay: 0.18, dur: 0.22 });
+        break;
+      }
+
+      // ── Enemy hurt vocalization ──────────────────────────────────
+      case "enemy_hurt": {
+        const pitch = 60 + Math.random() * 60;
+        this._toneBurst({ type: "sawtooth", freq: pitch, freqEnd: pitch * 0.5,
+          vol: 0.14, attack: 0.01, decay: 0.25, dur: 0.35 });
+        this._noiseBurst({ freq: 400, q: 1.5, filterType: "bandpass",
+          vol: 0.10, attack: 0.005, decay: 0.12, dur: 0.18 });
+        break;
+      }
+
+      // ── Shell casing drop ────────────────────────────────────────
+      case "shell_drop": {
+        const pitchMult = 0.85 + Math.random() * 0.3;
+        // Metallic clink — high bandpass transient
+        this._noiseBurst({ freq: 2400 * pitchMult, q: 8, filterType: "bandpass",
+          vol: 0.18, attack: 0, decay: 0.04, dur: 0.06 });
+        // Resonant ring
+        this._toneBurst({ type: "sine", freq: 1800 * pitchMult, freqEnd: 1000 * pitchMult,
+          vol: 0.08, attack: 0, decay: 0.10, dur: 0.14 });
+        // Bounce 1
+        if (Math.random() < 0.7) {
+          setTimeout(() => this._noiseBurst({ freq: 2000 * pitchMult, q: 6, filterType: "bandpass",
+            vol: 0.10, attack: 0, decay: 0.03, dur: 0.04 }), 80 + Math.random() * 60);
+        }
+        // Bounce 2
+        if (Math.random() < 0.4) {
+          setTimeout(() => this._noiseBurst({ freq: 1800 * pitchMult, q: 6, filterType: "bandpass",
+            vol: 0.06, attack: 0, decay: 0.02, dur: 0.03 }), 180 + Math.random() * 80);
+        }
         break;
       }
 
       // ── Enemy death ──────────────────────────────────────────────
       case "death": {
-        // Guttural groan — three detuned sines fading
-        [80, 95, 72].forEach((f, i) => {
+        // Guttural groan — detuned sines fading
+        [80, 95, 72].forEach((f) => {
           this._toneBurst({ type: "sawtooth", freq: f, freqEnd: f * 0.4,
             vol: 0.18, attack: 0.02, decay: 0.55, dur: 0.7 });
         });
@@ -163,6 +291,11 @@ export class AudioSystem {
         // High wheeze
         this._noiseBurst({ freq: 600, q: 2, filterType: "bandpass",
           vol: 0.12, attack: 0.05, decay: 0.4, dur: 0.55 });
+        // Body impact with floor
+        setTimeout(() => {
+          this._noiseBurst({ freq: 120, q: 0.8, filterType: "lowpass",
+            vol: 0.25, attack: 0, decay: 0.15, dur: 0.20 });
+        }, 400);
         break;
       }
 
@@ -215,19 +348,38 @@ export class AudioSystem {
       // ── Ambient drip/creak ───────────────────────────────────────
       case "ambience": {
         const choice = Math.random();
-        if (choice < 0.4) {
+        if (choice < 0.25) {
           // Distant drip
           this._toneBurst({ type: "sine",
             freq: 600 + Math.random() * 200, freqEnd: 300,
             vol: 0.06, attack: 0, decay: 0.5, dur: 0.6 });
-        } else if (choice < 0.7) {
+        } else if (choice < 0.45) {
           // Low rumble
           this._noiseBurst({ freq: 40 + Math.random() * 20, q: 0.5,
             filterType: "lowpass", vol: 0.04, attack: 0.3, decay: 1.2, dur: 1.8 });
-        } else {
+        } else if (choice < 0.60) {
           // Distant metallic creak
           this._noiseBurst({ freq: 800 + Math.random() * 400, q: 6,
             filterType: "bandpass", vol: 0.07, attack: 0.05, decay: 0.6, dur: 0.8 });
+        } else if (choice < 0.72) {
+          // Wind moan through corridor
+          this._toneBurst({ type: "sine", freq: 90 + Math.random() * 40,
+            freqEnd: 60, vol: 0.05, attack: 0.4, decay: 1.5, dur: 2.2 });
+          this._noiseBurst({ freq: 200, q: 0.4, filterType: "bandpass",
+            vol: 0.03, attack: 0.5, decay: 1.0, dur: 1.8 });
+        } else if (choice < 0.82) {
+          // Distant footstep (enemy patrol cue)
+          this._noiseBurst({ freq: 80, q: 1.2, filterType: "lowpass",
+            vol: 0.05, attack: 0, decay: 0.08, dur: 0.12 });
+        } else if (choice < 0.90) {
+          // Electrical hum / exposed wiring
+          this._toneBurst({ type: "sawtooth", freq: 60, freqEnd: 60,
+            vol: 0.025, attack: 0.1, decay: 1.5, dur: 2.0 });
+        } else {
+          // Distant demonic growl
+          const gf = 45 + Math.random() * 25;
+          this._toneBurst({ type: "sawtooth", freq: gf, freqEnd: gf * 0.6,
+            vol: 0.08, attack: 0.05, decay: 0.55, dur: 0.75 });
         }
         break;
       }

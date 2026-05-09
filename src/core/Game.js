@@ -214,6 +214,10 @@ export class Game {
       if (lowerKey === "1") this.player?.switchWeapon(0);
       if (lowerKey === "2") this.player?.switchWeapon(1);
       if (lowerKey === "3") this.player?.switchWeapon(2);
+      if (lowerKey === "4") this.player?.switchWeapon(3);
+      if (lowerKey === "5") this.player?.switchWeapon(4);
+      if (lowerKey === "6") this.player?.switchWeapon(5);
+      if (lowerKey === "7") this.player?.switchWeapon(6);
       if (lowerKey === "q") this.player?.previousWeapon();
       if (lowerKey === "e") this.player?.nextWeapon();
       if (lowerKey === "r") this.player?.reload();
@@ -240,18 +244,29 @@ export class Game {
     });
 
     // Enemy events
+    this.eventManager.on("enemyDamaged", ({ enemy }) => {
+      this.renderer.triggerHitFlash?.(enemy.id);
+      this.audioSystem.playSound("enemy_hurt");
+    });
+
     this.eventManager.on("enemyKilled", (enemy) => {
       this.enemiesKilled++;
       this._updateHUD();
       this.audioSystem.playSound("death");
 
-      // Create blood splatter
+      // 2D blood splatter overlay only
       this._createBloodSplatter(enemy.x, enemy.y);
 
       // Check victory condition
       if (this.enemiesKilled >= this.totalEnemies) {
         this._handleVictory();
       }
+    });
+
+    // Explosion event (grenade launcher)
+    this.eventManager.on("explosion", ({ x, y }) => {
+      this.renderer.spawnExplosion?.(x, y);
+      this.audioSystem.playSound("explosion");
     });
 
     // Player events
@@ -456,11 +471,12 @@ export class Game {
     // Add weapons — only those allowed by difficulty
     const ammoMult = diff.ammoMultiplier;
     const availableGuns = diff.availableGuns ?? ['pistol', 'shotgun', 'rifle'];
-    for (const type of ['pistol', 'shotgun', 'rifle']) {
-      if (availableGuns.includes(type)) {
+    for (const type of availableGuns) {
+      if (WeaponFactory.hasType(type)) {
         const weapon = WeaponFactory.create(type);
-        const configKey = type.toUpperCase();
-        weapon.reserveAmmo = Math.round(GameConfig.WEAPONS[configKey].reserveAmmo * ammoMult);
+        const configKey = type.toUpperCase().replace(/-/g, '_');
+        const wConf = GameConfig.WEAPONS[configKey];
+        weapon.reserveAmmo = Math.round((wConf?.reserveAmmo ?? weapon.reserveAmmo ?? 30) * ammoMult);
         this.player.addWeapon(weapon);
       }
     }
@@ -640,7 +656,8 @@ export class Game {
       eventManager: this.eventManager,
     });
     if (result?.success) {
-      this.renderer.triggerMuzzleFlash();
+      const wName = this.player.currentWeapon?.name?.toLowerCase() ?? "pistol";
+      this.renderer.triggerMuzzleFlash(wName);
       this._flashCrosshair();
     }
   }
@@ -807,10 +824,10 @@ export class Game {
 // Initialize game when DOM is ready
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => {
-    new Game();
+    window.game = new Game();
   });
 } else {
-  new Game();
+  window.game = new Game();
 }
 
 export default Game;
