@@ -1,24 +1,27 @@
 # GitHub Copilot Instructions
 
 ## Project Overview
-This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. The engine features true 3D rendering via Three.js (WebGL), AI-driven enemies, weapon systems, procedural map generation, mobile touch controls, and a procedural Web Audio API sound system.
+This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. The engine features true 3D rendering via Three.js (WebGL), AI-driven enemies, weapon systems, procedural map generation, difficulty presets, mobile touch controls, and a procedural Web Audio API sound system. It ships as a PWA (`manifest.json` + `sw.js`).
 
 ## Architecture Patterns
 
 ### State Pattern
 - AI behaviors use the State pattern (ChaseState, PatrolState, SearchState)
 - Each state should implement consistent interface methods
-- States are managed through AIBehavior coordinator
+- States are managed through `AIBehavior` base class (abstract; throws if instantiated directly)
+- `GameStateManager` also uses the State pattern for game-level state transitions
 
 ### Factory Pattern
 - Entities and weapons use Factory pattern (EnemyFactory, WeaponFactory)
 - Factories handle object creation and initialization
 - Keep creation logic centralized in factory classes
+- Both factories auto-initialize at module load via a static `init()` call
 
 ### Event-Driven Architecture
 - Use EventManager for decoupled communication between systems
 - Events should be named with descriptive action verbs
 - Subscribe to events in component initialization, unsubscribe on cleanup
+- `EventManager.on()` returns an unsubscribe function; `once()` for one-shot handlers
 
 ## SOLID Principles
 
@@ -32,7 +35,8 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - Classes should be open for extension, closed for modification
 - Use inheritance for weapon types (extend base Weapon class)
 - AI states extend base State interface
-- Add new enemy types through EnemyFactory without modifying core logic
+- Add new enemy types through `EnemyFactory.registerType()` without modifying core logic
+- Add new weapon types through `WeaponFactory.register()` without modifying core logic
 
 ### Liskov Substitution Principle (LSP)
 - Derived classes must be substitutable for their base classes
@@ -56,7 +60,7 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 
 ### Observer Pattern
 - EventManager implements Observer pattern
-- Systems subscribe to game events (enemy_killed, weapon_fired, etc.)
+- Systems subscribe to game events (`enemyKilled`, `enemyDamaged`, `weaponChanged`, `reloadStarted`, `reloadCompleted`, `playerDied`, `touchlook`, `keydown`, `mousedown`, `mouseup`)
 - Decouple event producers from consumers
 - Clean up subscriptions to prevent memory leaks
 
@@ -68,9 +72,9 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 
 ### Singleton Pattern
 - Use sparingly and only when truly needed
-- Game instance, EventManager, ResourceManager are valid singletons
+- `GameStateManager`, `ResourceManager`, and `AudioSystem` are singletons (use `getInstance()`)
+- `EventManager` is instantiated once in `Game` and injected
 - Avoid for entities that may need multiple instances
-- Consider dependency injection over global access
 
 ### Object Pool Pattern
 - Reuse objects for projectiles, particles, and effects
@@ -101,56 +105,88 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 ### Vector Math
 - Use Vector2D utility class for all position/direction calculations
 - Avoid raw x/y object literals for spatial data
-- Leverage Vector2D methods for common operations (add, subtract, normalize, etc.)
+- Leverage Vector2D methods for common operations (`add`, `subtract`, `normalize`, `dot`, `distanceTo`, `angle`, etc.)
 
 ## Game Engine Specifics
 
 ### Rendering (Three.js)
-- `Renderer` uses `THREE.WebGLRenderer` for true 3D first-person rendering
-- Scene uses `THREE.FogExp2`, `SpotLight` (player flashlight), and wall torch `PointLight`s
-- Enemies are 3D `THREE.Group` meshes tracked in `enemyMeshes` Map (enemy.id → Group)
-- Weapons render in a separate `weaponScene`/`weaponCamera` layered on top (no fog)
-- `RayCaster` handles ray-wall and ray-enemy intersection for **game logic** (shooting, line-of-sight), not for visual rendering
-- Window resize is handled via `_onResize()` which updates camera aspect and renderer size
+- `Renderer` uses `THREE.WebGLRenderer` (antialias, `high-performance`, pixel ratio capped at 2)
+- Shadow maps are **disabled** (`renderer.shadowMap.enabled = false`); tone mapping is `NoToneMapping`
+- Main scene uses `THREE.FogExp2` (density 0.06 by default; overridden by difficulty)
+- Lighting: `AmbientLight(0x334455, 1.2)` + `SpotLight` player flashlight (intensity 3.5, 18-unit range, `YXZ` rotation order) + wall torch `PointLight`s
+- Main camera: `PerspectiveCamera(75°, …)` with `camera.rotation.order = "YXZ"`; ADS smoothly lerps FOV to 42°
+- Enemies are 3D `THREE.Group` meshes (body/head/eye/horn parts) tracked in `enemyMeshes` Map (`enemy.id → Group`)
+- Wall/floor textures are **procedurally generated on `<canvas>`** and wrapped as `THREE.CanvasTexture`; SVG sprites in `window.SVGSprites` are loaded by `ResourceManager` for other use but are not the source of wall visuals
+- Weapons render in a separate `weaponScene`/`weaponCamera(55°)` layered on top (no fog, own ambient + directional lights); muzzle flash via `PointLight` in `weaponScene`
+- Wall materials use `THREE.MeshBasicMaterial` (no lighting math); enemy/weapon parts use `MeshLambertMaterial`
+- `RayCaster` (DDA step-based, not Three.js `Raycaster`) handles ray-wall and ray-enemy intersection for **game logic** (shooting, line-of-sight), not for visual rendering
+- Window resize is handled via `_onResize()` which updates both cameras' aspect ratios and renderer size
+- `applyDifficultyLighting(diff)` updates ambient intensity, fog density, and flashlight intensity at game start
 - Maintain 60 FPS target; profile Three.js draw calls and geometry as hot paths
 
+### Game State
+- `GameStateManager` (singleton) tracks: `LOADING`, `MENU`, `PLAYING`, `PAUSED`, `GAME_OVER`, `VICTORY`
+- State transitions fire `enter`, `exit`, and `change` callbacks registered via `stateManager.on(event, state, callback)`
+- Check state with `stateManager.is(GameStates.PLAYING)` pattern
+
+### Difficulty System
+- Five presets: `EASY`, `MEDIUM`, `HARD`, `IMPOSSIBLE`, `CUSTOM` — defined in `GameConfig.DIFFICULTY`
+- Per-difficulty overrides: `maxHealth`, `maxStamina`, `staminaDrain`, `staminaRecovery`, `ammoMultiplier`, `enemyCount`, `enemyHealthMult`, `enemySpeedMult`, `enemyDamage`, `fillRatio`, `smoothIterations`, `ambientIntensity`, `fogDensity`, `flashlightIntensity`, `autoReload`, `availableGuns`
+- `HARD` restricts guns to `['pistol', 'shotgun']`; `IMPOSSIBLE` to `['pistol']` only
+- Selected at game start by reading `.diff-btn.selected` from the DOM; defaults to `MEDIUM`
+- Applied to `Renderer` via `applyDifficultyLighting()` and to `Player`/`Enemy` instances at spawn time
+
 ### Entity Management
-- Player is a singleton managed by Game core; tracks health, stamina, ADS (`isAiming`), head bob, recoil, and screen shake
+- Player is a singleton managed by Game core; tracks health, stamina, `isAiming` (ADS), `isSprinting`, `headBob`, `recoilOffset`, `screenShake`, and `bloodLoss`
 - Enemy types: `demon`, `zombie`, `ghost`, `brute` — defined in `GameConfig.ENEMY.TYPES`
-- Enemies are instantiated through `EnemyFactory.create(type, x, y, initialState)`; the factory shares a single `AIBehavior` instance per state across all enemies
+- Enemies are instantiated through `EnemyFactory.create(type, x, y, initialState)`
+- **AI state instances are shared** — `EnemyFactory` holds one `ChaseState`, one `PatrolState`, one `SearchState` shared across all enemies; states must be stateless regarding individual enemy data
+- `Enemy.setState(state)` accepts either a state name string or a state object; when hit while not chasing, enemy auto-switches to `'chase'`
 - All entities should have consistent update/render interface
 
 ### Weapons System
 - Weapons extend base `Weapon` abstract class (throws if instantiated directly)
-- Each weapon defines: `damage`, `magazineSize`, `reserveAmmo`, `fireRate`, `spread`, `recoil`, `screenShake`, `pellets`, `penetration`, `muzzleFlashIntensity`
-- Registered types: `pistol`, `shotgun`, `rifle` — add new types via `WeaponFactory.register()`
+- Each weapon defines: `damage`, `magazineSize`, `reserveAmmo`, `fireRate`, `spread`, `reloadTime`, `penetration`, `bulletSpeed`, `muzzleFlashIntensity`, `recoil`, `screenShake`, `pellets`
+- Registered types: `pistol`, `shotgun`, `rifle` — add new types via `WeaponFactory.register(type, WeaponClass)`
 - `fire(context)` receives `{ player, enemies, map, audioSystem, eventManager }` and performs an internal raycast to resolve hits
+- Reload lifecycle: `startReload()` → `updateReload()` (polls elapsed time) → `completeReload()` (adjusts magazine/reserve)
+- `canFire()` checks: not reloading, magazine > 0, fire rate cooldown elapsed
 - Keep weapon logic separate from player input handling
+
+### Input & Controls
+- `controlType` is auto-detected from device capabilities at game start; values: `'keyboard'` or `'touch'`
+- `InputManager` handles keyboard (`keydown`/`keyup`) and mouse events; also contains a built-in dual-zone touch handler for raw movement (left zone = joystick, right zone = look delta)
+- `TouchInputManager` manages the visible virtual joystick UI (`#touchJoystick`, `#joystickStick`, `#touchLookArea`) and emits `touchlook` events via `EventManager`
+- Touch fire (`#touch-fire`), ADS (`#touch-ads`), and reload (`#touch-reload`) buttons are wired directly in `Game._setupEventListeners()`
+- `_touchFireActive` and `_touchAdsActive` flags in `Game` track hold state for auto-fire and ADS
 
 ### Audio
 - `AudioSystem` is a singleton that generates all sounds **procedurally** via the Web Audio API
 - No audio files are loaded from disk; sounds are synthesized using oscillators and noise buffers
-- Internal helpers: `_noiseBurst()` for percussive/noise sounds, `_toneBurst()` for tonal sounds
-- Background music is routed through a dedicated `musicGain` node
+- Internal helpers: `_noiseBurst({ freq, q, filterType, vol, attack, decay, dur })` for percussive/noise sounds, `_toneBurst({ type, freq, freqEnd, vol, attack, decay, dur })` for tonal sounds
+- Sound types: `'shoot'`, `'hit'`, `'death'`, `'footstep'`, `'reload'`, `'reload_end'`, `'empty'`, `'ambience'`
+- Weapon-specific gunshot profiles via `_getWeaponSoundProfile(weaponName)` — different body/snap/tail tuning for `shotgun`, `rifle`, and `pistol`
+- Background music is routed through a dedicated `musicGain` node (gain 0.75 relative to masterGain)
 - Master volume is controlled via `masterGain`; default value is `0.3`
-- `AudioContext` is created on first instantiation (browser autoplay policy must be considered)
+- `AudioContext` is created on first instantiation; call `audioSystem.resume()` on user gesture to comply with browser autoplay policy
 
 ### Maps
-- MapGenerator creates procedural level layouts using cellular automata
+- `MapGenerator` creates procedural level layouts using cellular automata
 - Map data is a 2D array of integers: `0` = floor, `>0` = wall type
 - Wall types (1–4): CONCRETE, BRICK, METAL, STONE — assigned randomly during generation
-- `generateSpawnMap()` creates a safe open zone around the player spawn and carves corridors
+- `generate(width, height, options)` accepts `fillRatio`, `smoothIterations`, `wallThreshold` overrides (difficulty drives `fillRatio` and `smoothIterations`)
+- `generateSpawnMap(playerX, playerY, options)` creates a safe open zone (radius 12) around the player spawn and carves corridors; default map size is 30×30 (`SPAWN_SIZE`)
 
 ## Performance Considerations
 - Minimize object creation in game loop (reuse objects/pools)
 - Cache frequently accessed DOM elements
 - Use requestAnimationFrame for game loop timing
-- Profile rendering pipeline for bottlenecks
+- Profile rendering pipeline for bottlenecks; watch Three.js draw call count
 
 ## Testing & Debugging
-- Test AI state transitions thoroughly
+- Test AI state transitions thoroughly (shared state instances must remain stateless)
 - Verify raycasting edge cases (corners, perpendicular walls)
-- Check weapon balance and feel
+- Check weapon balance and feel across all difficulty presets
 - Monitor FPS and optimize hot paths
 
 ## File Organization
@@ -159,7 +195,8 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - AI logic isolated in `/ai`
 - Reusable utilities in `/utils`
 - Configuration centralized in `/config`
-- SVG sprite data in `/data/sprites.js` (loaded via script tag as `window.SVGSprites`)
+- SVG sprite data in `/data/sprites.js` (loaded via `<script>` tag as `window.SVGSprites`; categories: `walls`, `enemies`, `weapons`)
+- PWA assets: `manifest.json`, `sw.js`, `icons/`
 - Keep files focused and under 300 lines when possible
 
 ## Best Practices
@@ -181,13 +218,13 @@ btn.onclick = () => doSomething();
 btn.addEventListener("click", handler);
 ```
 
-**Correct — use the `_bindTap` helper (Game.js) or an equivalent pattern:**
+**Correct — use the `_bindTap` helper (defined locally in `Game._setupEventListeners`) or an equivalent pattern:**
 ```js
 // reusable helper
 const _bindTap = (el, fn) => {
   if (!el) return;
   el.onclick = fn;
-  el.addEventListener("touchstart", (e) => { e.preventDefault(); fn(e); }, { passive: false });
+  el.addEventListener("touchstart", (e) => { e.preventDefault(); fn(); }, { passive: false });
 };
 _bindTap(btn, handler);
 ```
@@ -197,4 +234,5 @@ _bindTap(btn, handler);
 - Always call `e.preventDefault()` in the `touchstart` handler to suppress the delayed synthetic click and prevent double-firing.
 - Use `{ passive: false }` so `preventDefault()` is allowed.
 - Backdrop/overlay "close on tap" patterns need the same dual binding.
+- Touches on `BUTTON`, `A` tags, and elements inside `.overlay-screen`, `#startScreen`, `#pauseMenu`, `.menu-item`, `#start-btn` are intentionally skipped by `InputManager`'s raw touch handler — let `_bindTap` handle them instead.
 - When auditing new UI code, search for `.onclick =` and `addEventListener("click"` and verify each has a matching `touchstart` counterpart.
