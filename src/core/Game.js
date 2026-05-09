@@ -99,25 +99,22 @@ export class Game {
    * @private
    */
   _setupEventListeners() {
-    // Control selection
-    const keyboardBtn = document.getElementById('control-keyboard');
-    const touchBtn = document.getElementById('control-touch');
-
-    if (keyboardBtn) {
-      keyboardBtn.onclick = () => this._selectControl('keyboard');
-    }
-
-    if (touchBtn) {
-      touchBtn.onclick = () => this._selectControl('touch');
-    }
-
-    // Start game button — use both onclick and touchstart for mobile compatibility
-    const startBtn = document.getElementById("start-btn");
+    // Helper: bind both click and touchstart for mobile compatibility
     const _bindTap = (el, fn) => {
       if (!el) return;
       el.onclick = fn;
       el.addEventListener("touchstart", (e) => { e.preventDefault(); fn(); }, { passive: false });
     };
+
+    // Control selection
+    const keyboardBtn = document.getElementById('control-keyboard');
+    const touchBtn = document.getElementById('control-touch');
+
+    _bindTap(keyboardBtn, () => this._selectControl('keyboard'));
+    _bindTap(touchBtn, () => this._selectControl('touch'));
+
+    // Start game button — use both onclick and touchstart for mobile compatibility
+    const startBtn = document.getElementById("start-btn");
     if (startBtn) {
       _bindTap(startBtn, () => this._showControlSelection());
     } else {

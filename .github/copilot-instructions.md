@@ -169,3 +169,32 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - Keep game state immutable where possible
 - Validate user input and game state boundaries
 - Handle edge cases in collision detection
+
+## Mobile Touch Input — Critical Bug Pattern
+
+### The `click`-only handler bug
+This project sets `touch-action: none` on `body` (required for the game canvas). This prevents the browser from synthesizing `click` events from touch, so any interactive element that only listens for `click` or assigns `.onclick` **will not respond on mobile**.
+
+**Wrong — click-only:**
+```js
+btn.onclick = () => doSomething();
+btn.addEventListener("click", handler);
+```
+
+**Correct — use the `_bindTap` helper (Game.js) or an equivalent pattern:**
+```js
+// reusable helper
+const _bindTap = (el, fn) => {
+  if (!el) return;
+  el.onclick = fn;
+  el.addEventListener("touchstart", (e) => { e.preventDefault(); fn(e); }, { passive: false });
+};
+_bindTap(btn, handler);
+```
+
+**Rules:**
+- Every button, menu item, overlay, or clickable `div` visible during gameplay or in menus must bind **both** `click` (for desktop) and `touchstart` (for mobile).
+- Always call `e.preventDefault()` in the `touchstart` handler to suppress the delayed synthetic click and prevent double-firing.
+- Use `{ passive: false }` so `preventDefault()` is allowed.
+- Backdrop/overlay "close on tap" patterns need the same dual binding.
+- When auditing new UI code, search for `.onclick =` and `addEventListener("click"` and verify each has a matching `touchstart` counterpart.
