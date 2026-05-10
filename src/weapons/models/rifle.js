@@ -19,8 +19,8 @@ const RIFLE_CONFIG = {
   penetration: 2,
   bulletSpeed: 70,
   muzzleFlashIntensity: 1.0,
-  recoil: 15,
-  recoilDecay: 0.88,
+  recoil: 12,
+  recoilDecay: 0.3,
   screenShake: 3,
   shell: {
     size: { radius: 0.011, height: 0.055 },

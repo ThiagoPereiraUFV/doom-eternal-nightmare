@@ -18,8 +18,8 @@ const SMG_CONFIG = {
   penetration: 0.8,
   bulletSpeed: 55,
   muzzleFlashIntensity: 0.7,
-  recoil: 10,
-  recoilDecay: 0.92,
+  recoil: 6,
+  recoilDecay: 0.3,
   screenShake: 2,
   shell: {
     size: { radius: 0.011, height: 0.04 },
