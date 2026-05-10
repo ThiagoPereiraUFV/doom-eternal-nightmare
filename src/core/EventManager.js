@@ -65,46 +65,12 @@ export class EventManager {
     for (const callback of callbacks) {
       try {
         callback(...args);
-      } catch (error) {
+      } catch {
         // Silently handle errors in event handlers
       }
     }
   }
 
-  /**
-   * Subscribe to an event once
-   * @param {string} eventName - Name of the event
-   * @param {Function} callback - Function to call when event fires
-   */
-  once(eventName, callback) {
-    const onceWrapper = (...args) => {
-      callback(...args);
-      this.off(eventName, onceWrapper);
-    };
-
-    this.on(eventName, onceWrapper);
-  }
-
-  /**
-   * Remove all listeners for an event
-   * @param {string} eventName - Name of the event
-   */
-  clear(eventName) {
-    if (eventName) {
-      this._events.delete(eventName);
-    } else {
-      this._events.clear();
-    }
-  }
-
-  /**
-   * Get count of listeners for an event
-   * @param {string} eventName - Name of the event
-   * @returns {number} Number of listeners
-   */
-  listenerCount(eventName) {
-    return this._events.has(eventName) ? this._events.get(eventName).length : 0;
-  }
 }
 
 export default EventManager;

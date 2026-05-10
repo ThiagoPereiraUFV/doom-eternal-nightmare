@@ -11,8 +11,6 @@ export class InputManager {
 
     this.keys = {};
     this.mouse = {
-      x: 0,
-      y: 0,
       leftButton: false,
       rightButton: false,
     };
@@ -30,7 +28,6 @@ export class InputManager {
     window.addEventListener("keyup", (e) => this._handleKeyUp(e));
 
     // Mouse events
-    this.canvas.addEventListener("mousemove", (e) => this._handleMouseMove(e));
     this.canvas.addEventListener("mousedown", (e) => this._handleMouseDown(e));
     this.canvas.addEventListener("mouseup", (e) => this._handleMouseUp(e));
 
@@ -54,17 +51,6 @@ export class InputManager {
   _handleKeyUp(e) {
     this.keys[e.key.toLowerCase()] = false;
     this.eventManager.emit("keyup", e.key);
-  }
-
-  /**
-   * Handle mouse move event
-   * @private
-   */
-  _handleMouseMove(e) {
-    const rect = this.canvas.getBoundingClientRect();
-    this.mouse.x = e.clientX - rect.left;
-    this.mouse.y = e.clientY - rect.top;
-    this.eventManager.emit("mousemove", this.mouse);
   }
 
   /**
@@ -105,32 +91,6 @@ export class InputManager {
   }
 
   /**
-   * Check if any of multiple keys are pressed
-   * @param {...string} keys - Keys to check
-   * @returns {boolean} True if any key is pressed
-   */
-  isAnyKeyPressed(...keys) {
-    return keys.some((key) => this.isKeyPressed(key));
-  }
-
-  /**
-   * Check if all keys are pressed
-   * @param {...string} keys - Keys to check
-   * @returns {boolean} True if all keys are pressed
-   */
-  areAllKeysPressed(...keys) {
-    return keys.every((key) => this.isKeyPressed(key));
-  }
-
-  /**
-   * Get mouse position
-   * @returns {{x: number, y: number}} Mouse position
-   */
-  getMousePosition() {
-    return { x: this.mouse.x, y: this.mouse.y };
-  }
-
-  /**
    * Check if mouse button is pressed
    * @param {string} button - 'left' or 'right'
    * @returns {boolean} True if button is pressed
@@ -139,14 +99,7 @@ export class InputManager {
     return button === "left" ? this.mouse.leftButton : this.mouse.rightButton;
   }
 
-  /**
-   * Clear all input states
-   */
-  clear() {
-    this.keys = {};
-    this.mouse.leftButton = false;
-    this.mouse.rightButton = false;
-  }
 }
+
 
 export default InputManager;

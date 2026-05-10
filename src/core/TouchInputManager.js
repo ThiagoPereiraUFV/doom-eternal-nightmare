@@ -11,12 +11,12 @@ export class TouchInputManager {
    */
   constructor(eventManager) {
     this.eventManager = eventManager;
-    
+
     // Constants
     this.JOYSTICK_MAX_DISTANCE = 50; // pixels
     this.JOYSTICK_CENTER_POSITION = 25; // Center position as percentage of joystick element
     this.JOYSTICK_MOVEMENT_RANGE = 25; // Maximum movement range as percentage
-    
+
     // Virtual joystick state
     this.joystick = {
       active: false,
@@ -27,7 +27,7 @@ export class TouchInputManager {
       deltaX: 0,
       deltaY: 0,
     };
-    
+
     // Look area state
     this.lookArea = {
       active: false,
@@ -36,24 +36,21 @@ export class TouchInputManager {
       deltaX: 0,
       deltaY: 0,
     };
-    
-    // Touch button states
-    this.buttons = {};
-    
+
     // Elements
     this.touchControls = document.getElementById('touchControls');
     this.joystickElement = document.getElementById('touchJoystick');
     this.joystickStick = document.getElementById('joystickStick');
     this.lookAreaElement = document.getElementById('touchLookArea');
-    
+
     // Validate elements exist
     if (!this.touchControls || !this.joystickElement || !this.lookAreaElement) {
       console.warn('Touch control elements not found in DOM');
     }
-    
+
     this._setupListeners();
   }
-  
+
   /**
    * Enable touch controls
    */
@@ -62,7 +59,7 @@ export class TouchInputManager {
       this.touchControls.classList.add('active');
     }
   }
-  
+
   /**
    * Disable touch controls
    */
@@ -72,7 +69,7 @@ export class TouchInputManager {
     }
     this._resetState();
   }
-  
+
   /**
    * Setup touch event listeners
    * @private
@@ -85,7 +82,7 @@ export class TouchInputManager {
       this.joystickElement.addEventListener('touchend', (e) => this._handleJoystickEnd(e));
       this.joystickElement.addEventListener('touchcancel', (e) => this._handleJoystickEnd(e));
     }
-    
+
     // Look area
     if (this.lookAreaElement) {
       this.lookAreaElement.addEventListener('touchstart', (e) => this._handleLookStart(e));
@@ -94,7 +91,7 @@ export class TouchInputManager {
       this.lookAreaElement.addEventListener('touchcancel', (e) => this._handleLookEnd(e));
     }
   }
-  
+
   /**
    * Handle joystick touch start
    * @private
@@ -103,16 +100,16 @@ export class TouchInputManager {
     e.preventDefault();
     const touch = e.touches[0];
     const rect = this.joystickElement.getBoundingClientRect();
-    
+
     this.joystick.active = true;
     this.joystick.startX = rect.left + rect.width / 2;
     this.joystick.startY = rect.top + rect.height / 2;
     this.joystick.currentX = touch.clientX;
     this.joystick.currentY = touch.clientY;
-    
+
     this._updateJoystick();
   }
-  
+
   /**
    * Handle joystick touch move
    * @private
@@ -120,14 +117,14 @@ export class TouchInputManager {
   _handleJoystickMove(e) {
     e.preventDefault();
     if (!this.joystick.active) return;
-    
+
     const touch = e.touches[0];
     this.joystick.currentX = touch.clientX;
     this.joystick.currentY = touch.clientY;
-    
+
     this._updateJoystick();
   }
-  
+
   /**
    * Handle joystick touch end
    * @private
@@ -137,14 +134,14 @@ export class TouchInputManager {
     this.joystick.active = false;
     this.joystick.deltaX = 0;
     this.joystick.deltaY = 0;
-    
+
     // Reset stick position
     if (this.joystickStick) {
       this.joystickStick.style.left = `${this.JOYSTICK_CENTER_POSITION}%`;
       this.joystickStick.style.top = `${this.JOYSTICK_CENTER_POSITION}%`;
     }
   }
-  
+
   /**
    * Calculate joystick stick position as percentage
    * @private
@@ -154,7 +151,7 @@ export class TouchInputManager {
   _calculateStickPosition(clampedValue) {
     return this.JOYSTICK_CENTER_POSITION + (clampedValue / this.JOYSTICK_MAX_DISTANCE) * this.JOYSTICK_MOVEMENT_RANGE;
   }
-  
+
   /**
    * Update joystick state
    * @private
@@ -162,19 +159,19 @@ export class TouchInputManager {
   _updateJoystick() {
     const dx = this.joystick.currentX - this.joystick.startX;
     const dy = this.joystick.currentY - this.joystick.startY;
-    
+
     // Limit to joystick radius
     const distance = Math.sqrt(dx * dx + dy * dy);
     const angle = Math.atan2(dy, dx);
-    
+
     const clampedDistance = Math.min(distance, this.JOYSTICK_MAX_DISTANCE);
     const clampedX = Math.cos(angle) * clampedDistance;
     const clampedY = Math.sin(angle) * clampedDistance;
-    
+
     // Normalize to -1 to 1 range
     this.joystick.deltaX = clampedX / this.JOYSTICK_MAX_DISTANCE;
     this.joystick.deltaY = clampedY / this.JOYSTICK_MAX_DISTANCE;
-    
+
     // Update visual position
     if (this.joystickStick) {
       const stickX = this._calculateStickPosition(clampedX);
@@ -183,7 +180,7 @@ export class TouchInputManager {
       this.joystickStick.style.top = `${stickY}%`;
     }
   }
-  
+
   /**
    * Handle look area touch start
    * @private
@@ -191,12 +188,12 @@ export class TouchInputManager {
   _handleLookStart(e) {
     e.preventDefault();
     const touch = e.touches[0];
-    
+
     this.lookArea.active = true;
     this.lookArea.lastX = touch.clientX;
     this.lookArea.lastY = touch.clientY;
   }
-  
+
   /**
    * Handle look area touch move
    * @private
@@ -204,16 +201,16 @@ export class TouchInputManager {
   _handleLookMove(e) {
     e.preventDefault();
     if (!this.lookArea.active) return;
-    
+
     const touch = e.touches[0];
-    
+
     this.lookArea.deltaX = touch.clientX - this.lookArea.lastX;
     this.lookArea.deltaY = touch.clientY - this.lookArea.lastY;
-    
+
     this.lookArea.lastX = touch.clientX;
     this.lookArea.lastY = touch.clientY;
   }
-  
+
   /**
    * Handle look area touch end
    * @private
@@ -224,7 +221,7 @@ export class TouchInputManager {
     this.lookArea.deltaX = 0;
     this.lookArea.deltaY = 0;
   }
-  
+
   /**
    * Get movement input (-1 to 1)
    * @returns {{forward: number, strafe: number}}
@@ -235,7 +232,7 @@ export class TouchInputManager {
       strafe: this.joystick.deltaX,
     };
   }
-  
+
   /**
    * Get look delta
    * @returns {{x: number, y: number}}
@@ -245,14 +242,14 @@ export class TouchInputManager {
       x: this.lookArea.deltaX,
       y: this.lookArea.deltaY,
     };
-    
+
     // Reset delta after reading (consumed)
     this.lookArea.deltaX = 0;
     this.lookArea.deltaY = 0;
-    
+
     return delta;
   }
-  
+
   /**
    * Reset all touch input state
    * @private
@@ -261,11 +258,11 @@ export class TouchInputManager {
     this.joystick.active = false;
     this.joystick.deltaX = 0;
     this.joystick.deltaY = 0;
-    
+
     this.lookArea.active = false;
     this.lookArea.deltaX = 0;
     this.lookArea.deltaY = 0;
-    
+
     if (this.joystickStick) {
       this.joystickStick.style.left = `${this.JOYSTICK_CENTER_POSITION}%`;
       this.joystickStick.style.top = `${this.JOYSTICK_CENTER_POSITION}%`;

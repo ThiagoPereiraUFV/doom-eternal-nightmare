@@ -97,43 +97,6 @@ body {
 }
 
 
-#touch-look-zone {
-	position: absolute;
-	top: 0;
-	right: 0;
-	width: 60%;
-	height: 100%;
-	pointer-events: auto;
-	/* transparent — just a touch capture area */
-}
-
-#touch-joystick-base {
-	position: absolute;
-	bottom: 90px;
-	left: 60px;
-	width: 130px;
-	height: 130px;
-	border-radius: 50%;
-	border: 2px solid rgba(255, 255, 255, 0.25);
-	background: rgba(255, 255, 255, 0.06);
-	pointer-events: auto;
-	touch-action: none;
-}
-
-#touch-joystick-knob {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	width: 54px;
-	height: 54px;
-	border-radius: 50%;
-	background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.55), rgba(255,255,255,0.18));
-	border: 2px solid rgba(255, 255, 255, 0.4);
-	transform: translate(-50%, -50%);
-	pointer-events: none;
-	transition: transform 0.05s ease-out;
-}
-
 #touch-fire {
 	position: absolute;
 	bottom: 65px;
