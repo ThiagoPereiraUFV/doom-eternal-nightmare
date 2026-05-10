@@ -270,7 +270,7 @@ export class Player {
    * Update player state
    * @param {number} deltaTime - Time since last frame
    */
-  update(_deltaTime) {
+  update(deltaTime) {
     // Update weapon reload
     if (this.currentWeapon) {
       if (this.currentWeapon.updateReload()) {
@@ -279,12 +279,19 @@ export class Player {
       }
     }
 
-    // Decay recoil
-    this.recoilOffset *= GameConfig.WEAPON_3D.RECOIL_DECAY;
+    const frameFactor = Math.max(0, Math.min(10, deltaTime * 60));
+    const recoilDecay = Math.pow(
+      this.currentWeapon?.recoilDecay ?? GameConfig.WEAPON_3D.RECOIL_DECAY,
+      frameFactor,
+    );
+    this.recoilOffset *= recoilDecay;
+    if (Math.abs(this.recoilOffset) < 0.02) { this.recoilOffset = 0; }
 
-    // Decay screen shake
-    this.screenShake.x *= GameConfig.PLAYER.SCREEN_SHAKE_DECAY;
-    this.screenShake.y *= GameConfig.PLAYER.SCREEN_SHAKE_DECAY;
+    const shakeDecay = Math.pow(GameConfig.PLAYER.SCREEN_SHAKE_DECAY, frameFactor);
+    this.screenShake.x *= shakeDecay;
+    this.screenShake.y *= shakeDecay;
+    if (Math.abs(this.screenShake.x) < 0.01) { this.screenShake.x = 0; }
+    if (Math.abs(this.screenShake.y) < 0.01) { this.screenShake.y = 0; }
   }
 
   /**

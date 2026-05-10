@@ -704,9 +704,9 @@ export class Game {
 
     this.player.move(forward, strafe, this.map, deltaTime);
 
-    // ── Auto-fire (rifle held) ──────────────────────────────────
+    // ── Auto-fire for auto weapons only ──────────────────────────
     const weapon = this.player.currentWeapon;
-    if (weapon?.isAutoFire) {
+    if (weapon?.fireType === "auto") {
       const leftHeld  = this.inputManager.isMouseButtonPressed("left");
       const touchHeld = !!this._touchFireActive;
       if (leftHeld || touchHeld) {

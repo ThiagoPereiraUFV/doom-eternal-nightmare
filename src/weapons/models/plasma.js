@@ -20,7 +20,9 @@ const PLASMA_CONFIG = {
   bulletSpeed: 80,
   muzzleFlashIntensity: 1.8,
   recoil: 8,
+  recoilDecay: 0.94,
   screenShake: 2,
+  fireType: "auto",
   audio: {
     shoot: [
       { action: "toneBurst", type: "sawtooth", freq: 440, freqEnd: 180, vol: 0.35, attack: 0, decay: 0.12, dur: 0.16 },

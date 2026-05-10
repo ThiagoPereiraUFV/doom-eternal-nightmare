@@ -15,10 +15,12 @@ const RIFLE_CONFIG = {
   fireRate: 150,
   spread: 0.02,
   reloadTime: 2000,
+  fireType: "auto",
   penetration: 2,
   bulletSpeed: 70,
   muzzleFlashIntensity: 1.0,
   recoil: 15,
+  recoilDecay: 0.88,
   screenShake: 3,
   shell: {
     size: { radius: 0.011, height: 0.055 },
@@ -49,7 +51,6 @@ const RIFLE_CONFIG = {
 export class Rifle extends Weapon {
   constructor() {
     super("RIFLE", RIFLE_CONFIG);
-    this.isAutoFire = true; // fires continuously while shoot is held
   }
 
   /**

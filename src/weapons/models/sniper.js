@@ -14,11 +14,13 @@ const SNIPER_CONFIG = {
   reserveAmmo: 20,
   fireRate: 1200,
   spread: 0.002,
+  fireType: "manual",
   reloadTime: 3000,
   penetration: 5,
   bulletSpeed: 200,
   muzzleFlashIntensity: 2.0,
   recoil: 60,
+  recoilDecay: 0.68,
   screenShake: 12,
   shell: {
     size: { radius: 0.011, height: 0.055 },

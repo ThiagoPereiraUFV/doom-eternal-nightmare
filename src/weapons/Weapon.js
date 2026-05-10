@@ -26,8 +26,11 @@ export class Weapon {
     this.bulletSpeed = stats.bulletSpeed || 50;
     this.muzzleFlashIntensity = stats.muzzleFlashIntensity || 1.0;
     this.recoil = stats.recoil || 20;
+    this.recoilDecay = stats.recoilDecay ?? GameConfig.WEAPON_3D.RECOIL_DECAY;
     this.screenShake = stats.screenShake || 5;
     this.pellets = stats.pellets || 1;
+    this.fireType = stats.fireType || (stats.isAutoFire ? "auto" : "semi");
+    this.isAutoFire = this.fireType === "auto";
     this.render = stats.render || {};
     this.audio = stats.audio || {};
     this.shell = stats.shell ?? null;

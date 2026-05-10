@@ -13,11 +13,13 @@ const SMG_CONFIG = {
   reserveAmmo: 140,
   fireRate: 80,
   spread: 0.08,
+  fireType: "auto",
   reloadTime: 1800,
   penetration: 0.8,
   bulletSpeed: 55,
   muzzleFlashIntensity: 0.7,
   recoil: 10,
+  recoilDecay: 0.92,
   screenShake: 2,
   shell: {
     size: { radius: 0.011, height: 0.04 },

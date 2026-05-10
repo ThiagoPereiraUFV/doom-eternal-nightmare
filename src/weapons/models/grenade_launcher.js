@@ -12,11 +12,13 @@ const GRENADE_CONFIG = {
   reserveAmmo: 24,
   fireRate: 900,
   spread: 0.01,
+  fireType: "manual",
   reloadTime: 2800,
   penetration: 3,
   bulletSpeed: 25,
   muzzleFlashIntensity: 2.5,
   recoil: 50,
+  recoilDecay: 0.70,
   screenShake: 15,
   shell: {
     size: { radius: 0.018, height: 0.06 },

@@ -13,10 +13,12 @@ const PISTOL_CONFIG = {
   fireRate: 250,
   spread: 0.05,
   reloadTime: 1500,
+  fireType: "semi",
   penetration: 1,
   bulletSpeed: 50,
   muzzleFlashIntensity: 0.8,
   recoil: 25,
+  recoilDecay: 0.78,
   screenShake: 5,
   shell: {
     size: { radius: 0.011, height: 0.04 },
