@@ -20,6 +20,13 @@ const RIFLE_CONFIG = {
   muzzleFlashIntensity: 1.0,
   recoil: 15,
   screenShake: 3,
+  shell: {
+    size: { radius: 0.011, height: 0.055 },
+    speed: 0.09,
+    variance: 0.045,
+    material: "spent",
+    offsetDistance: 0.22,
+  },
   audio: {
     shoot: [
       { action: "noiseBurst", freq: 55, q: 0.5, filterType: "lowpass", vol: 0.55, attack: 0, decay: 0.18, dur: 0.22 },

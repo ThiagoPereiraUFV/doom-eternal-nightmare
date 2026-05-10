@@ -18,6 +18,13 @@ const PISTOL_CONFIG = {
   muzzleFlashIntensity: 0.8,
   recoil: 25,
   screenShake: 5,
+  shell: {
+    size: { radius: 0.011, height: 0.04 },
+    speed: 0.08,
+    variance: 0.04,
+    material: "spent",
+    offsetDistance: 0.2,
+  },
   audio: {
     shoot: [
       { action: "noiseBurst", freq: 55, q: 0.5, filterType: "lowpass", vol: 0.7, attack: 0, decay: 0.18, dur: 0.22 },

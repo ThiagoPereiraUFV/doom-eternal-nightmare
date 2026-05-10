@@ -351,30 +351,49 @@ export class Renderer {
    * @param {number} px - Player world X
    * @param {number} py - Player world Y
    * @param {number} angle - Player facing angle
-   * @param {'pistol'|'rifle'|'shotgun'} shellType
+   * @param {Object|string} shellConfig - Generic shell descriptor or legacy shell type
    */
-  spawnShell(px, py, angle, shellType = "pistol") {
-    const isRifle = shellType === "rifle";
-    const isShotgun = shellType === "shotgun";
-    const r = isShotgun ? 0.018 : 0.011;
-    const h = isShotgun ? 0.07 : isRifle ? 0.055 : 0.04;
+  spawnShell(px, py, angle, shellConfig = {}) {
+    if (typeof shellConfig === "string") {
+      shellConfig = { type: shellConfig };
+    }
+
+    const size = shellConfig.size || {};
+    const r = size.radius ?? 0.011;
+    const h = size.height ?? 0.04;
     const geo = new THREE.CylinderGeometry(r, r * 0.85, h, 8);
-    const mat = Math.random() < 0.5 ? this._shellMat : this._shellSpentMat;
+
+    let mat;
+    if (shellConfig.material instanceof THREE.Material) {
+      mat = shellConfig.material;
+    } else if (shellConfig.material === "spent") {
+      mat = this._shellSpentMat;
+    } else {
+      mat = this._shellMat;
+    }
+
     const mesh = new THREE.Mesh(geo, mat);
 
     // Spawn near camera right side
-    const ejAngle = angle + Math.PI / 2;
-    mesh.position.set(px + Math.cos(ejAngle) * 0.2, 0.5, py + Math.sin(ejAngle) * 0.2);
+    const ejAngle = angle + (shellConfig.angleOffset ?? Math.PI / 2);
+    mesh.position.set(
+      px + Math.cos(ejAngle) * (shellConfig.offsetDistance ?? 0.2),
+      shellConfig.spawnY ?? 0.5,
+      py + Math.sin(ejAngle) * (shellConfig.offsetDistance ?? 0.2),
+    );
 
-    // Random eject velocity (right + up + slightly forward)
-    const speed = 0.08 + Math.random() * 0.06;
+    const speed = shellConfig.speed ?? 0.08;
+    const variance = shellConfig.variance ?? 0.06;
+    const up = shellConfig.upVelocity ?? 0.06;
+    const meshSpeed = speed + Math.random() * variance;
+
     this.scene.add(mesh);
     this._shells.push({
       mesh,
       vel: new THREE.Vector3(
-        Math.cos(ejAngle) * speed + (Math.random() - 0.5) * 0.03,
-        0.06 + Math.random() * 0.04,
-        Math.sin(ejAngle) * speed + (Math.random() - 0.5) * 0.03,
+        Math.cos(ejAngle) * meshSpeed + (Math.random() - 0.5) * 0.03,
+        up + Math.random() * 0.04,
+        Math.sin(ejAngle) * meshSpeed + (Math.random() - 0.5) * 0.03,
       ),
       angVel: new THREE.Vector3(
         (Math.random() - 0.5) * 15,
@@ -382,7 +401,7 @@ export class Renderer {
         (Math.random() - 0.5) * 15,
       ),
       life: 0,
-      maxLife: 4 + Math.random() * 3,
+      maxLife: shellConfig.maxLife ?? 4 + Math.random() * 3,
       bounces: 0,
       bounced: false,
     });

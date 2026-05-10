@@ -18,6 +18,13 @@ const GRENADE_CONFIG = {
   muzzleFlashIntensity: 2.5,
   recoil: 50,
   screenShake: 15,
+  shell: {
+    size: { radius: 0.018, height: 0.06 },
+    speed: 0.075,
+    variance: 0.05,
+    material: "spent",
+    offsetDistance: 0.24,
+  },
   splashRadius: 2.5,
   audio: {
     shoot: [

@@ -21,6 +21,13 @@ const SHOTGUN_CONFIG = {
   muzzleFlashIntensity: 1.5,
   recoil: 40,
   screenShake: 8,
+  shell: {
+    size: { radius: 0.018, height: 0.07 },
+    speed: 0.10,
+    variance: 0.06,
+    material: "spent",
+    offsetDistance: 0.26,
+  },
   audio: {
     shoot: [
       { action: "noiseBurst", freq: 55, q: 0.5, filterType: "lowpass", vol: 0.9, attack: 0, decay: 0.18, dur: 0.22 },

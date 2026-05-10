@@ -287,6 +287,11 @@ export class Game {
     this.eventManager.on("reloadCompleted", () => {
       this._updateHUD();
     });
+
+    this.eventManager.on("weaponFired", ({ weapon, angle }) => {
+      if (!weapon || !weapon.shell) { return; }
+      this.renderer.spawnShell?.(this.player.x, this.player.y, angle, weapon.shell);
+    });
   }
 
   /**
@@ -554,7 +559,7 @@ export class Game {
 
     // Add weapons — only those allowed by difficulty
     const ammoMult = diff.ammoMultiplier;
-    const availableGuns = diff.availableGuns ?? ['pistol', 'shotgun', 'rifle'];
+    const availableGuns = diff.availableGuns;
     for (const type of availableGuns) {
       try {
         const weapon = await WeaponFactory.create(type);

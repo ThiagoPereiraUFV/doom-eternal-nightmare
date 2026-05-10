@@ -19,6 +19,13 @@ const SMG_CONFIG = {
   muzzleFlashIntensity: 0.7,
   recoil: 10,
   screenShake: 2,
+  shell: {
+    size: { radius: 0.011, height: 0.04 },
+    speed: 0.085,
+    variance: 0.05,
+    material: "spent",
+    offsetDistance: 0.2,
+  },
   audio: {
     shoot: [
       { action: "noiseBurst", freq: 55, q: 0.5, filterType: "lowpass", vol: 0.40, attack: 0, decay: 0.18, dur: 0.22 },
@@ -83,7 +90,6 @@ export class SMG extends Weapon {
     const hit = this._raycast(player.x, player.y, shotAngle, map, enemies);
 
     eventManager?.emit("weaponFired", { weapon: this, angle: shotAngle, hit });
-    eventManager?.emit("shellEjected", { x: player.x, y: player.y, angle: player.angle, type: "pistol" });
 
     return { success: true, hit, recoil: this.recoil, screenShake: this.screenShake };
   }

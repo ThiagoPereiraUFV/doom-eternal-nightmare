@@ -30,6 +30,7 @@ export class Weapon {
     this.pellets = stats.pellets || 1;
     this.render = stats.render || {};
     this.audio = stats.audio || {};
+    this.shell = stats.shell ?? null;
 
     // Raycast & falloff config — sourced from per-weapon defaults and GameConfig falloff constants
     this.maxDistance = stats.maxDistance ?? 50;

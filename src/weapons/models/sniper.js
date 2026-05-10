@@ -20,6 +20,13 @@ const SNIPER_CONFIG = {
   muzzleFlashIntensity: 2.0,
   recoil: 60,
   screenShake: 12,
+  shell: {
+    size: { radius: 0.011, height: 0.055 },
+    speed: 0.095,
+    variance: 0.05,
+    material: "spent",
+    offsetDistance: 0.24,
+  },
   audio: {
     shoot: [
       { action: "noiseBurst", freq: 50, q: 0.4, filterType: "lowpass", vol: 1.0, attack: 0, decay: 0.22, dur: 0.28 },
@@ -96,7 +103,6 @@ export class SniperRifle extends Weapon {
     const allHits = this._penetratingRaycast(player.x, player.y, shotAngle, map, enemies);
 
     eventManager?.emit("weaponFired", { weapon: this, angle: shotAngle, hits: allHits });
-    eventManager?.emit("shellEjected", { x: player.x, y: player.y, angle: player.angle, type: "rifle" });
 
     return { success: true, hits: allHits, hit: allHits[0] ?? { type: "miss" }, recoil: this.recoil, screenShake: this.screenShake };
   }
