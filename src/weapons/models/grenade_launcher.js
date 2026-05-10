@@ -65,7 +65,7 @@ const GRENADE_CONFIG = {
   render: {
     basePosition: [0.18, -0.18, -0.36],
     baseRotationY: -0.09,
-    adsOffset: [-0.16, 0.08, -0.09],
+    adsOffset: [-0.18, 0.05, 0],
     adsRotation: -0.02,
     scale: 3.0,
     muzzleFlash: { intensity: 7.0 },

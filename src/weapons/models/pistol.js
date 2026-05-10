@@ -83,7 +83,7 @@ const PISTOL_CONFIG = {
   render: {
     basePosition: [0.14, -0.14, -0.33],
     baseRotationY: -0.08,
-    adsOffset: [-0.12, 0.06, -0.08],
+    adsOffset: [-0.14, 0.05, 0],
     adsRotation: -0.02,
     scale: 3.0,
     muzzleFlash: { intensity: 5.0 },

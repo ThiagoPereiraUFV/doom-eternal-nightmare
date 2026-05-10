@@ -85,7 +85,7 @@ const RIFLE_CONFIG = {
   render: {
     basePosition: [0.19, -0.155, -0.34],
     baseRotationY: -0.09,
-    adsOffset: [-0.19, 0.08, -0.09],
+    adsOffset: [-0.19, 0.05, 0],
     adsRotation: 0.0,
     adsFOV: 22,
     scale: 3.0,

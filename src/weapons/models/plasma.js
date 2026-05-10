@@ -19,8 +19,8 @@ const PLASMA_CONFIG = {
   penetration: 4,
   bulletSpeed: 80,
   muzzleFlashIntensity: 1.8,
-  recoil: 8,
-  recoilDecay: 0.94,
+  recoil: 5,
+  recoilDecay: 0.3,
   screenShake: 2,
   fireType: "auto",
   audio: {
@@ -60,7 +60,7 @@ const PLASMA_CONFIG = {
   render: {
     basePosition: [0.15, -0.145, -0.32],
     baseRotationY: -0.08,
-    adsOffset: [-0.14, 0.07, -0.08],
+    adsOffset: [-0.15, 0.05, 0],
     adsRotation: -0.02,
     scale: 3.0,
     muzzleFlash: { intensity: 6.0, color: 0x00aaff, duration: 0.08 },
