@@ -18,6 +18,9 @@ export const GameConfig = {
     SPAWN_X: 3,
     SPAWN_Y: 3,
 
+    // Radius used for wall collision clearance.
+    COLLISION_RADIUS: 0.2,
+
     // Core survivability values.
     MAX_HEALTH: 100,
     MAX_STAMINA: 100,

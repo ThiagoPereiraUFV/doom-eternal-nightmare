@@ -41,6 +41,39 @@ export class Player {
   }
 
   /**
+   * Check whether the player can occupy a point with its collision radius.
+   * @param {number} x - Candidate x position
+   * @param {number} y - Candidate y position
+   * @param {Array} map - Game map
+   * @returns {boolean} True when the player fits at the target point
+   * @private
+   */
+  _canOccupy(x, y, map) {
+    const radius = GameConfig.PLAYER.COLLISION_RADIUS;
+    const offsets = [
+      [-radius, -radius],
+      [radius, -radius],
+      [-radius, radius],
+      [radius, radius],
+    ];
+
+    return offsets.every(([offsetX, offsetY]) => {
+      const sampleX = x + offsetX;
+      const sampleY = y + offsetY;
+      const mapX = Math.floor(sampleX);
+      const mapY = Math.floor(sampleY);
+
+      return (
+        mapY >= 0 &&
+        mapY < map.length &&
+        mapX >= 0 &&
+        mapX < map[0].length &&
+        map[mapY][mapX] === 0
+      );
+    });
+  }
+
+  /**
    * Add weapon to inventory
    * @param {Weapon} weapon - Weapon to add
    */
@@ -135,28 +168,31 @@ export class Player {
     const normalizedX = moveLength > 0 ? moveX / moveLength : 0;
     const normalizedY = moveLength > 0 ? moveY / moveLength : 0;
 
-    // Apply movement
-    const newX = this.x + normalizedX * speed;
-    const newY = this.y + normalizedY * speed;
+    // Apply movement per axis so wall sliding still works while keeping
+    // a small clearance from walls and corners.
+    const deltaX = normalizedX * speed;
+    const deltaY = normalizedY * speed;
+    let moved = false;
 
-    // Check collision with bounds checking
-    const mapY = Math.floor(newY);
-    const mapX = Math.floor(newX);
-
-    if (
-      mapY >= 0 &&
-      mapY < map.length &&
-      mapX >= 0 &&
-      mapX < map[0].length &&
-      map[mapY][mapX] === 0
-    ) {
-      this.x = newX;
-      this.y = newY;
-
-      // Update head bob
-      if (forward !== 0 || strafe !== 0) {
-        this.headBob += 0.15;
+    if (deltaX !== 0) {
+      const candidateX = this.x + deltaX;
+      if (this._canOccupy(candidateX, this.y, map)) {
+        this.x = candidateX;
+        moved = true;
       }
+    }
+
+    if (deltaY !== 0) {
+      const candidateY = this.y + deltaY;
+      if (this._canOccupy(this.x, candidateY, map)) {
+        this.y = candidateY;
+        moved = true;
+      }
+    }
+
+    // Update head bob only when movement actually changes position.
+    if (moved && (forward !== 0 || strafe !== 0)) {
+      this.headBob += 0.15;
     }
 
     // Clamp stamina
