@@ -1,421 +1,563 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>DOOM - Eternal Nightmare</title>
+    <meta
+      name="description"
+      content="A retro-style first-person shooter game inspired by classic titles like Doom."
+    />
+    <meta name="author" content="ThiagoPereiraUFV" />
+    <meta
+      name="keywords"
+      content="Doom, FPS, Retro Game, First-Person Shooter, JavaScript Game, Canvas Game"
+    />
+    <meta name="theme-color" content="#ff0033" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="DOOM" />
+    <!-- PWA manifest -->
+    <link rel="manifest" href="manifest.json" />
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png" />
+    <link rel="stylesheet" href="style.css" />
+    <script src="src/data/sprites.js"></script>
 
-	<head>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-		<title>DOOM - Eternal Nightmare</title>
-		<meta name="description" content="A retro-style first-person shooter game inspired by classic titles like Doom.">
-		<meta name="author" content="ThiagoPereiraUFV">
-		<meta name="keywords" content="Doom, FPS, Retro Game, First-Person Shooter, JavaScript Game, Canvas Game">
-		<meta name="theme-color" content="#ff0033">
-		<meta name="mobile-web-app-capable" content="yes">
-		<meta name="apple-mobile-web-app-capable" content="yes">
-		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-		<meta name="apple-mobile-web-app-title" content="DOOM">
-		<!-- PWA manifest -->
-		<link rel="manifest" href="manifest.json">
-		<!-- Icons -->
-		<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
-		<link rel="apple-touch-icon" href="icons/icon-192.png">
-		<link rel="stylesheet" href="style.css">
-		<script src="src/data/sprites.js"></script>
+    <!-- Three.js importmap for 3D rendering -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+        }
+      }
+    </script>
 
-		<!-- Three.js importmap for 3D rendering -->
-		<script type="importmap">
-		{
-			"imports": {
-				"three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-				"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
-			}
-		}
-		</script>
+    <!-- New modular ES6 system -->
+    <script type="module" src="src/core/Game.js"></script>
+  </head>
 
-		<!-- New modular ES6 system -->
-		<script type="module" src="src/core/Game.js"></script>
-	</head>
+  <body>
+    <div id="scanlines"></div>
+    <div id="vignette"></div>
 
-	<body>
-		<div id="scanlines"></div>
-		<div id="vignette"></div>
+    <canvas id="gameCanvas"></canvas>
+    <canvas id="weaponCanvas" style="display: none"></canvas>
+    <div id="muzzleFlash"></div>
+    <div id="crosshair">
+      <div class="ch-line ch-bottom"></div>
+      <div class="ch-line ch-left"></div>
+      <div class="ch-line ch-right"></div>
+      <div class="ch-center"></div>
+    </div>
 
-		<canvas id="gameCanvas"></canvas>
-		<canvas id="weaponCanvas" style="display:none"></canvas>
-		<div id="muzzleFlash"></div>
-		<div id="crosshair">
-		<div class="ch-line ch-top"></div>
-		<div class="ch-line ch-bottom"></div>
-		<div class="ch-line ch-left"></div>
-		<div class="ch-line ch-right"></div>
-		<div class="ch-center"></div>
-	</div>
+    <!-- Touch controls (shown only on touch devices via CSS media query) -->
+    <div id="touch-controls">
+      <button id="touch-fire">FIRE</button>
+      <button id="touch-ads">ADS</button>
+      <button id="touch-reload">R</button>
+      <button id="touch-prev-weapon">&#9664;</button>
+      <button id="touch-next-weapon">&#9654;</button>
+      <button id="touch-jump" style="display: none"></button>
+    </div>
 
-	<!-- Touch controls (shown only on touch devices via CSS media query) -->
-	<div id="touch-controls">
-		<button id="touch-fire">FIRE</button>
-		<button id="touch-ads">ADS</button>
-		<button id="touch-reload">R</button>
-		<button id="touch-prev-weapon">&#9664;</button>
-		<button id="touch-next-weapon">&#9654;</button>
-		<button id="touch-jump" style="display:none"></button>
-	</div>
+    <div id="hud">
+      <div class="hud-bottom-left">
+        <div class="stat-card health-card">
+          <div class="stat-icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="24"
+              height="24"
+              stroke="currentColor"
+              stroke-width="2"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"
+              ></path>
+            </svg>
+          </div>
+          <div class="stat-data">
+            <div class="stat-value"><span id="health">100</span>%</div>
+            <div class="stat-bar-bg">
+              <div
+                id="health-bar"
+                class="stat-bar-fill"
+                style="width: 100%"
+              ></div>
+            </div>
+          </div>
+        </div>
 
-	<div id="hud">
-		<div class="hud-bottom-left">
-			<div class="stat-card health-card">
-				<div class="stat-icon">
-					<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"
-						stroke-linecap="round" stroke-linejoin="round">
-						<path
-							d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z">
-						</path>
-					</svg>
-				</div>
-					<div class="stat-data">
-						<div class="stat-value"><span id="health">100</span>%</div>
-						<div class="stat-bar-bg">
-							<div id="health-bar" class="stat-bar-fill" style="width: 100%"></div>
-						</div>
-					</div>
-				</div>
+        <div class="stat-card stamina-card">
+          <div class="stat-icon">
+            <svg
+              viewBox="0 0 24 24"
+              width="24"
+              height="24"
+              stroke="currentColor"
+              stroke-width="2"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+            </svg>
+          </div>
+          <div class="stat-data">
+            <div class="stat-value"><span id="stamina">100</span>%</div>
+            <div class="stat-bar-bg">
+              <div
+                id="stamina-bar"
+                class="stat-bar-fill"
+                style="width: 100%"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-				<div class="stat-card stamina-card">
-					<div class="stat-icon">
-						<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"
-							stroke-linecap="round" stroke-linejoin="round">
-							<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
-						</svg>
-					</div>
-					<div class="stat-data">
-						<div class="stat-value"><span id="stamina">100</span>%</div>
-						<div class="stat-bar-bg">
-							<div id="stamina-bar" class="stat-bar-fill" style="width: 100%"></div>
-						</div>
-					</div>
-				</div>
-			</div>
+      <div class="hud-bottom-right">
+        <div class="weapon-card">
+          <div class="weapon-header">
+            <span id="weapon">PISTOL</span>
+          </div>
+          <div class="ammo-display">
+            <svg
+              class="ammo-icon"
+              viewBox="0 0 24 24"
+              width="24"
+              height="24"
+              stroke="currentColor"
+              stroke-width="2"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+              <line x1="6" y1="6" x2="6.01" y2="6"></line>
+              <line x1="6" y1="18" x2="6.01" y2="18"></line>
+            </svg>
+            <span id="ammo">12 / 48</span>
+          </div>
+        </div>
 
-			<div class="hud-bottom-right">
-				<div class="weapon-card">
-					<div class="weapon-header">
-						<span id="weapon">PISTOL</span>
-					</div>
-					<div class="ammo-display">
-						<svg class="ammo-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2"
-							fill="none" stroke-linecap="round" stroke-linejoin="round">
-							<rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
-							<rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
-							<line x1="6" y1="6" x2="6.01" y2="6"></line>
-							<line x1="6" y1="18" x2="6.01" y2="18"></line>
-						</svg>
-						<span id="ammo">12 / 48</span>
-					</div>
-				</div>
+        <div class="kills-card">
+          <div class="kills-label">DEMONS ELIMINATED</div>
+          <div class="kills-value" id="enemyCounter">0 / 0</div>
+        </div>
+      </div>
+    </div>
 
-				<div class="kills-card">
-					<div class="kills-label">DEMONS ELIMINATED</div>
-					<div class="kills-value" id="enemyCounter">0 / 0</div>
-				</div>
-			</div>
+    <div id="loadingScreen">
+      <div class="loading-content">
+        <div class="loading-logo">DOOM</div>
+        <div class="loading-status">INITIALIZING SYSTEMS...</div>
+        <div class="loading-bar-container">
+          <div class="loading-bar" id="loadingBar"></div>
+        </div>
+        <div class="loading-details">
+          <span id="loadingText">LOADING ASSETS</span>
+          <span id="loadingPercentage">0%</span>
+        </div>
+      </div>
+    </div>
 
-		</div>
+    <div id="startScreen" class="hidden">
+      <div class="start-content">
+        <h1 class="game-title">
+          DOOM <span class="subtitle">ETERNAL NIGHTMARE</span>
+        </h1>
 
-		<div id="loadingScreen">
-			<div class="loading-content">
-				<div class="loading-logo">DOOM</div>
-				<div class="loading-status">INITIALIZING SYSTEMS...</div>
-				<div class="loading-bar-container">
-					<div class="loading-bar" id="loadingBar"></div>
-				</div>
-				<div class="loading-details">
-					<span id="loadingText">LOADING ASSETS</span>
-					<span id="loadingPercentage">0%</span>
-				</div>
-			</div>
-		</div>
+        <!-- Difficulty selector -->
+        <div class="difficulty-section">
+          <div class="difficulty-label">SELECT DIFFICULTY</div>
+          <div class="difficulty-row">
+            <button class="diff-btn" data-diff="easy">
+              <span class="diff-name">EASY</span>
+              <span class="diff-sub">More ammo · Forgiving</span>
+            </button>
+            <button class="diff-btn selected" data-diff="medium">
+              <span class="diff-name">MEDIUM</span>
+              <span class="diff-sub">Balanced challenge</span>
+            </button>
+            <button class="diff-btn" data-diff="hard">
+              <span class="diff-name">HARD</span>
+              <span class="diff-sub">Scarce ammo · Tougher</span>
+            </button>
+            <button class="diff-btn diff-impossible" data-diff="impossible">
+              <span class="diff-name">IMPOSSIBLE</span>
+              <span class="diff-sub">One mistake — dead</span>
+            </button>
+            <button class="diff-btn diff-custom" data-diff="custom">
+              <span class="diff-name">CUSTOM</span>
+              <span class="diff-sub">Your rules</span>
+            </button>
+          </div>
+        </div>
 
-		<div id="startScreen" class="hidden">
-			<div class="start-content">
-				<h1 class="game-title">DOOM <span class="subtitle">ETERNAL NIGHTMARE</span></h1>
+        <div class="menu-box">
+          <div class="menu-item active" id="start-btn">INITIATE MISSION</div>
+        </div>
+      </div>
+    </div>
 
-				<!-- Difficulty selector -->
-				<div class="difficulty-section">
-					<div class="difficulty-label">SELECT DIFFICULTY</div>
-					<div class="difficulty-row">
-						<button class="diff-btn" data-diff="easy">
-							<span class="diff-name">EASY</span>
-							<span class="diff-sub">More ammo · Forgiving</span>
-						</button>
-						<button class="diff-btn selected" data-diff="medium">
-							<span class="diff-name">MEDIUM</span>
-							<span class="diff-sub">Balanced challenge</span>
-						</button>
-						<button class="diff-btn" data-diff="hard">
-							<span class="diff-name">HARD</span>
-							<span class="diff-sub">Scarce ammo · Tougher</span>
-						</button>
-						<button class="diff-btn diff-impossible" data-diff="impossible">
-							<span class="diff-name">IMPOSSIBLE</span>
-							<span class="diff-sub">One mistake — dead</span>
-						</button>
-						<button class="diff-btn diff-custom" data-diff="custom">
-							<span class="diff-name">CUSTOM</span>
-							<span class="diff-sub">Your rules</span>
-						</button>
-					</div>
-				</div>
+    <!-- Mission briefing overlay — shown for 5 s after INITIATE MISSION, before game starts -->
+    <div id="missionBriefingScreen" class="hidden">
+      <div class="briefing-content">
+        <div class="briefing-header">
+          <div class="briefing-title">MISSION BRIEFING</div>
+          <div class="briefing-countdown" id="briefingCountdown">5</div>
+        </div>
 
-				<div class="menu-box">
-					<div class="menu-item active" id="start-btn">INITIATE MISSION</div>
-				</div>
-			</div>
-		</div>
+        <!-- Difficulty stats (populated by JS before showing) -->
+        <div class="briefing-stats difficulty-stats" id="diff-stats">
+          <span id="diff-stat-health">❤ 100</span>
+          <span id="diff-stat-stamina">⚡ 100</span>
+          <span id="diff-stat-ammo">🔹 ×1.0</span>
+          <span id="diff-stat-enemies">☠ 50 enemies</span>
+          <span id="diff-stat-light">💡 Normal</span>
+          <span id="diff-stat-autoreload">🔄 Auto-reload: On</span>
+          <span id="diff-stat-aimassist">🎯 Aim assist: Off</span>
+          <span id="diff-stat-guns">🔫 All guns</span>
+        </div>
 
-		<!-- Mission briefing overlay — shown for 5 s after INITIATE MISSION, before game starts -->
-		<div id="missionBriefingScreen" class="hidden">
-			<div class="briefing-content">
-				<div class="briefing-header">
-					<div class="briefing-title">MISSION BRIEFING</div>
-					<div class="briefing-countdown" id="briefingCountdown">5</div>
-				</div>
+        <!-- Controls reference — keyboard on desktop, touch on mobile -->
+        <div class="controls-card" id="controls-desktop">
+          <div class="controls-card-title">KEYBOARD &amp; MOUSE</div>
+          <div class="controls-grid">
+            <div class="ctrl-row">
+              <span class="ctrl-key">W A S D</span
+              ><span class="ctrl-desc">Move</span>
+            </div>
+            <div class="ctrl-row">
+              <span class="ctrl-key">MOUSE</span
+              ><span class="ctrl-desc">Aim / Look</span>
+            </div>
+            <div class="ctrl-row">
+              <span class="ctrl-key">LMB</span
+              ><span class="ctrl-desc">Shoot</span>
+            </div>
+            <div class="ctrl-row">
+              <span class="ctrl-key">R</span
+              ><span class="ctrl-desc">Reload</span>
+            </div>
+            <div class="ctrl-row">
+              <span class="ctrl-key">SHIFT</span
+              ><span class="ctrl-desc">Sprint</span>
+            </div>
+            <div class="ctrl-row">
+              <span class="ctrl-key">Q / E</span
+              ><span class="ctrl-desc">Prev / Next weapon</span>
+            </div>
+            <div class="ctrl-row">
+              <span class="ctrl-key">P</span
+              ><span class="ctrl-desc">Pause</span>
+            </div>
+          </div>
+        </div>
 
-				<!-- Difficulty stats (populated by JS before showing) -->
-				<div class="briefing-stats difficulty-stats" id="diff-stats">
-					<span id="diff-stat-health">❤ 100</span>
-					<span id="diff-stat-stamina">⚡ 100</span>
-					<span id="diff-stat-ammo">🔹 ×1.0</span>
-					<span id="diff-stat-enemies">☠ 50 enemies</span>
-					<span id="diff-stat-light">💡 Normal</span>
-					<span id="diff-stat-autoreload">🔄 Auto-reload: On</span>				<span id="diff-stat-aimassist">🎯 Aim assist: Off</span>					<span id="diff-stat-guns">🔫 All guns</span>
-				</div>
+        <div class="controls-card" id="controls-touch">
+          <div class="controls-card-title">TOUCH SCREEN</div>
+          <div class="controls-grid">
+            <div class="ctrl-row">
+              <span class="ctrl-key ctrl-icon">◉</span
+              ><span class="ctrl-desc">Left joystick — Move</span>
+            </div>
+            <div class="ctrl-row">
+              <span class="ctrl-key ctrl-icon">👆</span
+              ><span class="ctrl-desc">Right drag — Look</span>
+            </div>
+            <div class="ctrl-row">
+              <span class="ctrl-key ctrl-icon ctrl-red">FIRE</span
+              ><span class="ctrl-desc">Shoot</span>
+            </div>
+            <div class="ctrl-row">
+              <span class="ctrl-key ctrl-icon ctrl-blue">ADS</span
+              ><span class="ctrl-desc">Toggle aim</span>
+            </div>
+            <div class="ctrl-row">
+              <span class="ctrl-key ctrl-icon ctrl-blue">R</span
+              ><span class="ctrl-desc">Reload</span>
+            </div>
+            <div class="ctrl-row">
+              <span class="ctrl-key ctrl-icon">◀ ▶</span
+              ><span class="ctrl-desc">Prev / Next weapon</span>
+            </div>
+          </div>
+        </div>
 
-				<!-- Controls reference — keyboard on desktop, touch on mobile -->
-				<div class="controls-card" id="controls-desktop">
-					<div class="controls-card-title">KEYBOARD &amp; MOUSE</div>
-					<div class="controls-grid">
-						<div class="ctrl-row"><span class="ctrl-key">W A S D</span><span class="ctrl-desc">Move</span></div>
-						<div class="ctrl-row"><span class="ctrl-key">MOUSE</span><span class="ctrl-desc">Aim / Look</span></div>
-						<div class="ctrl-row"><span class="ctrl-key">LMB</span><span class="ctrl-desc">Shoot</span></div>
-						<div class="ctrl-row"><span class="ctrl-key">R</span><span class="ctrl-desc">Reload</span></div>
-						<div class="ctrl-row"><span class="ctrl-key">SHIFT</span><span class="ctrl-desc">Sprint</span></div>
-						<div class="ctrl-row"><span class="ctrl-key">Q / E</span><span class="ctrl-desc">Prev / Next weapon</span></div>
-						<div class="ctrl-row"><span class="ctrl-key">P</span><span class="ctrl-desc">Pause</span></div>
-					</div>
-				</div>
+        <button class="briefing-skip" id="briefingSkip">SKIP ▶</button>
+      </div>
+    </div>
 
-				<div class="controls-card" id="controls-touch">
-					<div class="controls-card-title">TOUCH SCREEN</div>
-					<div class="controls-grid">
-						<div class="ctrl-row"><span class="ctrl-key ctrl-icon">◉</span><span class="ctrl-desc">Left joystick — Move</span></div>
-						<div class="ctrl-row"><span class="ctrl-key ctrl-icon">👆</span><span class="ctrl-desc">Right drag — Look</span></div>
-						<div class="ctrl-row"><span class="ctrl-key ctrl-icon ctrl-red">FIRE</span><span class="ctrl-desc">Shoot</span></div>
-						<div class="ctrl-row"><span class="ctrl-key ctrl-icon ctrl-blue">ADS</span><span class="ctrl-desc">Toggle aim</span></div>
-						<div class="ctrl-row"><span class="ctrl-key ctrl-icon ctrl-blue">R</span><span class="ctrl-desc">Reload</span></div>
-						<div class="ctrl-row"><span class="ctrl-key ctrl-icon">◀ ▶</span><span class="ctrl-desc">Prev / Next weapon</span></div>
-					</div>
-				</div>
+    <!-- Custom difficulty settings modal -->
+    <div id="custom-diff-modal" class="custom-modal hidden">
+      <div class="custom-modal-box">
+        <div class="custom-modal-title">CUSTOM SETTINGS</div>
+        <div class="custom-sliders" id="cs-sliders-container"></div>
+        <div class="custom-modal-actions">
+          <button id="cs-apply">APPLY</button>
+          <button id="cs-cancel">CANCEL</button>
+        </div>
+      </div>
+    </div>
 
-				<button class="briefing-skip" id="briefingSkip">SKIP ▶</button>
-			</div>
-		</div>
+    <div id="gameOverScreen" class="overlay-screen">
+      <div class="overlay-content">
+        <h1 class="game-over-title">CRITICAL FAILURE</h1>
+        <p class="overlay-message">OPERATIVE DECEASED</p>
+        <button class="retry-button" id="retry-btn-fail">REBOOT SYSTEM</button>
+      </div>
+    </div>
 
-		<!-- Custom difficulty settings modal -->
-		<div id="custom-diff-modal" class="custom-modal hidden">
-			<div class="custom-modal-box">
-				<div class="custom-modal-title">CUSTOM SETTINGS</div>
-				<div class="custom-sliders" id="cs-sliders-container"></div>
-				<div class="custom-modal-actions">
-					<button id="cs-apply">APPLY</button>
-					<button id="cs-cancel">CANCEL</button>
-				</div>
-			</div>
-		</div>
+    <div id="victoryScreen" class="overlay-screen">
+      <div class="overlay-content">
+        <h1 class="victory-title">MISSION ACCOMPLISHED</h1>
+        <p class="overlay-message">AREA SECURED</p>
+        <button class="retry-button" id="retry-btn-win">NEXT MISSION</button>
+      </div>
+    </div>
 
-		<div id="gameOverScreen" class="overlay-screen">
-			<div class="overlay-content">
-				<h1 class="game-over-title">CRITICAL FAILURE</h1>
-				<p class="overlay-message">OPERATIVE DECEASED</p>
-				<button class="retry-button" id="retry-btn-fail">REBOOT SYSTEM</button>
-			</div>
-		</div>
+    <div id="pauseMenu" class="overlay-screen">
+      <div class="overlay-content">
+        <h1 class="pause-title">PAUSED</h1>
+        <div class="pause-menu-box">
+          <div class="pause-menu-item" id="pause-resume">RESUME MISSION</div>
+          <div class="pause-menu-item" id="pause-exit">EXIT TO MENU</div>
+        </div>
+        <div class="pause-hint">Press P to Resume</div>
+      </div>
+    </div>
 
-		<div id="victoryScreen" class="overlay-screen">
-			<div class="overlay-content">
-				<h1 class="victory-title">MISSION ACCOMPLISHED</h1>
-				<p class="overlay-message">AREA SECURED</p>
-				<button class="retry-button" id="retry-btn-win">NEXT MISSION</button>
-			</div>
-		</div>
+    <div id="touchControls">
+      <div class="touch-joystick" id="touchJoystick">
+        <div class="joystick-base"></div>
+        <div class="joystick-stick" id="joystickStick"></div>
+      </div>
+      <div class="touch-look-area" id="touchLookArea"></div>
+    </div>
 
-		<div id="pauseMenu" class="overlay-screen">
-			<div class="overlay-content">
-				<h1 class="pause-title">PAUSED</h1>
-				<div class="pause-menu-box">
-					<div class="pause-menu-item" id="pause-resume">RESUME MISSION</div>
-					<div class="pause-menu-item" id="pause-exit">EXIT TO MENU</div>
-				</div>
-				<div class="pause-hint">Press P to Resume</div>
-			</div>
-		</div>
+    <!-- Service Worker registration -->
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("./sw.js")
+            .catch((err) => console.warn("SW registration failed:", err));
+        });
+      }
+    </script>
 
-		<div id="touchControls">
-			<div class="touch-joystick" id="touchJoystick">
-				<div class="joystick-base"></div>
-				<div class="joystick-stick" id="joystickStick"></div>
-			</div>
-			<div class="touch-look-area" id="touchLookArea"></div>
-		</div>
+    <script type="module">
+      // Difficulty selector UI logic (runs independently of game module)
+      import { GameConfig } from "./src/config/GameConfig.js";
 
-		<!-- Service Worker registration -->
-	<script>
-		if ('serviceWorker' in navigator) {
-			window.addEventListener('load', () => {
-				navigator.serviceWorker.register('./sw.js')
-					.catch((err) => console.warn('SW registration failed:', err));
-			});
-		}
-	</script>
+      const STATS = {
+        easy: GameConfig.DIFFICULTY.EASY,
+        medium: GameConfig.DIFFICULTY.MEDIUM,
+        hard: GameConfig.DIFFICULTY.HARD,
+        impossible: GameConfig.DIFFICULTY.IMPOSSIBLE,
+        custom: GameConfig.DIFFICULTY.CUSTOM,
+      };
+      const LIGHT_LABEL = {
+        easy: "Bright",
+        medium: "Normal",
+        hard: "Dark",
+        impossible: "Pitch black",
+        custom: "Custom",
+      };
+      const ALL_GUNS =
+        GameConfig.DIFFICULTY_SCHEMA.find((f) => f.key === "availableGuns")
+          ?.options ?? [];
 
-	<script type="module">
-		// Difficulty selector UI logic (runs independently of game module)
-		import { GameConfig } from "./src/config/GameConfig.js";
+      function gunsLabel(guns) {
+        if (!guns || guns.length === ALL_GUNS.length) return "All guns";
+        if (guns.length === 0) return "None";
+        return guns
+          .map((g) =>
+            g.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+          )
+          .join(", ");
+      }
 
-		const STATS = {
-			easy:       GameConfig.DIFFICULTY.EASY,
-			medium:     GameConfig.DIFFICULTY.MEDIUM,
-			hard:       GameConfig.DIFFICULTY.HARD,
-			impossible: GameConfig.DIFFICULTY.IMPOSSIBLE,
-			custom:     GameConfig.DIFFICULTY.CUSTOM,
-		};
-		const LIGHT_LABEL = {
-			easy: "Bright", medium: "Normal", hard: "Dark", impossible: "Pitch black", custom: "Custom",
-		};
-		const ALL_GUNS = GameConfig.DIFFICULTY_SCHEMA.find(f => f.key === 'availableGuns')?.options ?? [];
+      function updateStats(diffId) {
+        const d = STATS[diffId];
+        if (!d) return;
+        document.getElementById("diff-stat-health").textContent =
+          `\u2764 ${d.maxHealth} HP`;
+        document.getElementById("diff-stat-stamina").textContent =
+          `\u26a1 ${d.maxStamina} stamina`;
+        document.getElementById("diff-stat-ammo").textContent =
+          `\ud83d\udd39 \u00d7${d.ammoMultiplier.toFixed(2)} ammo`;
+        document.getElementById("diff-stat-enemies").textContent =
+          `\u2620 ${d.enemyCount} enemies`;
+        document.getElementById("diff-stat-light").textContent =
+          `\ud83d\udca1 ${LIGHT_LABEL[diffId]}`;
+        document.getElementById("diff-stat-autoreload").textContent =
+          `\ud83d\udd04 Auto-reload: ${d.autoReload ? "On" : "Off"}`;
+        document.getElementById("diff-stat-aimassist").textContent =
+          `\ud83c\udfaf Aim assist: ${d.aimAssist ? "On" : "Off"}`;
+        document.getElementById("diff-stat-guns").textContent =
+          `\ud83d\udd2b ${gunsLabel(d.availableGuns)}`;
+      }
 
-		function gunsLabel(guns) {
-			if (!guns || guns.length === ALL_GUNS.length) return 'All guns';
-			if (guns.length === 0) return 'None';
-			return guns.map(g => g.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())).join(', ');
-		}
+      // ── Build custom modal inputs from schema ───────────────────
+      function buildSliders() {
+        const container = document.getElementById("cs-sliders-container");
+        const defaults = GameConfig.DIFFICULTY.CUSTOM;
+        let currentGroup = null;
 
-		function updateStats(diffId) {
-			const d = STATS[diffId];
-			if (!d) return;
-			document.getElementById("diff-stat-health").textContent     = `\u2764 ${d.maxHealth} HP`;
-			document.getElementById("diff-stat-stamina").textContent    = `\u26a1 ${d.maxStamina} stamina`;
-			document.getElementById("diff-stat-ammo").textContent       = `\ud83d\udd39 \u00d7${d.ammoMultiplier.toFixed(2)} ammo`;
-			document.getElementById("diff-stat-enemies").textContent    = `\u2620 ${d.enemyCount} enemies`;
-			document.getElementById("diff-stat-light").textContent      = `\ud83d\udca1 ${LIGHT_LABEL[diffId]}`;
-			document.getElementById("diff-stat-autoreload").textContent = `\ud83d\udd04 Auto-reload: ${d.autoReload ? 'On' : 'Off'}`;
-			document.getElementById("diff-stat-aimassist").textContent  = `\ud83c\udfaf Aim assist: ${d.aimAssist ? 'On' : 'Off'}`;
-			document.getElementById("diff-stat-guns").textContent       = `\ud83d\udd2b ${gunsLabel(d.availableGuns)}`;
-		}
+        for (const field of GameConfig.DIFFICULTY_SCHEMA) {
+          if (field.group !== currentGroup) {
+            currentGroup = field.group;
+            const lbl = document.createElement("div");
+            lbl.className = "cs-group-label";
+            lbl.textContent = field.group;
+            container.appendChild(lbl);
+          }
 
-		// ── Build custom modal inputs from schema ───────────────────
-		function buildSliders() {
-			const container = document.getElementById("cs-sliders-container");
-			const defaults = GameConfig.DIFFICULTY.CUSTOM;
-			let currentGroup = null;
+          const row = document.createElement("div");
+          const defaultVal = defaults[field.key];
 
-			for (const field of GameConfig.DIFFICULTY_SCHEMA) {
-				if (field.group !== currentGroup) {
-					currentGroup = field.group;
-					const lbl = document.createElement('div');
-					lbl.className = 'cs-group-label';
-					lbl.textContent = field.group;
-					container.appendChild(lbl);
-				}
+          if (field.type === "range") {
+            row.className = "cs-row";
+            row.innerHTML =
+              `<label>${field.label} <span class="cs-val" id="cs-val-${field.key}">${field.format(defaultVal)}</span></label>` +
+              `<input type="range" id="cs-input-${field.key}" min="${field.min}" max="${field.max}" step="${field.step}" value="${defaultVal}">`;
+            const input = row.querySelector("input");
+            const span = row.querySelector(".cs-val");
+            input.addEventListener("input", () => {
+              span.textContent = field.format(input.value);
+            });
+          } else if (field.type === "checkbox") {
+            row.className = "cs-row cs-row-check";
+            row.innerHTML =
+              `<label>${field.label}</label>` +
+              `<input type="checkbox" id="cs-input-${field.key}" ${defaultVal ? "checked" : ""}>`;
+          } else if (field.type === "guns") {
+            row.className = "cs-row cs-row-check";
+            const checks = field.options
+              .map((g) => {
+                const label = g
+                  .replace(/_/g, " ")
+                  .replace(/\b\w/g, (c) => c.toUpperCase());
+                const checked = (defaultVal ?? []).includes(g) ? "checked" : "";
+                return `<label><input type="checkbox" id="cs-gun-${g}" ${checked}> ${label}</label>`;
+              })
+              .join("");
+            row.innerHTML = `<label>${field.label}</label><span class="cs-gun-checks">${checks}</span>`;
+          }
 
-				const row = document.createElement('div');
-				const defaultVal = defaults[field.key];
+          container.appendChild(row);
+        }
+      }
 
-				if (field.type === 'range') {
-					row.className = 'cs-row';
-					row.innerHTML =
-						`<label>${field.label} <span class="cs-val" id="cs-val-${field.key}">${field.format(defaultVal)}</span></label>` +
-						`<input type="range" id="cs-input-${field.key}" min="${field.min}" max="${field.max}" step="${field.step}" value="${defaultVal}">`;
-					const input = row.querySelector('input');
-					const span  = row.querySelector('.cs-val');
-					input.addEventListener('input', () => { span.textContent = field.format(input.value); });
-				} else if (field.type === 'checkbox') {
-					row.className = 'cs-row cs-row-check';
-					row.innerHTML =
-						`<label>${field.label}</label>` +
-						`<input type="checkbox" id="cs-input-${field.key}" ${defaultVal ? 'checked' : ''}>`;
-				} else if (field.type === 'guns') {
-					row.className = 'cs-row cs-row-check';
-					const checks = field.options.map(g => {
-						const label   = g.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-						const checked = (defaultVal ?? []).includes(g) ? 'checked' : '';
-						return `<label><input type="checkbox" id="cs-gun-${g}" ${checked}> ${label}</label>`;
-					}).join('');
-					row.innerHTML = `<label>${field.label}</label><span class="cs-gun-checks">${checks}</span>`;
-				}
+      // ── Custom modal logic ──────────────────────────────────────
+      const modal = document.getElementById("custom-diff-modal");
+      const csApply = document.getElementById("cs-apply");
+      const csCancel = document.getElementById("cs-cancel");
 
-				container.appendChild(row);
-			}
-		}
+      function openCustomModal() {
+        modal.classList.remove("hidden");
+      }
 
-		// ── Custom modal logic ──────────────────────────────────────
-		const modal   = document.getElementById("custom-diff-modal");
-		const csApply  = document.getElementById("cs-apply");
-		const csCancel = document.getElementById("cs-cancel");
+      function applyCustom() {
+        const c = GameConfig.DIFFICULTY.CUSTOM;
+        for (const field of GameConfig.DIFFICULTY_SCHEMA) {
+          if (field.type === "range") {
+            const val = parseFloat(
+              document.getElementById(`cs-input-${field.key}`).value,
+            );
+            // Use integer for step >= 1 fields (count, damage, etc.)
+            c[field.key] = field.step >= 1 ? Math.round(val) : val;
+          } else if (field.type === "checkbox") {
+            c[field.key] = document.getElementById(
+              `cs-input-${field.key}`,
+            ).checked;
+          } else if (field.type === "guns") {
+            const selected = field.options.filter(
+              (g) => document.getElementById(`cs-gun-${g}`)?.checked,
+            );
+            c[field.key] = selected.length > 0 ? selected : [field.options[0]];
+          }
+        }
+        STATS.custom = c;
+        updateStats("custom");
+        modal.classList.add("hidden");
+      }
 
-		function openCustomModal() {
-			modal.classList.remove("hidden");
-		}
+      const _tap = (el, fn) => {
+        el.addEventListener("click", fn);
+        el.addEventListener(
+          "touchstart",
+          (e) => {
+            e.preventDefault();
+            fn(e);
+          },
+          { passive: false },
+        );
+      };
+      _tap(csApply, applyCustom);
+      _tap(csCancel, () => modal.classList.add("hidden"));
+      // Close on backdrop click/tap — only preventDefault when tapping the backdrop itself,
+      // NOT when touching inside the modal-box (would break scrolling)
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) modal.classList.add("hidden");
+      });
+      modal.addEventListener(
+        "touchstart",
+        (e) => {
+          if (e.target === modal) {
+            e.preventDefault();
+            modal.classList.add("hidden");
+          }
+        },
+        { passive: false },
+      );
 
-		function applyCustom() {
-			const c = GameConfig.DIFFICULTY.CUSTOM;
-			for (const field of GameConfig.DIFFICULTY_SCHEMA) {
-				if (field.type === 'range') {
-					const val = parseFloat(document.getElementById(`cs-input-${field.key}`).value);
-					// Use integer for step >= 1 fields (count, damage, etc.)
-					c[field.key] = field.step >= 1 ? Math.round(val) : val;
-				} else if (field.type === 'checkbox') {
-					c[field.key] = document.getElementById(`cs-input-${field.key}`).checked;
-				} else if (field.type === 'guns') {
-					const selected = field.options.filter(g => document.getElementById(`cs-gun-${g}`)?.checked);
-					c[field.key] = selected.length > 0 ? selected : [field.options[0]];
-				}
-			}
-			STATS.custom = c;
-			updateStats("custom");
-			modal.classList.add("hidden");
-		}
+      // ── Difficulty button wiring ────────────────────────────────
+      document.querySelectorAll(".diff-btn").forEach((btn) => {
+        const activate = (e) => {
+          e?.stopPropagation();
+          document
+            .querySelectorAll(".diff-btn")
+            .forEach((b) => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          if (btn.dataset.diff === "custom") {
+            openCustomModal();
+          } else {
+            updateStats(btn.dataset.diff);
+          }
+        };
+        btn.addEventListener("click", (e) => activate(e));
+        btn.addEventListener(
+          "touchstart",
+          (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            activate(e);
+          },
+          { passive: false },
+        );
+      });
 
-		const _tap = (el, fn) => {
-			el.addEventListener("click", fn);
-			el.addEventListener("touchstart", (e) => { e.preventDefault(); fn(e); }, { passive: false });
-		};
-		_tap(csApply,  applyCustom);
-		_tap(csCancel, () => modal.classList.add("hidden"));
-		// Close on backdrop click/tap — only preventDefault when tapping the backdrop itself,
-		// NOT when touching inside the modal-box (would break scrolling)
-		modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.add("hidden"); });
-		modal.addEventListener("touchstart", (e) => {
-			if (e.target === modal) { e.preventDefault(); modal.classList.add("hidden"); }
-		}, { passive: false });
-
-		// ── Difficulty button wiring ────────────────────────────────
-		document.querySelectorAll(".diff-btn").forEach(btn => {
-			const activate = (e) => {
-				e?.stopPropagation();
-				document.querySelectorAll(".diff-btn").forEach(b => b.classList.remove("selected"));
-				btn.classList.add("selected");
-				if (btn.dataset.diff === "custom") {
-					openCustomModal();
-				} else {
-					updateStats(btn.dataset.diff);
-				}
-			};
-			btn.addEventListener("click",      (e) => activate(e));
-			btn.addEventListener("touchstart",  (e) => { e.preventDefault(); e.stopPropagation(); activate(e); }, { passive: false });
-		});
-
-		// Build modal inputs and init stats display
-		buildSliders();
-		updateStats("medium");
-	</script>
-	</body>
+      // Build modal inputs and init stats display
+      buildSliders();
+      updateStats("medium");
+    </script>
+  </body>
 </html>

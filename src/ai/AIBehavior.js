@@ -104,7 +104,13 @@ export class AIBehavior {
       // Check collision with map bounds guard
       const nx = Math.floor(newX);
       const ny = Math.floor(newY);
-      if (ny >= 0 && ny < map.length && nx >= 0 && nx < map[0].length && map[ny][nx] === 0) {
+      if (
+        ny >= 0 &&
+        ny < map.length &&
+        nx >= 0 &&
+        nx < map[0].length &&
+        map[ny][nx] === 0
+      ) {
         entity.x = newX;
         entity.y = newY;
         return true;

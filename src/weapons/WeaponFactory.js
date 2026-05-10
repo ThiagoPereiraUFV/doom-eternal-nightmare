@@ -13,7 +13,9 @@ export class WeaponFactory {
    * The factory is agnostic to concrete weapon modules and only caches loaded classes.
    */
   static async init() {
-    if (this._initialized) { return; }
+    if (this._initialized) {
+      return;
+    }
     this._initialized = true;
   }
 
@@ -59,7 +61,10 @@ export class WeaponFactory {
   static async _importModuleClass(path) {
     try {
       const module = await import(path);
-      return module.default || Object.values(module).find((exported) => typeof exported === "function");
+      return (
+        module.default ||
+        Object.values(module).find((exported) => typeof exported === "function")
+      );
     } catch {
       return null;
     }

@@ -58,7 +58,7 @@ export class Renderer {
     this._dyingEnemies = []; // {mesh, startTime, duration}
 
     // ─── Blood particle system ─────────────────────────────────────
-    this._bloodParticles = [];  // {mesh, vel, life, maxLife}
+    this._bloodParticles = []; // {mesh, vel, life, maxLife}
     this._bloodPoolGroup = new THREE.Group();
     this.scene.add(this._bloodPoolGroup);
 
@@ -99,7 +99,14 @@ export class Renderer {
     this.scene.add(this._ambientLight);
 
     // Player flashlight — follows camera each frame
-    this.playerLight = new THREE.SpotLight(0xfff0dd, 3.5, 18, Math.PI * 0.28, 0.4, 1.2);
+    this.playerLight = new THREE.SpotLight(
+      0xfff0dd,
+      3.5,
+      18,
+      Math.PI * 0.28,
+      0.4,
+      1.2,
+    );
     this.playerLight.position.set(0, 0.5, 0);
     this.playerLight.target.position.set(0, 0.4, -1);
     this.scene.add(this.playerLight);
@@ -131,8 +138,8 @@ export class Renderer {
    * Smoothly zoom camera FOV for ADS / hip-fire.
    * @param {boolean} aiming - True = ADS, false = hip-fire
    */
-  setADS(aiming) {
-    const target = aiming ? 42 : 75;
+  setADS(aiming, weapon = null) {
+    const target = aiming ? (weapon?.render?.adsFOV ?? 42) : 75;
     if (Math.abs(this.camera.fov - target) > 0.2) {
       this.camera.fov += (target - this.camera.fov) * 0.18;
       this.camera.updateProjectionMatrix();
@@ -147,12 +154,12 @@ export class Renderer {
     // MeshBasicMaterial — always full texture color, no lighting math needed
     this._wallMats = {
       concrete: new THREE.MeshBasicMaterial({ map: this._wallTex("concrete") }),
-      brick:    new THREE.MeshBasicMaterial({ map: this._wallTex("brick") }),
-      metal:    new THREE.MeshBasicMaterial({ map: this._wallTex("metal") }),
-      stone:    new THREE.MeshBasicMaterial({ map: this._wallTex("stone") }),
+      brick: new THREE.MeshBasicMaterial({ map: this._wallTex("brick") }),
+      metal: new THREE.MeshBasicMaterial({ map: this._wallTex("metal") }),
+      stone: new THREE.MeshBasicMaterial({ map: this._wallTex("stone") }),
     };
     this._floorMat = new THREE.MeshBasicMaterial({ map: this._floorTex() });
-    this._ceilMat  = new THREE.MeshBasicMaterial({ color: 0x1a1a28 });
+    this._ceilMat = new THREE.MeshBasicMaterial({ color: 0x1a1a28 });
 
     const lam = (hex, extra = {}) =>
       new THREE.MeshLambertMaterial({ color: hex, ...extra });
@@ -161,51 +168,80 @@ export class Renderer {
 
     this._enemyMats = {
       demon: {
-        body: lam(0xaa1100), head: lam(0xcc2200),
-        eye:  bas(0xff4400), horn: lam(0x330000),
+        body: lam(0xaa1100),
+        head: lam(0xcc2200),
+        eye: bas(0xff4400),
+        horn: lam(0x330000),
       },
       zombie: {
-        body: lam(0x445533), head: lam(0x556644),
-        eye:  bas(0xff0000), horn: lam(0x222222),
+        body: lam(0x445533),
+        head: lam(0x556644),
+        eye: bas(0xff0000),
+        horn: lam(0x222222),
       },
       ghost: {
         body: new THREE.MeshLambertMaterial({
-          color: 0x5599cc, transparent: true, opacity: 0.6,
+          color: 0x5599cc,
+          transparent: true,
+          opacity: 0.6,
           emissive: new THREE.Color(0x112233),
         }),
         head: lam(0x77bbee, { transparent: true, opacity: 0.65 }),
-        eye:  bas(0x00ffff, { transparent: true, opacity: 0.9 }),
+        eye: bas(0x00ffff, { transparent: true, opacity: 0.9 }),
         horn: lam(0x334455),
       },
       brute: {
-        body: lam(0x664422), head: lam(0x775533),
-        eye:  bas(0xff2200), horn: lam(0x111111),
+        body: lam(0x664422),
+        head: lam(0x775533),
+        eye: bas(0xff2200),
+        horn: lam(0x111111),
       },
     };
 
     this._wMat = {
-      dark:     lam(0x1c1c1c),          // polymer frame / receiver
-      metal:    lam(0x38393b),          // blued steel / iron
-      bright:   lam(0x8c9098),          // stainless / bare barrel
-      steel:    lam(0xb0b8be),          // polished steel / muzzle crown
-      wood:     lam(0x5c3317),          // walnut stock
-      tan:      lam(0x8b7355),          // desert tan / furniture
-      glass:    new THREE.MeshLambertMaterial({
-        color: 0x334466, transparent: true, opacity: 0.7,
+      dark: lam(0x1c1c1c), // polymer frame / receiver
+      scope: new THREE.MeshLambertMaterial({
+        color: 0x1c1c1c,
+        side: THREE.DoubleSide,
       }),
-      rubber:   lam(0x0f0f0f),          // grip panels / stippling
-      red:      bas(0xcc1100),          // laser / dot
+      metal: lam(0x38393b), // blued steel / iron
+      bright: lam(0x8c9098), // stainless / bare barrel
+      steel: lam(0xb0b8be), // polished steel / muzzle crown
+      wood: lam(0x5c3317), // walnut stock
+      tan: lam(0x8b7355), // desert tan / furniture
+      glass: new THREE.MeshLambertMaterial({
+        color: 0x334466,
+        transparent: true,
+        opacity: 0.7,
+        side: THREE.DoubleSide,
+      }),
+      rubber: lam(0x0f0f0f), // grip panels / stippling
+      red: bas(0xcc1100), // laser / dot
     };
   }
 
   _initBloodPool() {
     // Pre-build blood/shell materials for reuse
-    this._bloodMat = new THREE.MeshBasicMaterial({ color: 0x880000, side: THREE.FrontSide });
-    this._bloodDarkMat = new THREE.MeshBasicMaterial({ color: 0x440000, side: THREE.FrontSide });
+    this._bloodMat = new THREE.MeshBasicMaterial({
+      color: 0x880000,
+      side: THREE.FrontSide,
+    });
+    this._bloodDarkMat = new THREE.MeshBasicMaterial({
+      color: 0x440000,
+      side: THREE.FrontSide,
+    });
     this._shellMat = new THREE.MeshLambertMaterial({ color: 0xd4a020 });
     this._shellSpentMat = new THREE.MeshLambertMaterial({ color: 0x8a6010 });
-    this._plasmaSphereMat = new THREE.MeshBasicMaterial({ color: 0x00ccff, transparent: true, opacity: 0.9 });
-    this._explosionMat = new THREE.MeshBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.85 });
+    this._plasmaSphereMat = new THREE.MeshBasicMaterial({
+      color: 0x00ccff,
+      transparent: true,
+      opacity: 0.9,
+    });
+    this._explosionMat = new THREE.MeshBasicMaterial({
+      color: 0xff6600,
+      transparent: true,
+      opacity: 0.85,
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -222,9 +258,10 @@ export class Renderer {
     const count = Math.round(8 * intensity + Math.random() * 6 * intensity);
     for (let i = 0; i < count; i++) {
       const size = 0.04 + Math.random() * 0.08 * intensity;
-      const geo = Math.random() < 0.5
-        ? new THREE.SphereGeometry(size, 4, 4)
-        : new THREE.BoxGeometry(size, size * 0.4, size);
+      const geo =
+        Math.random() < 0.5
+          ? new THREE.SphereGeometry(size, 4, 4)
+          : new THREE.BoxGeometry(size, size * 0.4, size);
       const mat = Math.random() < 0.6 ? this._bloodMat : this._bloodDarkMat;
       const mesh = new THREE.Mesh(geo, mat);
       mesh.position.set(
@@ -259,10 +296,17 @@ export class Renderer {
   }
 
   _spawnBloodPool(wx, wy, intensity) {
-    const geo = new THREE.CircleGeometry(0.1 + Math.random() * 0.15 * intensity, 8);
+    const geo = new THREE.CircleGeometry(
+      0.1 + Math.random() * 0.15 * intensity,
+      8,
+    );
     const pool = new THREE.Mesh(geo, this._bloodDarkMat);
     pool.rotation.x = -Math.PI / 2;
-    pool.position.set(wx + (Math.random() - 0.5) * 0.4, 0.01, wy + (Math.random() - 0.5) * 0.4);
+    pool.position.set(
+      wx + (Math.random() - 0.5) * 0.4,
+      0.01,
+      wy + (Math.random() - 0.5) * 0.4,
+    );
     this._bloodPoolGroup.add(pool);
     // Grow the pool over time
     pool.userData.targetScale = 0.8 + intensity * 0.6;
@@ -272,12 +316,25 @@ export class Renderer {
   _spawnWallSplatter(wx, wy, intensity) {
     const count = Math.round(4 * intensity);
     for (let i = 0; i < count; i++) {
-      const geo = new THREE.PlaneGeometry(0.08 + Math.random() * 0.12, 0.06 + Math.random() * 0.1);
+      const geo = new THREE.PlaneGeometry(
+        0.08 + Math.random() * 0.12,
+        0.06 + Math.random() * 0.1,
+      );
       const splat = new THREE.Mesh(geo, this._bloodMat);
       // Place on a nearby wall face at random height
       const side = Math.floor(Math.random() * 4);
-      const offsets = [[0.5, 0, 0], [-0.5, 0, 0], [0, 0, 0.5], [0, 0, -0.5]];
-      const rotations = [[0, Math.PI / 2, 0], [0, -Math.PI / 2, 0], [0, 0, 0], [0, Math.PI, 0]];
+      const offsets = [
+        [0.5, 0, 0],
+        [-0.5, 0, 0],
+        [0, 0, 0.5],
+        [0, 0, -0.5],
+      ];
+      const rotations = [
+        [0, Math.PI / 2, 0],
+        [0, -Math.PI / 2, 0],
+        [0, 0, 0],
+        [0, Math.PI, 0],
+      ];
       const [ox, , oz] = offsets[side];
       const [rx, ry, rz] = rotations[side];
       splat.position.set(wx + ox, 0.2 + Math.random() * 0.6, wy + oz);
@@ -298,7 +355,9 @@ export class Renderer {
         // Blood pools grow
         if (p.mesh.userData.growPool) {
           p.mesh.scale.multiplyScalar(1 + dt * 0.5);
-          if (p.mesh.scale.x > p.mesh.userData.maxScale) { p.mesh.userData.growPool = false; }
+          if (p.mesh.scale.x > p.mesh.userData.maxScale) {
+            p.mesh.userData.growPool = false;
+          }
         }
         // Fade after a while
         if (p.life > p.maxLife) {
@@ -329,16 +388,28 @@ export class Renderer {
 
     // Grow blood pools
     for (const child of this._bloodPoolGroup.children) {
-      if (child.userData.targetScale && child.scale.x < child.userData.targetScale) {
+      if (
+        child.userData.targetScale &&
+        child.scale.x < child.userData.targetScale
+      ) {
         const s = child.scale.x + dt * 0.4;
-        child.scale.set(Math.min(s, child.userData.targetScale), Math.min(s, child.userData.targetScale), 1);
+        child.scale.set(
+          Math.min(s, child.userData.targetScale),
+          Math.min(s, child.userData.targetScale),
+          1,
+        );
       }
     }
 
     // Limit total blood particles for performance
     if (this._bloodParticles.length > 200) {
-      const excess = this._bloodParticles.splice(0, this._bloodParticles.length - 200);
-      for (const p of excess) { this.scene.remove(p.mesh); }
+      const excess = this._bloodParticles.splice(
+        0,
+        this._bloodParticles.length - 200,
+      );
+      for (const p of excess) {
+        this.scene.remove(p.mesh);
+      }
     }
   }
 
@@ -452,7 +523,9 @@ export class Renderer {
     // Limit shells for performance
     if (this._shells.length > 60) {
       const excess = this._shells.splice(0, this._shells.length - 60);
-      for (const s of excess) { this.scene.remove(s.mesh); }
+      for (const s of excess) {
+        this.scene.remove(s.mesh);
+      }
     }
   }
 
@@ -467,17 +540,28 @@ export class Renderer {
       const geo = new THREE.SphereGeometry(size, 4, 4);
       const mat = new THREE.MeshBasicMaterial({
         color: i < count / 2 ? 0xff6600 : 0xffcc00,
-        transparent: true, opacity: 0.9,
+        transparent: true,
+        opacity: 0.9,
       });
       const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(wx + (Math.random() - 0.5) * 0.5, 0.3 + Math.random() * 0.6, wy + (Math.random() - 0.5) * 0.5);
+      mesh.position.set(
+        wx + (Math.random() - 0.5) * 0.5,
+        0.3 + Math.random() * 0.6,
+        wy + (Math.random() - 0.5) * 0.5,
+      );
       const speed = 0.08 + Math.random() * 0.15;
       const ang = Math.random() * Math.PI * 2;
       this.scene.add(mesh);
       this._explosionParticles.push({
-        mesh, mat,
-        vel: new THREE.Vector3(Math.cos(ang) * speed, 0.05 + Math.random() * 0.1, Math.sin(ang) * speed),
-        life: 0, maxLife: 0.6 + Math.random() * 0.3,
+        mesh,
+        mat,
+        vel: new THREE.Vector3(
+          Math.cos(ang) * speed,
+          0.05 + Math.random() * 0.1,
+          Math.sin(ang) * speed,
+        ),
+        life: 0,
+        maxLife: 0.6 + Math.random() * 0.3,
       });
     }
     // Large flash point light
@@ -515,14 +599,16 @@ export class Renderer {
    * @param {THREE.Group} mesh
    */
   startDeathAnimation(mesh) {
-    if (!mesh) { return; }
+    if (!mesh) {
+      return;
+    }
     this._dyingEnemies.push({
       mesh,
       startTime: performance.now() / 1000,
       duration: 1.2,
       startY: mesh.position.y,
       rotDir: Math.random() < 0.5 ? 1 : -1,
-      rotAxis: Math.random() < 0.5 ? 'x' : 'z',
+      rotAxis: Math.random() < 0.5 ? "x" : "z",
     });
   }
 
@@ -552,18 +638,25 @@ export class Renderer {
     const cv = document.createElement("canvas");
     cv.width = cv.height = S;
     const ctx = cv.getContext("2d");
-    const bases = { concrete: "#5a5a5a", brick: "#8b4513", metal: "#445566", stone: "#565548" };
+    const bases = {
+      concrete: "#5a5a5a",
+      brick: "#8b4513",
+      metal: "#445566",
+      stone: "#565548",
+    };
     ctx.fillStyle = bases[type];
     ctx.fillRect(0, 0, S, S);
 
     if (type === "brick") {
-      const bh = 28, bw = 56;
+      const bh = 28,
+        bw = 56;
       for (let row = 0; row < S / bh; row++) {
         const off = (row % 2) * (bw / 2);
         ctx.strokeStyle = "rgba(35,15,5,0.9)";
         ctx.lineWidth = 3;
-        for (let col = -1; col <= S / bw + 1; col++)
-          { ctx.strokeRect(col * bw + off + 1.5, row * bh + 1.5, bw - 3, bh - 3); }
+        for (let col = -1; col <= S / bw + 1; col++) {
+          ctx.strokeRect(col * bw + off + 1.5, row * bh + 1.5, bw - 3, bh - 3);
+        }
       }
       ctx.globalCompositeOperation = "multiply";
       for (let row = 0; row < S / bh; row++) {
@@ -576,7 +669,8 @@ export class Renderer {
       }
       ctx.globalCompositeOperation = "source-over";
     } else if (type === "concrete") {
-      ctx.strokeStyle = "rgba(0,0,0,0.18)"; ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(0,0,0,0.18)";
+      ctx.lineWidth = 1;
       for (let i = 0; i < 50; i++) {
         ctx.beginPath();
         ctx.moveTo(Math.random() * S, Math.random() * S);
@@ -584,29 +678,45 @@ export class Renderer {
         ctx.stroke();
       }
     } else if (type === "metal") {
-      ctx.strokeStyle = "rgba(0,0,0,0.5)"; ctx.lineWidth = 2;
-      for (let y = 0; y <= S; y += 64) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(S, y); ctx.stroke(); }
-      for (let x = 0; x <= S; x += 64) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, S); ctx.stroke(); }
+      ctx.strokeStyle = "rgba(0,0,0,0.5)";
+      ctx.lineWidth = 2;
+      for (let y = 0; y <= S; y += 64) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(S, y);
+        ctx.stroke();
+      }
+      for (let x = 0; x <= S; x += 64) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, S);
+        ctx.stroke();
+      }
       ctx.fillStyle = "rgba(180,190,210,0.7)";
-      for (let y = 32; y < S; y += 64)
-        { for (let x = 32; x < S; x += 64) {
-          ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
-        } }
+      for (let y = 32; y < S; y += 64) {
+        for (let x = 32; x < S; x += 64) {
+          ctx.beginPath();
+          ctx.arc(x, y, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
     } else if (type === "stone") {
-      ctx.strokeStyle = "rgba(20,18,10,0.9)"; ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(20,18,10,0.9)";
+      ctx.lineWidth = 3;
       for (let row = 0; row < 7; row++) {
         const off = (row % 2) * 34;
-        for (let col = -1; col < 6; col++)
-          { ctx.strokeRect(col * 54 + off + 3, row * 40 + 3, 48, 34); }
+        for (let col = -1; col < 6; col++) {
+          ctx.strokeRect(col * 54 + off + 3, row * 40 + 3, 48, 34);
+        }
       }
     }
 
     const id = ctx.getImageData(0, 0, S, S);
     for (let i = 0; i < id.data.length; i += 4) {
       const n = (Math.random() - 0.5) * 22;
-      id.data[i]   = Math.max(0, Math.min(255, id.data[i]   + n));
-      id.data[i+1] = Math.max(0, Math.min(255, id.data[i+1] + n));
-      id.data[i+2] = Math.max(0, Math.min(255, id.data[i+2] + n));
+      id.data[i] = Math.max(0, Math.min(255, id.data[i] + n));
+      id.data[i + 1] = Math.max(0, Math.min(255, id.data[i + 1] + n));
+      id.data[i + 2] = Math.max(0, Math.min(255, id.data[i + 2] + n));
     }
     ctx.putImageData(id, 0, 0);
     const tex = new THREE.CanvasTexture(cv);
@@ -622,15 +732,20 @@ export class Renderer {
     ctx.fillStyle = "#2a2a28";
     ctx.fillRect(0, 0, S, S);
     const ts = 64;
-    ctx.strokeStyle = "rgba(0,0,0,0.65)"; ctx.lineWidth = 2;
-    for (let y = 0; y < S; y += ts)
-      { for (let x = 0; x < S; x += ts)
-        { ctx.strokeRect(x + 1, y + 1, ts - 2, ts - 2); } }
+    ctx.strokeStyle = "rgba(0,0,0,0.65)";
+    ctx.lineWidth = 2;
+    for (let y = 0; y < S; y += ts) {
+      for (let x = 0; x < S; x += ts) {
+        ctx.strokeRect(x + 1, y + 1, ts - 2, ts - 2);
+      }
+    }
     const id = ctx.getImageData(0, 0, S, S);
     for (let i = 0; i < id.data.length; i += 4) {
       const n = (Math.random() - 0.5) * 16;
-      id.data[i] = id.data[i+1] = id.data[i+2] =
-        Math.max(0, Math.min(255, id.data[i] + n));
+      id.data[i] =
+        id.data[i + 1] =
+        id.data[i + 2] =
+          Math.max(0, Math.min(255, id.data[i] + n));
     }
     ctx.putImageData(id, 0, 0);
     const tex = new THREE.CanvasTexture(cv);
@@ -650,7 +765,9 @@ export class Renderer {
    */
   buildMap(map) {
     this.mapGroup.clear();
-    for (const { light } of this._wallLights) { this.scene.remove(light); }
+    for (const { light } of this._wallLights) {
+      this.scene.remove(light);
+    }
     this._wallLights = [];
 
     const rows = map.length;
@@ -684,7 +801,9 @@ export class Renderer {
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
         const tile = map[row][col];
-        if (!tile) { continue; }
+        if (!tile) {
+          continue;
+        }
         const name = typeNames[tile] || "concrete";
         buckets[name].push({ col, row });
 
@@ -702,7 +821,9 @@ export class Renderer {
 
     const baseGeo = new THREE.BoxGeometry(1, WALL_H, 1);
     for (const [typeName, walls] of Object.entries(buckets)) {
-      if (!walls.length) { continue; }
+      if (!walls.length) {
+        continue;
+      }
       const instanced = new THREE.InstancedMesh(
         baseGeo,
         this._wallMats[typeName],
@@ -756,71 +877,88 @@ export class Renderer {
       // Detailed ghost: ethereal form with trailing wisp tails
       const body = sphere(0.26, bM, 0, 0.65, 0, 12);
       // Face features
-      sphere(0.07, eM, -0.1, 0.70, 0.22);
-      sphere(0.07, eM,  0.1, 0.70, 0.22);
+      sphere(0.07, eM, -0.1, 0.7, 0.22);
+      sphere(0.07, eM, 0.1, 0.7, 0.22);
       sphere(0.04, eM, -0.05, 0.63, 0.24);
-      sphere(0.04, eM,  0.05, 0.63, 0.24);
-      sphere(0.03, eM,  0.00, 0.63, 0.25); // mouth
+      sphere(0.04, eM, 0.05, 0.63, 0.24);
+      sphere(0.03, eM, 0.0, 0.63, 0.25); // mouth
       // Trailing body segments
       const seg1 = sphere(0.2, bM, 0, 0.42, 0, 10);
       const seg2 = sphere(0.14, bM, 0, 0.24, 0, 8);
       const seg3 = sphere(0.08, bM, 0, 0.11, 0, 6);
       // Arm wisps
-      const wL = sphere(0.1, bM,  -0.34, 0.55, 0.05, 7);
-      const wR = sphere(0.1, bM,   0.34, 0.55, 0.05, 7);
-      const wL2 = sphere(0.07, bM, -0.44, 0.50, 0.08, 6);
-      const wR2 = sphere(0.07, bM,  0.44, 0.50, 0.08, 6);
+      const wL = sphere(0.1, bM, -0.34, 0.55, 0.05, 7);
+      const wR = sphere(0.1, bM, 0.34, 0.55, 0.05, 7);
+      const wL2 = sphere(0.07, bM, -0.44, 0.5, 0.08, 6);
+      const wR2 = sphere(0.07, bM, 0.44, 0.5, 0.08, 6);
       g.userData.animate = (t) => {
         body.position.y = 0.65 + Math.sin(t * 1.8) * 0.1;
         seg1.position.y = 0.42 + Math.sin(t * 1.8 + 0.3) * 0.08;
         seg2.position.y = 0.24 + Math.sin(t * 1.8 + 0.6) * 0.06;
         seg3.position.y = 0.11 + Math.sin(t * 1.8 + 0.9) * 0.04;
-        wL.position.set( -0.34 + Math.sin(t * 2.2) * 0.08, 0.55 + Math.cos(t * 2.2) * 0.06, 0.05);
-        wR.position.set(  0.34 + Math.sin(t * 2.2 + 1) * 0.08, 0.55 + Math.cos(t * 2.2 + 1) * 0.06, 0.05);
-        wL2.position.set(-0.44 + Math.sin(t * 2.6) * 0.1, 0.50 + Math.cos(t * 2.6) * 0.08, 0.08);
-        wR2.position.set( 0.44 + Math.sin(t * 2.6 + 1) * 0.1, 0.50 + Math.cos(t * 2.6 + 1) * 0.08, 0.08);
+        wL.position.set(
+          -0.34 + Math.sin(t * 2.2) * 0.08,
+          0.55 + Math.cos(t * 2.2) * 0.06,
+          0.05,
+        );
+        wR.position.set(
+          0.34 + Math.sin(t * 2.2 + 1) * 0.08,
+          0.55 + Math.cos(t * 2.2 + 1) * 0.06,
+          0.05,
+        );
+        wL2.position.set(
+          -0.44 + Math.sin(t * 2.6) * 0.1,
+          0.5 + Math.cos(t * 2.6) * 0.08,
+          0.08,
+        );
+        wR2.position.set(
+          0.44 + Math.sin(t * 2.6 + 1) * 0.1,
+          0.5 + Math.cos(t * 2.6 + 1) * 0.08,
+          0.08,
+        );
         // Pulsing opacity
-        if (bM.transparent) { bM.opacity = 0.5 + Math.sin(t * 2.2) * 0.15; }
+        if (bM.transparent) {
+          bM.opacity = 0.5 + Math.sin(t * 2.2) * 0.15;
+        }
       };
-
     } else if (enemy.type === "brute") {
       // Massive detailed brute: huge torso, thick limbs, hunched
       // Torso - multi-part for muscle definition
-      box(0.70, 0.45, 0.48, bM,   0,     0.68, 0);   // lower torso
-      box(0.64, 0.42, 0.44, bM,   0,     1.04, 0);   // upper torso
-      box(0.58, 0.22, 0.40, hM,   0,     1.36, 0);   // neck/trap area
+      box(0.7, 0.45, 0.48, bM, 0, 0.68, 0); // lower torso
+      box(0.64, 0.42, 0.44, bM, 0, 1.04, 0); // upper torso
+      box(0.58, 0.22, 0.4, hM, 0, 1.36, 0); // neck/trap area
       // Pecs
-      box(0.30, 0.16, 0.18, bM,  -0.2,  1.08, -0.22);
-      box(0.30, 0.16, 0.18, bM,   0.2,  1.08, -0.22);
+      box(0.3, 0.16, 0.18, bM, -0.2, 1.08, -0.22);
+      box(0.3, 0.16, 0.18, bM, 0.2, 1.08, -0.22);
       // Head - massive and brutish
-      sphere(0.26, hM,  0, 1.68, 0, 12);
-      sphere(0.18, hM,  0, 1.55, 0.18, 10); // jaw protrusion
+      sphere(0.26, hM, 0, 1.68, 0, 12);
+      sphere(0.18, hM, 0, 1.55, 0.18, 10); // jaw protrusion
       // Eyes deep set
-      sphere(0.07, eM, -0.12, 1.72, 0.20, 8);
-      sphere(0.07, eM,  0.12, 1.72, 0.20, 8);
+      sphere(0.07, eM, -0.12, 1.72, 0.2, 8);
+      sphere(0.07, eM, 0.12, 1.72, 0.2, 8);
       // Brow ridge
-      box(0.38, 0.06, 0.08, hornM, 0, 1.80, 0.16);
+      box(0.38, 0.06, 0.08, hornM, 0, 1.8, 0.16);
       // Horns - curved with multiple segments
-      cone(0.06, 0.28, hornM, -0.22, 1.92, 0.04,  0, 0, -0.35);
-      cone(0.04, 0.14, hornM, -0.34, 2.08, 0.02,  0, 0, -0.55);
-      cone(0.06, 0.28, hornM,  0.22, 1.92, 0.04,  0, 0,  0.35);
-      cone(0.04, 0.14, hornM,  0.34, 2.08, 0.02,  0, 0,  0.55);
+      cone(0.06, 0.28, hornM, -0.22, 1.92, 0.04, 0, 0, -0.35);
+      cone(0.04, 0.14, hornM, -0.34, 2.08, 0.02, 0, 0, -0.55);
+      cone(0.06, 0.28, hornM, 0.22, 1.92, 0.04, 0, 0, 0.35);
+      cone(0.04, 0.14, hornM, 0.34, 2.08, 0.02, 0, 0, 0.55);
       // Arms - massive, angled outward
-      const aUpperL = box(0.28, 0.55, 0.28, bM, -0.56, 0.96, 0, 0, 0,  0.28);
-      const aForeL  = box(0.24, 0.48, 0.24, bM, -0.70, 0.52, 0, 0, 0,  0.15);
-      const handL   = sphere(0.16, bM, -0.78, 0.24, 0, 7);
-      const aUpperR = box(0.28, 0.55, 0.28, bM,  0.56, 0.96, 0, 0, 0, -0.28);
-      const aForeR  = box(0.24, 0.48, 0.24, bM,  0.70, 0.52, 0, 0, 0, -0.15);
-      const handR   = sphere(0.16, bM,  0.78, 0.24, 0, 7);
+      const aUpperL = box(0.28, 0.55, 0.28, bM, -0.56, 0.96, 0, 0, 0, 0.28);
+      const aForeL = box(0.24, 0.48, 0.24, bM, -0.7, 0.52, 0, 0, 0, 0.15);
+      const handL = sphere(0.16, bM, -0.78, 0.24, 0, 7);
+      const aUpperR = box(0.28, 0.55, 0.28, bM, 0.56, 0.96, 0, 0, 0, -0.28);
+      const aForeR = box(0.24, 0.48, 0.24, bM, 0.7, 0.52, 0, 0, 0, -0.15);
+      const handR = sphere(0.16, bM, 0.78, 0.24, 0, 7);
       // Legs - thick, short
-      const lL = box(0.30, 0.52, 0.30, bM, -0.24, 0.26, 0);
-      const lR = box(0.30, 0.52, 0.30, bM,  0.24, 0.26, 0);
+      const lL = box(0.3, 0.52, 0.3, bM, -0.24, 0.26, 0);
+      const lR = box(0.3, 0.52, 0.3, bM, 0.24, 0.26, 0);
       // Feet
-      box(0.30, 0.10, 0.38, bM, -0.24, 0.02, -0.06);
-      box(0.30, 0.10, 0.38, bM,  0.24, 0.02, -0.06);
+      box(0.3, 0.1, 0.38, bM, -0.24, 0.02, -0.06);
+      box(0.3, 0.1, 0.38, bM, 0.24, 0.02, -0.06);
       // Spinal ridge bumps
       for (let i = 0; i < 5; i++) {
-        sphere(0.05, hornM, 0, 0.70 + i * 0.14, -0.24, 6);
+        sphere(0.05, hornM, 0, 0.7 + i * 0.14, -0.24, 6);
       }
       g.userData.animate = (t) => {
         lL.rotation.x = Math.sin(t * 2.8) * 0.38;
@@ -832,104 +970,124 @@ export class Renderer {
         handL.position.y = 0.24 + Math.sin(t * 2.8 + 0.5) * 0.04;
         handR.position.y = 0.24 + Math.sin(t * 2.8 + Math.PI + 0.5) * 0.04;
       };
-
     } else if (enemy.type === "zombie") {
       // Detailed zombie: ragged clothes, visible wounds, lopsided walk
       // Torso: tattered clothing layered look
-      box(0.36, 0.62, 0.24, bM,   0,   0.50, 0);    // main body
-      box(0.30, 0.20, 0.18, hM,   0,   0.82, 0.02); // shirt collar area
-      box(0.38, 0.12, 0.26, bM,   0,   0.32, 0);    // belt/waist
+      box(0.36, 0.62, 0.24, bM, 0, 0.5, 0); // main body
+      box(0.3, 0.2, 0.18, hM, 0, 0.82, 0.02); // shirt collar area
+      box(0.38, 0.12, 0.26, bM, 0, 0.32, 0); // belt/waist
       // Wound detail (darker patch)
-      box(0.14, 0.10, 0.04, hornM, -0.08, 0.58, -0.12);
+      box(0.14, 0.1, 0.04, hornM, -0.08, 0.58, -0.12);
       // Head with rotted features
       sphere(0.22, hM, 0, 0.95, 0, 10);
-      sphere(0.15, bM, 0, 0.85, 0.14, 8);  // sunken cheek
+      sphere(0.15, bM, 0, 0.85, 0.14, 8); // sunken cheek
       // Jaw detail
       box(0.18, 0.07, 0.14, hornM, 0, 0.78, 0.16);
       // Eyes sunken
       sphere(0.048, eM, -0.09, 0.98, 0.18, 7);
-      sphere(0.048, eM,  0.09, 0.98, 0.18, 7);
+      sphere(0.048, eM, 0.09, 0.98, 0.18, 7);
       // Exposed skull patches
       sphere(0.05, hornM, -0.16, 1.04, -0.06, 5);
-      sphere(0.04, hornM,  0.18, 1.06, -0.04, 5);
+      sphere(0.04, hornM, 0.18, 1.06, -0.04, 5);
       // Arms: one outstretched, one hanging
       const aUpperL = box(0.14, 0.52, 0.14, bM, -0.28, 0.62, 0.14, -0.9, 0, 0);
-      const aForeL  = box(0.12, 0.45, 0.12, bM, -0.28, 0.98, 0.38, -0.95, 0, 0.05);
-      sphere(0.09, bM, -0.28, 1.20, 0.52, 6);
-      const aUpperR = box(0.14, 0.52, 0.14, bM,  0.28, 0.58, 0.04, 0.12, 0, 0.05);
-      const aForeR  = box(0.12, 0.45, 0.12, bM,  0.28, 0.18, 0.04, 0.06, 0, 0);
+      const aForeL = box(
+        0.12,
+        0.45,
+        0.12,
+        bM,
+        -0.28,
+        0.98,
+        0.38,
+        -0.95,
+        0,
+        0.05,
+      );
+      sphere(0.09, bM, -0.28, 1.2, 0.52, 6);
+      const aUpperR = box(
+        0.14,
+        0.52,
+        0.14,
+        bM,
+        0.28,
+        0.58,
+        0.04,
+        0.12,
+        0,
+        0.05,
+      );
+      const aForeR = box(0.12, 0.45, 0.12, bM, 0.28, 0.18, 0.04, 0.06, 0, 0);
       sphere(0.09, bM, 0.28, -0.06, 0.04, 6);
       // Legs: lopsided
-      const lL = box(0.16, 0.50, 0.16, bM, -0.12, 0.25, 0);
-      const lR = box(0.16, 0.50, 0.16, bM,  0.12, 0.25, 0);
+      const lL = box(0.16, 0.5, 0.16, bM, -0.12, 0.25, 0);
+      const lR = box(0.16, 0.5, 0.16, bM, 0.12, 0.25, 0);
       // Feet with visible bones
       box(0.14, 0.06, 0.22, bM, -0.12, 0.01, -0.04);
-      box(0.14, 0.06, 0.22, bM,  0.12, 0.01, -0.04);
-      sphere(0.045, hornM, -0.12, 0.06, -0.14, 5);  // toe bone
-      sphere(0.045, hornM,  0.12, 0.06, -0.14, 5);
+      box(0.14, 0.06, 0.22, bM, 0.12, 0.01, -0.04);
+      sphere(0.045, hornM, -0.12, 0.06, -0.14, 5); // toe bone
+      sphere(0.045, hornM, 0.12, 0.06, -0.14, 5);
       g.userData.animate = (t) => {
         lL.rotation.x = Math.sin(t * 2.8) * 0.32;
         lR.rotation.x = Math.sin(t * 2.8 + Math.PI) * 0.32;
         // Lopsided gait: zombie lurches
         aUpperL.rotation.x = -0.9 + Math.sin(t * 2.8) * 0.25;
-        aForeL.rotation.x  = -0.95 + Math.sin(t * 2.8 + 0.4) * 0.2;
+        aForeL.rotation.x = -0.95 + Math.sin(t * 2.8 + 0.4) * 0.2;
         aUpperR.rotation.x = 0.12 + Math.sin(t * 2.8 + Math.PI) * 0.1;
-        aForeR.rotation.x  = 0.06 + Math.sin(t * 2.8 + Math.PI + 0.3) * 0.08;
+        aForeR.rotation.x = 0.06 + Math.sin(t * 2.8 + Math.PI + 0.3) * 0.08;
       };
-
     } else {
       // ── Demon (default) ── More detailed: muscular, clawed, menacing
       // Abdomen
-      box(0.42, 0.30, 0.32, bM,  0, 0.32, 0);
+      box(0.42, 0.3, 0.32, bM, 0, 0.32, 0);
       // Main torso - wider at chest
-      box(0.48, 0.42, 0.36, bM,  0, 0.60, 0);
+      box(0.48, 0.42, 0.36, bM, 0, 0.6, 0);
       // Chest muscle definition
-      box(0.20, 0.18, 0.14, bM, -0.16, 0.66, -0.18);
-      box(0.20, 0.18, 0.14, bM,  0.16, 0.66, -0.18);
+      box(0.2, 0.18, 0.14, bM, -0.16, 0.66, -0.18);
+      box(0.2, 0.18, 0.14, bM, 0.16, 0.66, -0.18);
       // Shoulders - wide and spiked
       sphere(0.16, bM, -0.36, 0.84, 0, 8);
-      sphere(0.16, bM,  0.36, 0.84, 0, 8);
+      sphere(0.16, bM, 0.36, 0.84, 0, 8);
       // Shoulder spikes
-      cone(0.05, 0.18, hornM, -0.40, 0.98, 0, 0, 0, -0.4);
-      cone(0.05, 0.18, hornM,  0.40, 0.98, 0, 0, 0,  0.4);
+      cone(0.05, 0.18, hornM, -0.4, 0.98, 0, 0, 0, -0.4);
+      cone(0.05, 0.18, hornM, 0.4, 0.98, 0, 0, 0, 0.4);
       // Head - angular and demonic
       sphere(0.22, hM, 0, 1.06, 0, 10);
-      box(0.26, 0.10, 0.22, hM, 0, 0.92, 0.10); // heavy jaw
+      box(0.26, 0.1, 0.22, hM, 0, 0.92, 0.1); // heavy jaw
       // Snout
-      box(0.16, 0.10, 0.14, hM, 0, 0.94, 0.20);
+      box(0.16, 0.1, 0.14, hM, 0, 0.94, 0.2);
       // Eyes - glowing with orbital ridge
-      box(0.20, 0.04, 0.06, hornM, 0, 1.12, 0.18); // brow ridge
+      box(0.2, 0.04, 0.06, hornM, 0, 1.12, 0.18); // brow ridge
       sphere(0.055, eM, -0.09, 1.08, 0.21, 8);
-      sphere(0.055, eM,  0.09, 1.08, 0.21, 8);
+      sphere(0.055, eM, 0.09, 1.08, 0.21, 8);
       // Horns - branched
       cone(0.05, 0.22, hornM, -0.14, 1.22, 0, 0, 0, -0.4);
       cone(0.04, 0.12, hornM, -0.22, 1.36, 0, 0, 0, -0.6);
-      cone(0.05, 0.22, hornM,  0.14, 1.22, 0, 0, 0,  0.4);
-      cone(0.04, 0.12, hornM,  0.22, 1.36, 0, 0, 0,  0.6);
+      cone(0.05, 0.22, hornM, 0.14, 1.22, 0, 0, 0, 0.4);
+      cone(0.04, 0.12, hornM, 0.22, 1.36, 0, 0, 0, 0.6);
       // Spine ridge
       for (let i = 0; i < 4; i++) {
-        cone(0.04, 0.12, hornM, 0, 0.40 + i * 0.16, -0.18, -0.4);
+        cone(0.04, 0.12, hornM, 0, 0.4 + i * 0.16, -0.18, -0.4);
       }
       // Arms with forearm + hand
       const aUpperL = box(0.18, 0.44, 0.18, bM, -0.36, 0.64, 0);
-      const aForeL  = box(0.16, 0.38, 0.16, bM, -0.36, 0.28, 0);
-      const clawL1  = box(0.04, 0.14, 0.04, hornM, -0.30, 0.06, -0.06, -0.3);
-      const clawL2  = box(0.04, 0.14, 0.04, hornM, -0.36, 0.05, -0.08, -0.3);
-      const clawL3  = box(0.04, 0.14, 0.04, hornM, -0.42, 0.06, -0.06, -0.3);
-      const aUpperR = box(0.18, 0.44, 0.18, bM,  0.36, 0.64, 0);
-      const aForeR  = box(0.16, 0.38, 0.16, bM,  0.36, 0.28, 0);
-      const clawR1  = box(0.04, 0.14, 0.04, hornM,  0.30, 0.06, -0.06, -0.3);
-      const clawR2  = box(0.04, 0.14, 0.04, hornM,  0.36, 0.05, -0.08, -0.3);
-      const clawR3  = box(0.04, 0.14, 0.04, hornM,  0.42, 0.06, -0.06, -0.3);
+      const aForeL = box(0.16, 0.38, 0.16, bM, -0.36, 0.28, 0);
+      const clawL1 = box(0.04, 0.14, 0.04, hornM, -0.3, 0.06, -0.06, -0.3);
+      const clawL2 = box(0.04, 0.14, 0.04, hornM, -0.36, 0.05, -0.08, -0.3);
+      const clawL3 = box(0.04, 0.14, 0.04, hornM, -0.42, 0.06, -0.06, -0.3);
+      const aUpperR = box(0.18, 0.44, 0.18, bM, 0.36, 0.64, 0);
+      const aForeR = box(0.16, 0.38, 0.16, bM, 0.36, 0.28, 0);
+      const clawR1 = box(0.04, 0.14, 0.04, hornM, 0.3, 0.06, -0.06, -0.3);
+      const clawR2 = box(0.04, 0.14, 0.04, hornM, 0.36, 0.05, -0.08, -0.3);
+      const clawR3 = box(0.04, 0.14, 0.04, hornM, 0.42, 0.06, -0.06, -0.3);
       // Legs with digitigrade stance
-      const lL = box(0.20, 0.44, 0.20, bM, -0.18, 0.28, 0.04);
-      const lR = box(0.20, 0.44, 0.20, bM,  0.18, 0.28, 0.04);
+      const lL = box(0.2, 0.44, 0.2, bM, -0.18, 0.28, 0.04);
+      const lR = box(0.2, 0.44, 0.2, bM, 0.18, 0.28, 0.04);
       // Lower legs angled back
-      const llL = box(0.16, 0.30, 0.16, bM, -0.18, 0.06, 0.10, 0.5);
-      const llR = box(0.16, 0.30, 0.16, bM,  0.18, 0.06, 0.10, 0.5);
+      const llL = box(0.16, 0.3, 0.16, bM, -0.18, 0.06, 0.1, 0.5);
+      const llR = box(0.16, 0.3, 0.16, bM, 0.18, 0.06, 0.1, 0.5);
       // Feet/claws
       box(0.18, 0.05, 0.28, bM, -0.18, -0.04, 0.04);
-      box(0.18, 0.05, 0.28, bM,  0.18, -0.04, 0.04);
+      box(0.18, 0.05, 0.28, bM, 0.18, -0.04, 0.04);
       g.userData.animate = (t) => {
         lL.rotation.x = Math.sin(t * 4.5) * 0.44;
         lR.rotation.x = Math.sin(t * 4.5 + Math.PI) * 0.44;
@@ -937,8 +1095,8 @@ export class Renderer {
         llR.rotation.x = 0.5 + Math.sin(t * 4.5 + Math.PI) * 0.22;
         aUpperL.rotation.x = Math.sin(t * 4.5 + Math.PI) * 0.32;
         aUpperR.rotation.x = Math.sin(t * 4.5) * 0.32;
-        aForeL.rotation.x  = Math.sin(t * 4.5 + 0.5) * 0.2;
-        aForeR.rotation.x  = Math.sin(t * 4.5 + Math.PI + 0.5) * 0.2;
+        aForeL.rotation.x = Math.sin(t * 4.5 + 0.5) * 0.2;
+        aForeR.rotation.x = Math.sin(t * 4.5 + Math.PI + 0.5) * 0.2;
         // Claw rattle
         const clawSwing = Math.sin(t * 9) * 0.08;
         clawL1.rotation.x = -0.3 + clawSwing;
@@ -971,9 +1129,9 @@ export class Renderer {
       return mesh;
     };
     // Helper: add a CylinderGeometry mesh (rx rotates barrel to horizontal)
-    const addCyl = (rt, rb, h, mat, px, py, pz, rx = 0) => {
+    const addCyl = (rt, rb, h, mat, px, py, pz, rx = 0, openEnded = false) => {
       const mesh = new THREE.Mesh(
-        new THREE.CylinderGeometry(rt, rb, h, 12),
+        new THREE.CylinderGeometry(rt, rb, h, 12, 1, openEnded),
         mat,
       );
       mesh.position.set(px, py, pz);
@@ -992,11 +1150,13 @@ export class Renderer {
     if (weapon && typeof weapon.buildModel === "function") {
       weapon.buildModel(builder);
     } else {
-      addBox(0.08, 0.05, 0.30, m.metal, 0, 0, -0.08);
+      addBox(0.08, 0.05, 0.3, m.metal, 0, 0, -0.08);
     }
 
     const gunBuildCfg = weapon?.render || {};
-    const [baseX, baseY, baseZ] = gunBuildCfg.basePosition ?? [0.14, -0.14, -0.33];
+    const [baseX, baseY, baseZ] = gunBuildCfg.basePosition ?? [
+      0.14, -0.14, -0.33,
+    ];
     const baseRotationY = gunBuildCfg.baseRotationY ?? -0.06;
     this.weaponGroup.position.set(baseX, baseY, baseZ);
     this.weaponGroup.rotation.y = baseRotationY;
@@ -1034,7 +1194,9 @@ export class Renderer {
       mesh.position.set(enemy.x, 0, enemy.y);
       // Always face the camera (billboard-style Y rotation)
       mesh.lookAt(this.camera.position.x, 0, this.camera.position.z);
-      if (mesh.userData.animate) { mesh.userData.animate(t); }
+      if (mesh.userData.animate) {
+        mesh.userData.animate(t);
+      }
 
       // Hit flash: briefly turn red when recently damaged
       if (mesh.userData.hitFlashTimer > 0) {
@@ -1069,7 +1231,9 @@ export class Renderer {
    */
   triggerHitFlash(enemyId) {
     const mesh = this.enemyMeshes.get(enemyId);
-    if (mesh) { mesh.userData.hitFlashTimer = 0.25; }
+    if (mesh) {
+      mesh.userData.hitFlashTimer = 0.25;
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -1110,7 +1274,7 @@ export class Renderer {
     this._updateEnemyMeshes(enemies, t);
 
     // Update particle systems
-    const dt = Math.min(1 / 30, (t - (this._lastT || t)));
+    const dt = Math.min(1 / 30, t - (this._lastT || t));
     this._lastT = t;
     this._updateBloodParticles(dt);
     this._updateShells(dt);
@@ -1140,62 +1304,68 @@ export class Renderer {
    */
   renderWeapon(player) {
     const weapon = player.currentWeapon;
-    if (!weapon) { return; }
+    if (!weapon) {
+      return;
+    }
 
     const ltype = (weapon.name ?? "").toLowerCase();
     if (ltype !== this._currentWeaponType) {
       this._buildWeaponModel(weapon);
     }
 
-    const t      = performance.now() / 1000;
+    const t = performance.now() / 1000;
     const aiming = !!player.isAiming;
-    const bob    = typeof player.headBob      === "number" ? Math.sin(player.headBob) : 0;
-    const recoil = typeof player.recoilOffset === "number" ? player.recoilOffset      : 0;
+    const bob =
+      typeof player.headBob === "number" ? Math.sin(player.headBob) : 0;
+    const recoil =
+      typeof player.recoilOffset === "number" ? player.recoilOffset : 0;
 
     const gunRenderCfg = weapon.render || {};
     const [bx, by, bz] = gunRenderCfg.basePosition ?? [0.14, -0.14, -0.33];
-    const [ax, ay, az] = aiming ? gunRenderCfg.adsOffset ?? [0, 0, 0] : [0, 0, 0];
+    const [ax, ay, az] = aiming
+      ? (gunRenderCfg.adsOffset ?? [0, 0, 0])
+      : [0, 0, 0];
     const hipYRot = gunRenderCfg.baseRotationY ?? -0.06;
     const aimYRot = (gunRenderCfg.adsRotation ?? hipYRot) * 0.2;
     const yRot = aiming ? aimYRot : hipYRot;
 
     // ── Reload animation ─────────────────────────────────────────
     // reloadTime is in ms; reloadStartTime is Date.now() epoch ms
-    let reloadOffsetY   = 0;
-    let reloadTiltZ     = 0;
-    let reloadTiltX     = 0;
-    let reloadOffsetZ   = 0;
+    let reloadOffsetY = 0;
+    let reloadTiltZ = 0;
+    let reloadTiltX = 0;
+    let reloadOffsetZ = 0;
 
     if (weapon.isReloading && weapon.reloadTime > 0) {
-      const elapsed  = Date.now() - weapon.reloadStartTime;          // ms
-      const progress = Math.min(elapsed / weapon.reloadTime, 1.0);   // 0 → 1
+      const elapsed = Date.now() - weapon.reloadStartTime; // ms
+      const progress = Math.min(elapsed / weapon.reloadTime, 1.0); // 0 → 1
 
       // Phase 0–35 %: weapon drops + tilts (eject / mag out)
       // Phase 35–65 %: held low and tilted (magazine swap)
       // Phase 65–100 %: rises back + un-tilts and snaps (chamber)
-      const easeIn  = (x) => x * x;
+      const easeIn = (x) => x * x;
       const easeOut = (x) => 1 - (1 - x) * (1 - x);
 
       if (progress < 0.35) {
         const p = easeIn(progress / 0.35);
         reloadOffsetY = -0.22 * p;
-        reloadTiltZ   =  0.55 * p;   // tilt weapon outward
-        reloadOffsetZ =  0.06 * p;   // pull slightly toward player
-        reloadTiltX   =  0.3  * p;   // angle barrel down
+        reloadTiltZ = 0.55 * p; // tilt weapon outward
+        reloadOffsetZ = 0.06 * p; // pull slightly toward player
+        reloadTiltX = 0.3 * p; // angle barrel down
       } else if (progress < 0.65) {
         reloadOffsetY = -0.22;
-        reloadTiltZ   =  0.55;
-        reloadOffsetZ =  0.06;
-        reloadTiltX   =  0.3;
+        reloadTiltZ = 0.55;
+        reloadOffsetZ = 0.06;
+        reloadTiltX = 0.3;
       } else {
         const p = easeOut((progress - 0.65) / 0.35);
         reloadOffsetY = -0.22 * (1 - p);
-        reloadTiltZ   =  0.55  * (1 - p);
-        reloadOffsetZ =  0.06  * (1 - p);
-        reloadTiltX   =  0.3   * (1 - p);
+        reloadTiltZ = 0.55 * (1 - p);
+        reloadOffsetZ = 0.06 * (1 - p);
+        reloadTiltX = 0.3 * (1 - p);
         // Overshoot snap at the very end
         if (p > 0.85) {
-          const snap = Math.sin((p - 0.85) / 0.15 * Math.PI) * 0.04;
+          const snap = Math.sin(((p - 0.85) / 0.15) * Math.PI) * 0.04;
           reloadOffsetY += snap;
         }
       }
@@ -1210,7 +1380,8 @@ export class Renderer {
     );
     this.weaponGroup.rotation.x = recoil * 0.12 + reloadTiltX;
     this.weaponGroup.rotation.y = yRot;
-    this.weaponGroup.rotation.z = Math.sin(t * 3) * bob * 0.015 * bobStrength + reloadTiltZ;
+    this.weaponGroup.rotation.z =
+      Math.sin(t * 3) * bob * 0.015 * bobStrength + reloadTiltZ;
   }
 
   /**
@@ -1225,11 +1396,14 @@ export class Renderer {
 
     this.muzzleFlashLight.color.setHex(color);
     this.muzzleFlashLight.intensity = intensity;
-    setTimeout(() => { this.muzzleFlashLight.intensity = 0; }, duration * 1000);
+    setTimeout(() => {
+      this.muzzleFlashLight.intensity = 0;
+    }, duration * 1000);
   }
 
   _onResize() {
-    const w = window.innerWidth, h = window.innerHeight;
+    const w = window.innerWidth,
+      h = window.innerHeight;
     this.renderer.setSize(w, h);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();

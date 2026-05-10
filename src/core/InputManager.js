@@ -98,8 +98,6 @@ export class InputManager {
   isMouseButtonPressed(button) {
     return button === "left" ? this.mouse.leftButton : this.mouse.rightButton;
   }
-
 }
-
 
 export default InputManager;

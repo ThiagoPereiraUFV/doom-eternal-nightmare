@@ -25,18 +25,62 @@ const SHOTGUN_CONFIG = {
   screenShake: 8,
   shell: {
     size: { radius: 0.018, height: 0.07 },
-    speed: 0.10,
+    speed: 0.1,
     variance: 0.06,
     material: "spent",
     offsetDistance: 0.26,
   },
   audio: {
     shoot: [
-      { action: "noiseBurst", freq: 55, q: 0.5, filterType: "lowpass", vol: 0.9, attack: 0, decay: 0.18, dur: 0.22 },
-      { action: "noiseBurst", freq: 100, q: 0.8, filterType: "bandpass", vol: 0.5, attack: 0, decay: 0.08, dur: 0.12 },
-      { action: "noiseBurst", freq: 2800, q: 0.6, filterType: "highpass", vol: 0.35, attack: 0, decay: 0.025, dur: 0.04 },
-      { action: "noiseBurst", freq: 90, q: 3, filterType: "bandpass", vol: 0.55, attack: 0.01, decay: 0.35, dur: 0.45 },
-      { action: "toneBurst", type: "sine", freq: 42, freqEnd: 22, vol: 0.3, decay: 0.18, dur: 0.22 },
+      {
+        action: "noiseBurst",
+        freq: 55,
+        q: 0.5,
+        filterType: "lowpass",
+        vol: 0.9,
+        attack: 0,
+        decay: 0.18,
+        dur: 0.22,
+      },
+      {
+        action: "noiseBurst",
+        freq: 100,
+        q: 0.8,
+        filterType: "bandpass",
+        vol: 0.5,
+        attack: 0,
+        decay: 0.08,
+        dur: 0.12,
+      },
+      {
+        action: "noiseBurst",
+        freq: 2800,
+        q: 0.6,
+        filterType: "highpass",
+        vol: 0.35,
+        attack: 0,
+        decay: 0.025,
+        dur: 0.04,
+      },
+      {
+        action: "noiseBurst",
+        freq: 90,
+        q: 3,
+        filterType: "bandpass",
+        vol: 0.55,
+        attack: 0.01,
+        decay: 0.35,
+        dur: 0.45,
+      },
+      {
+        action: "toneBurst",
+        type: "sine",
+        freq: 42,
+        freqEnd: 22,
+        vol: 0.3,
+        decay: 0.18,
+        dur: 0.22,
+      },
     ],
   },
   render: {
@@ -59,19 +103,19 @@ export class Shotgun extends Weapon {
    * @param {Object} builder
    */
   buildModel({ addBox, addCyl, mat }) {
-    addCyl(0.034, 0.034, 0.640, mat.bright, 0,        0.040,  -0.260, Math.PI / 2);
-    addBox(0.012, 0.006, 0.640, mat.steel,  0,        0.074,  -0.260);
-    addBox(0.012, 0.012, 0.012, mat.steel,  0,        0.082,  -0.580);
-    addCyl(0.022, 0.022, 0.530, mat.metal,  0,        0.006,  -0.205, Math.PI / 2);
-    addCyl(0.030, 0.030, 0.130, mat.wood,   0,        0.006,  -0.310, Math.PI / 2);
-    addBox(0.064, 0.030, 0.120, mat.wood,   0,        0.005,  -0.310);
-    addBox(0.100, 0.096, 0.200, mat.dark,   0,        0.010,   0.030);
-    addBox(0.006, 0.038, 0.090, mat.bright, 0.052,    0.022,   0.018);
-    addBox(0.018, 0.010, 0.018, mat.metal,  0,        0.062,   0.010);
-    addBox(0.076, 0.076, 0.310, mat.wood,   0,        0.006,   0.235, -0.07);
-    addBox(0.078, 0.082, 0.014, mat.rubber, 0,        0.005,   0.394, -0.07);
-    addBox(0.060, 0.008, 0.090, mat.metal,  0,       -0.046,   0.050);
-    addBox(0.010, 0.026, 0.012, mat.metal,  0,       -0.040,   0.042);
+    addCyl(0.034, 0.034, 0.64, mat.bright, 0, 0.04, -0.26, Math.PI / 2);
+    addBox(0.012, 0.006, 0.64, mat.steel, 0, 0.074, -0.26);
+    addBox(0.012, 0.012, 0.012, mat.steel, 0, 0.082, -0.58);
+    addCyl(0.022, 0.022, 0.53, mat.metal, 0, 0.006, -0.205, Math.PI / 2);
+    addCyl(0.03, 0.03, 0.13, mat.wood, 0, 0.006, -0.31, Math.PI / 2);
+    addBox(0.064, 0.03, 0.12, mat.wood, 0, 0.005, -0.31);
+    addBox(0.1, 0.096, 0.2, mat.dark, 0, 0.01, 0.03);
+    addBox(0.006, 0.038, 0.09, mat.bright, 0.052, 0.022, 0.018);
+    addBox(0.018, 0.01, 0.018, mat.metal, 0, 0.062, 0.01);
+    addBox(0.076, 0.076, 0.31, mat.wood, 0, 0.006, 0.235, -0.07);
+    addBox(0.078, 0.082, 0.014, mat.rubber, 0, 0.005, 0.394, -0.07);
+    addBox(0.06, 0.008, 0.09, mat.metal, 0, -0.046, 0.05);
+    addBox(0.01, 0.026, 0.012, mat.metal, 0, -0.04, 0.042);
   }
 
   /**
@@ -96,13 +140,7 @@ export class Shotgun extends Weapon {
       const spreadAngle = (Math.random() - 0.5) * this.spread;
       const shotAngle = player.angle + spreadAngle;
 
-      const hit = this._raycast(
-        player.x,
-        player.y,
-        shotAngle,
-        map,
-        enemies,
-      );
+      const hit = this._raycast(player.x, player.y, shotAngle, map, enemies);
       if (hit.type !== "miss") {
         hits.push(hit);
       }

@@ -13,7 +13,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ICONS_DIR = path.join(__dirname, "..", "icons");
-const SVG_PATH  = path.join(ICONS_DIR, "icon.svg");
+const SVG_PATH = path.join(ICONS_DIR, "icon.svg");
 
 // --- Try sharp (fast, no native deps on most systems) ------------------
 async function trySharp() {
@@ -29,11 +29,11 @@ async function generateWithSharp(sharp) {
   const svgBuf = fs.readFileSync(SVG_PATH);
 
   const sizes = [
-    { name: "icon-192.png",          size: 192 },
-    { name: "icon-512.png",          size: 512 },
+    { name: "icon-192.png", size: 192 },
+    { name: "icon-512.png", size: 512 },
     { name: "icon-maskable-192.png", size: 192 },
     { name: "icon-maskable-512.png", size: 512 },
-    { name: "screenshot-wide.png",   width: 1280, height: 720 },
+    { name: "screenshot-wide.png", width: 1280, height: 720 },
   ];
 
   for (const spec of sizes) {
@@ -42,9 +42,9 @@ async function generateWithSharp(sharp) {
       // Landscape screenshot placeholder
       await sharp({
         create: {
-          width:      spec.width,
-          height:     spec.height,
-          channels:   4,
+          width: spec.width,
+          height: spec.height,
+          channels: 4,
           background: { r: 10, g: 0, b: 0, alpha: 1 },
         },
       })
@@ -62,7 +62,6 @@ async function generateWithSharp(sharp) {
 // A minimal 1×1 red PNG, upscaled via sharp is preferred.
 // Without sharp we write a raw RGB PNG at the right size.
 function writeFallbackPng(outPath, width, height, r, g, b) {
-
   function crc32(buf) {
     let crc = -1;
     for (const byte of buf) {
@@ -83,27 +82,29 @@ function writeFallbackPng(outPath, width, height, r, g, b) {
     const len = Buffer.alloc(4);
     len.writeUInt32BE(data.length);
     const typeData = Buffer.concat([Buffer.from(type), data]);
-    const crcBuf   = Buffer.alloc(4);
+    const crcBuf = Buffer.alloc(4);
     crcBuf.writeUInt32BE(crc32(typeData));
     return Buffer.concat([len, typeData, crcBuf]);
   }
 
   // IHDR
   const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(width,  0);
+  ihdr.writeUInt32BE(width, 0);
   ihdr.writeUInt32BE(height, 4);
-  ihdr[8]  = 8;  // bit depth
-  ihdr[9]  = 2;  // color type RGB
-  ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
+  ihdr[8] = 8; // bit depth
+  ihdr[9] = 2; // color type RGB
+  ihdr[10] = 0;
+  ihdr[11] = 0;
+  ihdr[12] = 0;
 
   // Raw scanlines (filter byte 0 + RGB pixels)
   const rowSize = 1 + width * 3;
-  const raw     = Buffer.alloc(height * rowSize);
+  const raw = Buffer.alloc(height * rowSize);
   for (let y = 0; y < height; y++) {
     raw[y * rowSize] = 0; // filter
     for (let x = 0; x < width; x++) {
       const off = y * rowSize + 1 + x * 3;
-      raw[off]     = r;
+      raw[off] = r;
       raw[off + 1] = g;
       raw[off + 2] = b;
     }
@@ -135,11 +136,11 @@ function writeFallbackPng(outPath, width, height, r, g, b) {
     console.log("Run `npm install sharp` for proper icon rendering.\n");
     // Dark red background (#0a0000) as placeholder
     for (const [name, w, h] of [
-      ["icon-192.png",          192, 192],
-      ["icon-512.png",          512, 512],
+      ["icon-192.png", 192, 192],
+      ["icon-512.png", 512, 512],
       ["icon-maskable-192.png", 192, 192],
       ["icon-maskable-512.png", 512, 512],
-      ["screenshot-wide.png",   1280, 720],
+      ["screenshot-wide.png", 1280, 720],
     ]) {
       writeFallbackPng(path.join(ICONS_DIR, name), w, h, 10, 0, 0);
     }

@@ -38,7 +38,8 @@ export class Weapon {
     // Raycast & falloff config — sourced from per-weapon defaults and GameConfig falloff constants
     this.maxDistance = stats.maxDistance ?? 50;
     this.raycastStep = stats.raycastStep ?? 0.1;
-    this.falloffRange = stats.falloffRange ?? GameConfig.COMBAT.DAMAGE_FALLOFF_RANGE;
+    this.falloffRange =
+      stats.falloffRange ?? GameConfig.COMBAT.DAMAGE_FALLOFF_RANGE;
     this.falloffMin = stats.falloffMin ?? GameConfig.COMBAT.DAMAGE_FALLOFF_MIN;
     this.falloffScale = stats.falloffScale ?? 1;
     this.wallPenetrationCost = stats.wallPenetrationCost ?? Infinity;
@@ -54,7 +55,7 @@ export class Weapon {
    */
   buildModel(builder) {
     const { addBox, mat } = builder;
-    addBox(0.08, 0.05, 0.30, mat.metal, 0, 0, -0.08);
+    addBox(0.08, 0.05, 0.3, mat.metal, 0, 0, -0.08);
   }
 
   /**
@@ -101,7 +102,14 @@ export class Weapon {
           const dx = enemy.x - testX;
           const dy = enemy.y - testY;
           if (dx * dx + dy * dy < hitRadiusSq) {
-            return { type: "enemy", enemy, distance, damage: this._calcFalloffDamage(distance), x: testX, y: testY };
+            return {
+              type: "enemy",
+              enemy,
+              distance,
+              damage: this._calcFalloffDamage(distance),
+              x: testX,
+              y: testY,
+            };
           }
         }
       }
@@ -114,7 +122,12 @@ export class Weapon {
    * @protected
    */
   _penetratingRaycast(x, y, angle, map, enemies) {
-    const { maxDistance, raycastStep: step, penetration, wallPenetrationCost } = this;
+    const {
+      maxDistance,
+      raycastStep: step,
+      penetration,
+      wallPenetrationCost,
+    } = this;
     const maxIterations = Math.ceil(maxDistance / step) + 200;
     const hitRadiusSq = GameConfig.COMBAT.ENEMY_HIT_RADIUS_SQ;
 
@@ -128,7 +141,11 @@ export class Weapon {
     let distance = 0;
     let iterations = 0;
 
-    while (distance < maxDistance && iterations < maxIterations && penetrationLeft > 0) {
+    while (
+      distance < maxDistance &&
+      iterations < maxIterations &&
+      penetrationLeft > 0
+    ) {
       iterations++;
       distance += step;
       const testX = x + Math.cos(angle) * distance;
@@ -142,9 +159,13 @@ export class Weapon {
       }
       if (map[mapY][mapX] > 0) {
         hits.push({ type: "wall", distance, wallType: map[mapY][mapX] });
-        if (!isFinite(wallPenetrationCost)) { break; }
+        if (!isFinite(wallPenetrationCost)) {
+          break;
+        }
         penetrationLeft -= wallPenetrationCost;
-        if (penetrationLeft <= 0) { break; }
+        if (penetrationLeft <= 0) {
+          break;
+        }
         continue;
       }
 
@@ -154,7 +175,14 @@ export class Weapon {
           const dy = enemy.y - testY;
           if (dx * dx + dy * dy < hitRadiusSq) {
             hitEnemies.add(enemy.id);
-            hits.push({ type: "enemy", enemy, distance, damage: this._calcFalloffDamage(distance), x: testX, y: testY });
+            hits.push({
+              type: "enemy",
+              enemy,
+              distance,
+              damage: this._calcFalloffDamage(distance),
+              x: testX,
+              y: testY,
+            });
             penetrationLeft--;
             break;
           }
@@ -171,9 +199,14 @@ export class Weapon {
    */
   _calcFalloffDamage(distance) {
     const { falloffRange, falloffMin, falloffScale, damage } = this;
-    if (distance < falloffRange) { return damage; }
+    if (distance < falloffRange) {
+      return damage;
+    }
     const min = damage * falloffMin;
-    const falloff = Math.max(0, 1 - (distance - falloffRange) / (falloffRange * falloffScale));
+    const falloff = Math.max(
+      0,
+      1 - (distance - falloffRange) / (falloffRange * falloffScale),
+    );
     return min + (damage - min) * falloff;
   }
 
@@ -213,7 +246,9 @@ export class Weapon {
    * @returns {boolean} True if reload completed
    */
   updateReload() {
-    if (!this.isReloading) { return false; }
+    if (!this.isReloading) {
+      return false;
+    }
 
     const currentTime = Date.now();
     if (currentTime - this.reloadStartTime >= this.reloadTime) {

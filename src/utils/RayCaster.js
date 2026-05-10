@@ -180,7 +180,9 @@ export class RayCaster {
    * @returns {number} Wall height in pixels
    */
   static calculateWallHeight(distance, screenHeight) {
-    if (distance === 0) { return screenHeight; }
+    if (distance === 0) {
+      return screenHeight;
+    }
     return (screenHeight * GameConfig.RENDERING.WALL_HEIGHT_RATIO) / distance;
   }
 }

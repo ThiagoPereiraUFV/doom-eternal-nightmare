@@ -31,11 +31,55 @@ const RIFLE_CONFIG = {
   },
   audio: {
     shoot: [
-      { action: "noiseBurst", freq: 55, q: 0.5, filterType: "lowpass", vol: 0.55, attack: 0, decay: 0.18, dur: 0.22 },
-      { action: "noiseBurst", freq: 220, q: 1.8, filterType: "bandpass", vol: 0.5, attack: 0, decay: 0.08, dur: 0.12 },
-      { action: "noiseBurst", freq: 2800, q: 0.6, filterType: "highpass", vol: 0.35, attack: 0, decay: 0.025, dur: 0.04 },
-      { action: "noiseBurst", freq: 160, q: 3, filterType: "bandpass", vol: 0.28, attack: 0.01, decay: 0.35, dur: 0.45 },
-      { action: "toneBurst", type: "sine", freq: 42, freqEnd: 22, vol: 0.3, decay: 0.18, dur: 0.22 },
+      {
+        action: "noiseBurst",
+        freq: 55,
+        q: 0.5,
+        filterType: "lowpass",
+        vol: 0.55,
+        attack: 0,
+        decay: 0.18,
+        dur: 0.22,
+      },
+      {
+        action: "noiseBurst",
+        freq: 220,
+        q: 1.8,
+        filterType: "bandpass",
+        vol: 0.5,
+        attack: 0,
+        decay: 0.08,
+        dur: 0.12,
+      },
+      {
+        action: "noiseBurst",
+        freq: 2800,
+        q: 0.6,
+        filterType: "highpass",
+        vol: 0.35,
+        attack: 0,
+        decay: 0.025,
+        dur: 0.04,
+      },
+      {
+        action: "noiseBurst",
+        freq: 160,
+        q: 3,
+        filterType: "bandpass",
+        vol: 0.28,
+        attack: 0.01,
+        decay: 0.35,
+        dur: 0.45,
+      },
+      {
+        action: "toneBurst",
+        type: "sine",
+        freq: 42,
+        freqEnd: 22,
+        vol: 0.3,
+        decay: 0.18,
+        dur: 0.22,
+      },
     ],
   },
   render: {
@@ -43,6 +87,7 @@ const RIFLE_CONFIG = {
     baseRotationY: -0.09,
     adsOffset: [-0.19, 0.08, -0.09],
     adsRotation: 0.0,
+    adsFOV: 22,
     scale: 3.0,
     muzzleFlash: { intensity: 5.0 },
   },
@@ -58,32 +103,32 @@ export class Rifle extends Weapon {
    * @param {Object} builder
    */
   buildModel({ addBox, addCyl, mat }) {
-    addCyl(0.018, 0.016, 0.560, mat.bright, 0,        0.010,  -0.430, Math.PI / 2);
-    addCyl(0.022, 0.018, 0.060, mat.bright, 0,        0.010,  -0.180, Math.PI / 2);
-    addCyl(0.024, 0.024, 0.044, mat.metal,  0,        0.010,  -0.685, Math.PI / 2);
-    addBox(0.006, 0.050, 0.044, mat.dark,   0,        0.010,  -0.685);
-    addBox(0.058, 0.058, 0.300, mat.dark,   0,        0.010,  -0.270);
-    addBox(0.062, 0.014, 0.300, mat.metal,  0,        0.042,  -0.270);
-    addBox(0.062, 0.014, 0.300, mat.dark,   0,       -0.042,  -0.270);
-    addBox(0.064, 0.010, 0.030, mat.metal,  0,        0.010,  -0.200);
-    addBox(0.064, 0.010, 0.030, mat.metal,  0,        0.010,  -0.310);
-    addBox(0.068, 0.062, 0.200, mat.dark,   0,        0.010,   0.000);
-    addBox(0.072, 0.012, 0.200, mat.metal,  0,        0.048,   0.000);
-    addBox(0.042, 0.016, 0.020, mat.metal,  0,        0.050,   0.090);
-    addBox(0.008, 0.032, 0.008, mat.metal,  0,        0.058,   0.090);
-    addBox(0.030, 0.030, 0.032, mat.metal,  0,        0.072,  -0.005);
-    addBox(0.006, 0.012, 0.005, mat.steel,  0,        0.090,  -0.005);
-    addBox(0.068, 0.058, 0.160, mat.dark,   0,       -0.026,   0.025);
-    addBox(0.060, 0.007, 0.080, mat.metal,  0,       -0.062,   0.055);
-    addBox(0.060, 0.024, 0.007, mat.metal,  0,       -0.052,   0.019);
-    addBox(0.046, 0.110, 0.072, mat.rubber, 0,       -0.096,   0.072,  0.20);
-    addBox(0.050, 0.140, 0.072, mat.dark,   0,       -0.096,  -0.018, -0.05);
-    addBox(0.052, 0.010, 0.064, mat.metal,  0,       -0.168,  -0.018, -0.05);
-    addBox(0.044, 0.044, 0.200, mat.metal,  0,       -0.008,   0.135);
-    addBox(0.072, 0.072, 0.120, mat.dark,   0,       -0.006,   0.230);
-    addBox(0.076, 0.014, 0.120, mat.rubber, 0,       -0.038,   0.230);
-    addBox(0.018, 0.018, 0.018, mat.metal,  0,        0.010,  -0.420);
-    addBox(0.006, 0.016, 0.005, mat.steel,  0,        0.025,  -0.420);
+    addCyl(0.018, 0.016, 0.56, mat.bright, 0, 0.01, -0.43, Math.PI / 2);
+    addCyl(0.022, 0.018, 0.06, mat.bright, 0, 0.01, -0.18, Math.PI / 2);
+    addCyl(0.024, 0.024, 0.044, mat.metal, 0, 0.01, -0.685, Math.PI / 2);
+    addBox(0.006, 0.05, 0.044, mat.dark, 0, 0.01, -0.685);
+    addBox(0.058, 0.058, 0.3, mat.dark, 0, 0.01, -0.27);
+    addBox(0.062, 0.014, 0.3, mat.metal, 0, 0.042, -0.27);
+    addBox(0.062, 0.014, 0.3, mat.dark, 0, -0.042, -0.27);
+    addBox(0.064, 0.01, 0.03, mat.metal, 0, 0.01, -0.2);
+    addBox(0.064, 0.01, 0.03, mat.metal, 0, 0.01, -0.31);
+    addBox(0.068, 0.062, 0.2, mat.dark, 0, 0.01, 0.0);
+    addBox(0.072, 0.012, 0.2, mat.metal, 0, 0.048, 0.0);
+    addBox(0.042, 0.016, 0.02, mat.metal, 0, 0.05, 0.09);
+    addBox(0.008, 0.032, 0.008, mat.metal, 0, 0.058, 0.09);
+    addBox(0.03, 0.03, 0.032, mat.metal, 0, 0.072, -0.005);
+    addBox(0.006, 0.012, 0.005, mat.steel, 0, 0.09, -0.005);
+    addBox(0.068, 0.058, 0.16, mat.dark, 0, -0.026, 0.025);
+    addBox(0.06, 0.007, 0.08, mat.metal, 0, -0.062, 0.055);
+    addBox(0.06, 0.024, 0.007, mat.metal, 0, -0.052, 0.019);
+    addBox(0.046, 0.11, 0.072, mat.rubber, 0, -0.096, 0.072, 0.2);
+    addBox(0.05, 0.14, 0.072, mat.dark, 0, -0.096, -0.018, -0.05);
+    addBox(0.052, 0.01, 0.064, mat.metal, 0, -0.168, -0.018, -0.05);
+    addBox(0.044, 0.044, 0.2, mat.metal, 0, -0.008, 0.135);
+    addBox(0.072, 0.072, 0.12, mat.dark, 0, -0.006, 0.23);
+    addBox(0.076, 0.014, 0.12, mat.rubber, 0, -0.038, 0.23);
+    addBox(0.018, 0.018, 0.018, mat.metal, 0, 0.01, -0.42);
+    addBox(0.006, 0.016, 0.005, mat.steel, 0, 0.025, -0.42);
   }
 
   /**

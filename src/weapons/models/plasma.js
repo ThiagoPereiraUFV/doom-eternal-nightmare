@@ -25,9 +25,36 @@ const PLASMA_CONFIG = {
   fireType: "auto",
   audio: {
     shoot: [
-      { action: "toneBurst", type: "sawtooth", freq: 440, freqEnd: 180, vol: 0.35, attack: 0, decay: 0.12, dur: 0.16 },
-      { action: "noiseBurst", freq: 3200, q: 4, filterType: "bandpass", vol: 0.25, attack: 0, decay: 0.06, dur: 0.10 },
-      { action: "toneBurst", type: "sine", freq: 880, freqEnd: 220, vol: 0.20, attack: 0, decay: 0.18, dur: 0.22 },
+      {
+        action: "toneBurst",
+        type: "sawtooth",
+        freq: 440,
+        freqEnd: 180,
+        vol: 0.35,
+        attack: 0,
+        decay: 0.12,
+        dur: 0.16,
+      },
+      {
+        action: "noiseBurst",
+        freq: 3200,
+        q: 4,
+        filterType: "bandpass",
+        vol: 0.25,
+        attack: 0,
+        decay: 0.06,
+        dur: 0.1,
+      },
+      {
+        action: "toneBurst",
+        type: "sine",
+        freq: 880,
+        freqEnd: 220,
+        vol: 0.2,
+        attack: 0,
+        decay: 0.18,
+        dur: 0.22,
+      },
     ],
   },
   render: {
@@ -50,28 +77,86 @@ export class PlasmaGun extends Weapon {
    * @param {Object} builder
    */
   buildModel({ addBox, addCyl, THREE, mat }) {
-    addBox(0.090, 0.080, 0.380, mat.dark,   0,  0.004,  0.000);
-    addBox(0.010, 0.068, 0.280, new THREE.MeshLambertMaterial({ color: 0x001133 }), -0.050, 0.004, -0.040);
-    addBox(0.010, 0.068, 0.280, new THREE.MeshLambertMaterial({ color: 0x001133 }),  0.050, 0.004, -0.040);
-    addCyl(0.030, 0.026, 0.200, mat.dark,   0,  0.004, -0.290, Math.PI / 2);
-    addCyl(0.034, 0.034, 0.020, mat.dark,   0,  0.004, -0.392, Math.PI / 2);
+    addBox(0.09, 0.08, 0.38, mat.dark, 0, 0.004, 0.0);
+    addBox(
+      0.01,
+      0.068,
+      0.28,
+      new THREE.MeshLambertMaterial({ color: 0x001133 }),
+      -0.05,
+      0.004,
+      -0.04,
+    );
+    addBox(
+      0.01,
+      0.068,
+      0.28,
+      new THREE.MeshLambertMaterial({ color: 0x001133 }),
+      0.05,
+      0.004,
+      -0.04,
+    );
+    addCyl(0.03, 0.026, 0.2, mat.dark, 0, 0.004, -0.29, Math.PI / 2);
+    addCyl(0.034, 0.034, 0.02, mat.dark, 0, 0.004, -0.392, Math.PI / 2);
     const plasmaRingMat = new THREE.MeshBasicMaterial({ color: 0x00aaff });
     for (let ri = 0; ri < 4; ri++) {
-      addCyl(0.036, 0.036, 0.006, plasmaRingMat, 0, 0.004, -0.200 - ri * 0.040, Math.PI / 2);
+      addCyl(
+        0.036,
+        0.036,
+        0.006,
+        plasmaRingMat,
+        0,
+        0.004,
+        -0.2 - ri * 0.04,
+        Math.PI / 2,
+      );
     }
-    addBox(0.070, 0.060, 0.100, new THREE.MeshLambertMaterial({ color: 0x003366 }), 0,  0.004,  0.060);
-    addCyl(0.028, 0.028, 0.080, new THREE.MeshLambertMaterial({ color: 0x0044aa }), 0,  0.004,  0.050, 0);
-    addBox(0.010, 0.012, 0.360, mat.metal,  0,  0.048,  0.000);
-    addBox(0.030, 0.014, 0.008, mat.metal,  0,  0.048,  0.168);
-    addBox(0.050, 0.110, 0.072, mat.rubber, 0, -0.072,  0.090,  0.16);
-    addBox(0.052, 0.010, 0.064, mat.dark,   0, -0.128,  0.088,  0.16);
-    addBox(0.058, 0.008, 0.084, mat.dark,   0, -0.046,  0.058);
-    addBox(0.010, 0.026, 0.010, new THREE.MeshBasicMaterial({ color: 0x0088ff }), 0, -0.044,  0.050);
+    addBox(
+      0.07,
+      0.06,
+      0.1,
+      new THREE.MeshLambertMaterial({ color: 0x003366 }),
+      0,
+      0.004,
+      0.06,
+    );
+    addCyl(
+      0.028,
+      0.028,
+      0.08,
+      new THREE.MeshLambertMaterial({ color: 0x0044aa }),
+      0,
+      0.004,
+      0.05,
+      0,
+    );
+    addBox(0.01, 0.012, 0.36, mat.metal, 0, 0.048, 0.0);
+    addBox(0.03, 0.014, 0.008, mat.metal, 0, 0.048, 0.168);
+    addBox(0.05, 0.11, 0.072, mat.rubber, 0, -0.072, 0.09, 0.16);
+    addBox(0.052, 0.01, 0.064, mat.dark, 0, -0.128, 0.088, 0.16);
+    addBox(0.058, 0.008, 0.084, mat.dark, 0, -0.046, 0.058);
+    addBox(
+      0.01,
+      0.026,
+      0.01,
+      new THREE.MeshBasicMaterial({ color: 0x0088ff }),
+      0,
+      -0.044,
+      0.05,
+    );
     const ledMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
-    addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.100);
-    addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.060);
-    addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.020);
-    addBox(0.004, 0.008, 0.008, new THREE.MeshBasicMaterial({ color: 0xff4400 }), -0.046, 0.028, -0.020);
+    addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.1);
+    addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.06);
+    addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.02);
+    addBox(
+      0.004,
+      0.008,
+      0.008,
+      new THREE.MeshBasicMaterial({ color: 0xff4400 }),
+      -0.046,
+      0.028,
+      -0.02,
+    );
   }
 
   fire(context) {
@@ -83,12 +168,28 @@ export class PlasmaGun extends Weapon {
     this.consumeAmmo();
 
     const shotAngle = player.angle + (Math.random() - 0.5) * this.spread;
-    const allHits = this._penetratingRaycast(player.x, player.y, shotAngle, map, enemies);
+    const allHits = this._penetratingRaycast(
+      player.x,
+      player.y,
+      shotAngle,
+      map,
+      enemies,
+    );
 
-    eventManager?.emit("weaponFired", { weapon: this, angle: shotAngle, hits: allHits });
+    eventManager?.emit("weaponFired", {
+      weapon: this,
+      angle: shotAngle,
+      hits: allHits,
+    });
     // No shell ejection — energy weapon
 
-    return { success: true, hits: allHits, hit: allHits[0] ?? { type: "miss" }, recoil: this.recoil, screenShake: this.screenShake };
+    return {
+      success: true,
+      hits: allHits,
+      hit: allHits[0] ?? { type: "miss" },
+      recoil: this.recoil,
+      screenShake: this.screenShake,
+    };
   }
 }
 

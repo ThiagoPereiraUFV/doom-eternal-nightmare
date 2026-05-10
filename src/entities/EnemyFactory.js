@@ -24,7 +24,7 @@ export class EnemyFactory {
     });
 
     // Register AI states
-    this.registerAIState(GameConfig.ENEMY.AI_STATES.CHASE,  new ChaseState());
+    this.registerAIState(GameConfig.ENEMY.AI_STATES.CHASE, new ChaseState());
     this.registerAIState(GameConfig.ENEMY.AI_STATES.PATROL, new PatrolState());
     this.registerAIState(GameConfig.ENEMY.AI_STATES.SEARCH, new SearchState());
   }

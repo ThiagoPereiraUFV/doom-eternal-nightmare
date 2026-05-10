@@ -13,7 +13,7 @@ export default [
     rules: {
       "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       "no-undef": "error",
-      "eqeqeq": ["error", "always"],
+      eqeqeq: ["error", "always"],
     },
   },
   {
@@ -54,10 +54,10 @@ export default [
       "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       "no-undef": "error",
       "no-console": "off",
-      "eqeqeq": ["error", "always"],
+      eqeqeq: ["error", "always"],
       "no-var": "error",
       "prefer-const": "warn",
-      "curly": ["error", "all"],
+      curly: ["error", "all"],
       "nonblock-statement-body-position": ["error", "below"],
     },
   },

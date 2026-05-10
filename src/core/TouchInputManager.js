@@ -38,14 +38,14 @@ export class TouchInputManager {
     };
 
     // Elements
-    this.touchControls = document.getElementById('touchControls');
-    this.joystickElement = document.getElementById('touchJoystick');
-    this.joystickStick = document.getElementById('joystickStick');
-    this.lookAreaElement = document.getElementById('touchLookArea');
+    this.touchControls = document.getElementById("touchControls");
+    this.joystickElement = document.getElementById("touchJoystick");
+    this.joystickStick = document.getElementById("joystickStick");
+    this.lookAreaElement = document.getElementById("touchLookArea");
 
     // Validate elements exist
     if (!this.touchControls || !this.joystickElement || !this.lookAreaElement) {
-      console.warn('Touch control elements not found in DOM');
+      console.warn("Touch control elements not found in DOM");
     }
 
     this._setupListeners();
@@ -56,7 +56,7 @@ export class TouchInputManager {
    */
   enable() {
     if (this.touchControls) {
-      this.touchControls.classList.add('active');
+      this.touchControls.classList.add("active");
     }
   }
 
@@ -65,7 +65,7 @@ export class TouchInputManager {
    */
   disable() {
     if (this.touchControls) {
-      this.touchControls.classList.remove('active');
+      this.touchControls.classList.remove("active");
     }
     this._resetState();
   }
@@ -77,18 +77,34 @@ export class TouchInputManager {
   _setupListeners() {
     // Joystick
     if (this.joystickElement) {
-      this.joystickElement.addEventListener('touchstart', (e) => this._handleJoystickStart(e));
-      this.joystickElement.addEventListener('touchmove', (e) => this._handleJoystickMove(e));
-      this.joystickElement.addEventListener('touchend', (e) => this._handleJoystickEnd(e));
-      this.joystickElement.addEventListener('touchcancel', (e) => this._handleJoystickEnd(e));
+      this.joystickElement.addEventListener("touchstart", (e) =>
+        this._handleJoystickStart(e),
+      );
+      this.joystickElement.addEventListener("touchmove", (e) =>
+        this._handleJoystickMove(e),
+      );
+      this.joystickElement.addEventListener("touchend", (e) =>
+        this._handleJoystickEnd(e),
+      );
+      this.joystickElement.addEventListener("touchcancel", (e) =>
+        this._handleJoystickEnd(e),
+      );
     }
 
     // Look area
     if (this.lookAreaElement) {
-      this.lookAreaElement.addEventListener('touchstart', (e) => this._handleLookStart(e));
-      this.lookAreaElement.addEventListener('touchmove', (e) => this._handleLookMove(e));
-      this.lookAreaElement.addEventListener('touchend', (e) => this._handleLookEnd(e));
-      this.lookAreaElement.addEventListener('touchcancel', (e) => this._handleLookEnd(e));
+      this.lookAreaElement.addEventListener("touchstart", (e) =>
+        this._handleLookStart(e),
+      );
+      this.lookAreaElement.addEventListener("touchmove", (e) =>
+        this._handleLookMove(e),
+      );
+      this.lookAreaElement.addEventListener("touchend", (e) =>
+        this._handleLookEnd(e),
+      );
+      this.lookAreaElement.addEventListener("touchcancel", (e) =>
+        this._handleLookEnd(e),
+      );
     }
   }
 
@@ -116,7 +132,9 @@ export class TouchInputManager {
    */
   _handleJoystickMove(e) {
     e.preventDefault();
-    if (!this.joystick.active) { return; }
+    if (!this.joystick.active) {
+      return;
+    }
 
     const touch = e.touches[0];
     this.joystick.currentX = touch.clientX;
@@ -149,7 +167,10 @@ export class TouchInputManager {
    * @returns {number} Position as percentage
    */
   _calculateStickPosition(clampedValue) {
-    return this.JOYSTICK_CENTER_POSITION + (clampedValue / this.JOYSTICK_MAX_DISTANCE) * this.JOYSTICK_MOVEMENT_RANGE;
+    return (
+      this.JOYSTICK_CENTER_POSITION +
+      (clampedValue / this.JOYSTICK_MAX_DISTANCE) * this.JOYSTICK_MOVEMENT_RANGE
+    );
   }
 
   /**
@@ -200,7 +221,9 @@ export class TouchInputManager {
    */
   _handleLookMove(e) {
     e.preventDefault();
-    if (!this.lookArea.active) { return; }
+    if (!this.lookArea.active) {
+      return;
+    }
 
     const touch = e.touches[0];
 
