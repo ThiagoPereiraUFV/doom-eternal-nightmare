@@ -134,13 +134,21 @@ export class Shotgun extends Weapon {
     this.consumeAmmo();
 
     const hits = [];
+    const shotPitch = this._getShotPitch(player);
 
     // Fire multiple pellets
     for (let i = 0; i < this.pellets; i++) {
       const spreadAngle = (Math.random() - 0.5) * this.spread;
       const shotAngle = player.angle + spreadAngle;
 
-      const hit = this._raycast(player.x, player.y, shotAngle, map, enemies);
+      const hit = this._raycast(
+        player.x,
+        player.y,
+        shotAngle,
+        map,
+        enemies,
+        shotPitch,
+      );
       if (hit.type !== "miss") {
         hits.push(hit);
       }
@@ -149,6 +157,7 @@ export class Shotgun extends Weapon {
     // Emit fire event
     eventManager?.emit("weaponFired", {
       weapon: this,
+      pitch: shotPitch,
       hits,
     });
 

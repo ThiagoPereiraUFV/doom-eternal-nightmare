@@ -132,10 +132,23 @@ export class SMG extends Weapon {
 
     const spreadAngle = (Math.random() - 0.5) * this.spread;
     const shotAngle = player.angle + spreadAngle;
+    const shotPitch = this._getShotPitch(player);
 
-    const hit = this._raycast(player.x, player.y, shotAngle, map, enemies);
+    const hit = this._raycast(
+      player.x,
+      player.y,
+      shotAngle,
+      map,
+      enemies,
+      shotPitch,
+    );
 
-    eventManager?.emit("weaponFired", { weapon: this, angle: shotAngle, hit });
+    eventManager?.emit("weaponFired", {
+      weapon: this,
+      angle: shotAngle,
+      pitch: shotPitch,
+      hit,
+    });
 
     return {
       success: true,

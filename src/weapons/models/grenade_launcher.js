@@ -121,8 +121,15 @@ export class GrenadeL extends Weapon {
     // shoot sound played by Player.shoot(); play explosion after landing
 
     const shotAngle = player.angle + (Math.random() - 0.5) * this.spread;
+    const shotPitch = this._getShotPitch(player);
     // Find where the grenade lands (wall or max range)
-    const landing = this._findLandingPoint(player.x, player.y, shotAngle, map);
+    const landing = this._findLandingPoint(
+      player.x,
+      player.y,
+      shotAngle,
+      shotPitch,
+      map,
+    );
 
     // Apply splash damage to all enemies in radius
     const hits = [];
@@ -150,6 +157,7 @@ export class GrenadeL extends Weapon {
     eventManager?.emit("weaponFired", {
       weapon: this,
       angle: shotAngle,
+      pitch: shotPitch,
       hits,
       explosion: landing,
     });
@@ -168,9 +176,10 @@ export class GrenadeL extends Weapon {
     };
   }
 
-  _findLandingPoint(x, y, angle, map) {
-    const maxDistance = this.maxDistance;
-    const step = this.raycastStep;
+  _findLandingPoint(x, y, angle, pitch, map) {
+    const rangeScale = Math.max(0.05, Math.cos(Math.abs(pitch)));
+    const maxDistance = this.maxDistance * rangeScale;
+    const step = this.raycastStep * rangeScale;
     let distance = 0;
     let iterations = 0;
 

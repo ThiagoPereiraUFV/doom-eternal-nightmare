@@ -68,10 +68,33 @@ export class Weapon {
   }
 
   /**
+   * Get vertical shot pitch for the current player view.
+   * @protected
+   */
+  _getShotPitch(player) {
+    return player?.pitch ?? 0;
+  }
+
+  /**
+   * Return whether a target falls inside the current vertical aim window.
+   * @protected
+   */
+  _isEnemyWithinPitch(enemy, distance, pitch) {
+    const shotHeight =
+      GameConfig.COMBAT.SHOT_ORIGIN_HEIGHT + Math.tan(pitch) * distance;
+    const targetHeight = enemy.targetHeight ?? 1;
+    const targetCenterHeight = enemy.targetCenterHeight ?? targetHeight / 2;
+    const targetBottom = targetCenterHeight - targetHeight / 2;
+    const targetTop = targetCenterHeight + targetHeight / 2;
+
+    return shotHeight >= targetBottom && shotHeight <= targetTop;
+  }
+
+  /**
    * Ray march — returns first wall or enemy hit
    * @protected
    */
-  _raycast(x, y, angle, map, enemies) {
+  _raycast(x, y, angle, map, enemies, pitch = 0) {
     const { maxDistance, raycastStep: step } = this;
     const maxIterations = Math.ceil(maxDistance / step) + 200;
     const hitRadiusSq = GameConfig.COMBAT.ENEMY_HIT_RADIUS_SQ;
@@ -101,7 +124,10 @@ export class Weapon {
         if (!enemy.isDead) {
           const dx = enemy.x - testX;
           const dy = enemy.y - testY;
-          if (dx * dx + dy * dy < hitRadiusSq) {
+          if (
+            dx * dx + dy * dy < hitRadiusSq &&
+            this._isEnemyWithinPitch(enemy, distance, pitch)
+          ) {
             return {
               type: "enemy",
               enemy,
@@ -121,7 +147,7 @@ export class Weapon {
    * Penetrating ray march — returns all hits, supports wall pass-through
    * @protected
    */
-  _penetratingRaycast(x, y, angle, map, enemies) {
+  _penetratingRaycast(x, y, angle, map, enemies, pitch = 0) {
     const {
       maxDistance,
       raycastStep: step,
@@ -173,7 +199,10 @@ export class Weapon {
         if (!enemy.isDead && !hitEnemies.has(enemy.id)) {
           const dx = enemy.x - testX;
           const dy = enemy.y - testY;
-          if (dx * dx + dy * dy < hitRadiusSq) {
+          if (
+            dx * dx + dy * dy < hitRadiusSq &&
+            this._isEnemyWithinPitch(enemy, distance, pitch)
+          ) {
             hitEnemies.add(enemy.id);
             hits.push({
               type: "enemy",

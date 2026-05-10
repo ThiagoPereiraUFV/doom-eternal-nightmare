@@ -135,14 +135,23 @@ export class Pistol extends Weapon {
     // Calculate shot direction with spread
     const spreadAngle = (Math.random() - 0.5) * this.spread;
     const shotAngle = player.angle + spreadAngle;
+    const shotPitch = this._getShotPitch(player);
 
     // Perform raycast to find hit
-    const hit = this._raycast(player.x, player.y, shotAngle, map, enemies);
+    const hit = this._raycast(
+      player.x,
+      player.y,
+      shotAngle,
+      map,
+      enemies,
+      shotPitch,
+    );
 
     // Emit fire event
     eventManager?.emit("weaponFired", {
       weapon: this,
       angle: shotAngle,
+      pitch: shotPitch,
       hit,
     });
 

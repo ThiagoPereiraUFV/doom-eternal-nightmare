@@ -234,6 +234,7 @@ export class SniperRifle extends Weapon {
     this.consumeAmmo();
 
     const shotAngle = player.angle + (Math.random() - 0.5) * this.spread;
+    const shotPitch = this._getShotPitch(player);
     // Sniper penetrates multiple enemies
     const allHits = this._penetratingRaycast(
       player.x,
@@ -241,11 +242,13 @@ export class SniperRifle extends Weapon {
       shotAngle,
       map,
       enemies,
+      shotPitch,
     );
 
     eventManager?.emit("weaponFired", {
       weapon: this,
       angle: shotAngle,
+      pitch: shotPitch,
       hits: allHits,
     });
 

@@ -22,6 +22,9 @@ export class Enemy {
     this.maxHealth = config.health;
     this.speed = config.speed;
     this.color = config.color;
+    this.targetHeight = config.targetHeight ?? 1;
+    this.targetCenterHeight =
+      config.targetCenterHeight ?? this.targetHeight / 2;
 
     // AI state
     this.currentState = null;

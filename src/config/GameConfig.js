@@ -139,30 +139,41 @@ export const GameConfig = {
         health: 50,
         speed: 0.025,
         color: { r: 180, g: 40 },
+        targetHeight: 1.45,
+        targetCenterHeight: 0.72,
       },
       ZOMBIE: {
         type: "zombie",
         health: 80,
         speed: 0.015,
         color: { r: 120, g: 150 },
+        targetHeight: 1.1,
+        targetCenterHeight: 0.55,
       },
       GHOST: {
         type: "ghost",
         health: 30,
         speed: 0.03,
         color: { r: 200, g: 200 },
+        targetHeight: 0.95,
+        targetCenterHeight: 0.52,
       },
       BRUTE: {
         type: "brute",
         health: 120,
         speed: 0.01,
         color: { r: 140, g: 60 },
+        targetHeight: 2.2,
+        targetCenterHeight: 1.1,
       },
     },
   },
 
   // Combat
   COMBAT: {
+    // Shot origin height from the floor, matching the first-person camera.
+    SHOT_ORIGIN_HEIGHT: 0.5,
+
     // Minimum damage multiplier once range falloff bottoms out.
     DAMAGE_FALLOFF_MIN: 0.3,
 

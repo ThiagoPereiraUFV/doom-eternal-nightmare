@@ -168,17 +168,20 @@ export class PlasmaGun extends Weapon {
     this.consumeAmmo();
 
     const shotAngle = player.angle + (Math.random() - 0.5) * this.spread;
+    const shotPitch = this._getShotPitch(player);
     const allHits = this._penetratingRaycast(
       player.x,
       player.y,
       shotAngle,
       map,
       enemies,
+      shotPitch,
     );
 
     eventManager?.emit("weaponFired", {
       weapon: this,
       angle: shotAngle,
+      pitch: shotPitch,
       hits: allHits,
     });
     // No shell ejection — energy weapon

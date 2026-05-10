@@ -149,6 +149,7 @@ export class Rifle extends Weapon {
     // Calculate shot direction with minimal spread
     const spreadAngle = (Math.random() - 0.5) * this.spread;
     const shotAngle = player.angle + spreadAngle;
+    const shotPitch = this._getShotPitch(player);
 
     // Perform raycast with penetration
     const hits = this._penetratingRaycast(
@@ -157,12 +158,14 @@ export class Rifle extends Weapon {
       shotAngle,
       map,
       enemies,
+      shotPitch,
     );
 
     // Emit fire event
     eventManager?.emit("weaponFired", {
       weapon: this,
       angle: shotAngle,
+      pitch: shotPitch,
       hits,
     });
 
