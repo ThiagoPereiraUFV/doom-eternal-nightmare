@@ -194,8 +194,7 @@
 					<span id="diff-stat-ammo">🔹 ×1.0</span>
 					<span id="diff-stat-enemies">☠ 50 enemies</span>
 					<span id="diff-stat-light">💡 Normal</span>
-					<span id="diff-stat-autoreload">🔄 Auto-reload: On</span>
-					<span id="diff-stat-guns">🔫 All guns</span>
+					<span id="diff-stat-autoreload">🔄 Auto-reload: On</span>				<span id="diff-stat-aimassist">🎯 Aim assist: Off</span>					<span id="diff-stat-guns">🔫 All guns</span>
 				</div>
 
 				<!-- Controls reference — keyboard on desktop, touch on mobile -->
@@ -232,37 +231,7 @@
 		<div id="custom-diff-modal" class="custom-modal hidden">
 			<div class="custom-modal-box">
 				<div class="custom-modal-title">CUSTOM SETTINGS</div>
-				<div class="custom-sliders">
-					<!-- Player -->
-					<div class="cs-group-label">PLAYER</div>
-					<div class="cs-row"><label>Health <span class="cs-val" id="cs-health-val">100</span></label><input type="range" id="cs-health" min="20" max="200" step="5" value="100"></div>
-					<div class="cs-row"><label>Stamina <span class="cs-val" id="cs-stamina-val">100</span></label><input type="range" id="cs-stamina" min="20" max="200" step="5" value="100"></div>
-					<!-- Weapons -->
-					<div class="cs-group-label">WEAPONS</div>
-					<div class="cs-row"><label>Ammo multiplier <span class="cs-val" id="cs-ammo-val">×1.00</span></label><input type="range" id="cs-ammo" min="0.1" max="4" step="0.05" value="1"></div>
-					<!-- Enemies -->
-					<div class="cs-group-label">ENEMIES</div>
-					<div class="cs-row"><label>Count <span class="cs-val" id="cs-enemies-val">50</span></label><input type="range" id="cs-enemies" min="5" max="200" step="5" value="50"></div>
-					<div class="cs-row"><label>Health mult <span class="cs-val" id="cs-ehp-val">×1.00</span></label><input type="range" id="cs-ehp" min="0.25" max="4" step="0.05" value="1"></div>
-					<div class="cs-row"><label>Speed mult <span class="cs-val" id="cs-espd-val">×1.00</span></label><input type="range" id="cs-espd" min="0.25" max="3" step="0.05" value="1"></div>
-					<div class="cs-row"><label>Damage <span class="cs-val" id="cs-edmg-val">10</span></label><input type="range" id="cs-edmg" min="1" max="50" step="1" value="10"></div>
-					<!-- Environment -->
-					<div class="cs-group-label">ENVIRONMENT</div>
-					<div class="cs-row"><label>Map density <span class="cs-val" id="cs-fill-val">0.55</span></label><input type="range" id="cs-fill" min="0.3" max="0.8" step="0.01" value="0.55"></div>
-					<div class="cs-row"><label>Ambient light <span class="cs-val" id="cs-amb-val">1.20</span></label><input type="range" id="cs-amb" min="0.1" max="3" step="0.05" value="1.2"></div>
-					<div class="cs-row"><label>Fog density <span class="cs-val" id="cs-fog-val">0.06</span></label><input type="range" id="cs-fog" min="0.01" max="0.3" step="0.005" value="0.06"></div>
-					<div class="cs-row"><label>Flashlight <span class="cs-val" id="cs-flash-val">3.50</span></label><input type="range" id="cs-flash" min="0" max="8" step="0.1" value="3.5"></div>
-					<!-- Gameplay -->
-					<div class="cs-group-label">GAMEPLAY</div>
-					<div class="cs-row cs-row-check"><label>Auto reload</label><input type="checkbox" id="cs-autoreload" checked></div>
-					<div class="cs-row cs-row-check"><label>Available guns</label>
-						<span class="cs-gun-checks">
-							<label><input type="checkbox" id="cs-gun-pistol" checked> Pistol</label>
-							<label><input type="checkbox" id="cs-gun-shotgun" checked> Shotgun</label>
-							<label><input type="checkbox" id="cs-gun-rifle" checked> Rifle</label>
-						</span>
-					</div>
-				</div>
+				<div class="custom-sliders" id="cs-sliders-container"></div>
 				<div class="custom-modal-actions">
 					<button id="cs-apply">APPLY</button>
 					<button id="cs-cancel">CANCEL</button>
@@ -329,23 +298,70 @@
 		const LIGHT_LABEL = {
 			easy: "Bright", medium: "Normal", hard: "Dark", impossible: "Pitch black", custom: "Custom",
 		};
+		const ALL_GUNS = GameConfig.DIFFICULTY_SCHEMA.find(f => f.key === 'availableGuns')?.options ?? [];
 
 		function gunsLabel(guns) {
-			if (!guns || guns.length === 3) return 'All guns';
+			if (!guns || guns.length === ALL_GUNS.length) return 'All guns';
 			if (guns.length === 0) return 'None';
-			return guns.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(' + ');
+			return guns.map(g => g.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())).join(', ');
 		}
 
 		function updateStats(diffId) {
 			const d = STATS[diffId];
 			if (!d) return;
-			document.getElementById("diff-stat-health").textContent     = `❤ ${d.maxHealth} HP`;
-			document.getElementById("diff-stat-stamina").textContent    = `⚡ ${d.maxStamina} stamina`;
-			document.getElementById("diff-stat-ammo").textContent       = `🔹 ×${d.ammoMultiplier.toFixed(2)} ammo`;
-			document.getElementById("diff-stat-enemies").textContent    = `☠ ${d.enemyCount} enemies`;
-			document.getElementById("diff-stat-light").textContent      = `💡 ${LIGHT_LABEL[diffId]}`;
-			document.getElementById("diff-stat-autoreload").textContent = `🔄 Auto-reload: ${d.autoReload ? 'On' : 'Off'}`;
-			document.getElementById("diff-stat-guns").textContent       = `🔫 ${gunsLabel(d.availableGuns)}`;
+			document.getElementById("diff-stat-health").textContent     = `\u2764 ${d.maxHealth} HP`;
+			document.getElementById("diff-stat-stamina").textContent    = `\u26a1 ${d.maxStamina} stamina`;
+			document.getElementById("diff-stat-ammo").textContent       = `\ud83d\udd39 \u00d7${d.ammoMultiplier.toFixed(2)} ammo`;
+			document.getElementById("diff-stat-enemies").textContent    = `\u2620 ${d.enemyCount} enemies`;
+			document.getElementById("diff-stat-light").textContent      = `\ud83d\udca1 ${LIGHT_LABEL[diffId]}`;
+			document.getElementById("diff-stat-autoreload").textContent = `\ud83d\udd04 Auto-reload: ${d.autoReload ? 'On' : 'Off'}`;
+			document.getElementById("diff-stat-aimassist").textContent  = `\ud83c\udfaf Aim assist: ${d.aimAssist ? 'On' : 'Off'}`;
+			document.getElementById("diff-stat-guns").textContent       = `\ud83d\udd2b ${gunsLabel(d.availableGuns)}`;
+		}
+
+		// ── Build custom modal inputs from schema ───────────────────
+		function buildSliders() {
+			const container = document.getElementById("cs-sliders-container");
+			const defaults = GameConfig.DIFFICULTY.CUSTOM;
+			let currentGroup = null;
+
+			for (const field of GameConfig.DIFFICULTY_SCHEMA) {
+				if (field.group !== currentGroup) {
+					currentGroup = field.group;
+					const lbl = document.createElement('div');
+					lbl.className = 'cs-group-label';
+					lbl.textContent = field.group;
+					container.appendChild(lbl);
+				}
+
+				const row = document.createElement('div');
+				const defaultVal = defaults[field.key];
+
+				if (field.type === 'range') {
+					row.className = 'cs-row';
+					row.innerHTML =
+						`<label>${field.label} <span class="cs-val" id="cs-val-${field.key}">${field.format(defaultVal)}</span></label>` +
+						`<input type="range" id="cs-input-${field.key}" min="${field.min}" max="${field.max}" step="${field.step}" value="${defaultVal}">`;
+					const input = row.querySelector('input');
+					const span  = row.querySelector('.cs-val');
+					input.addEventListener('input', () => { span.textContent = field.format(input.value); });
+				} else if (field.type === 'checkbox') {
+					row.className = 'cs-row cs-row-check';
+					row.innerHTML =
+						`<label>${field.label}</label>` +
+						`<input type="checkbox" id="cs-input-${field.key}" ${defaultVal ? 'checked' : ''}>`;
+				} else if (field.type === 'guns') {
+					row.className = 'cs-row cs-row-check';
+					const checks = field.options.map(g => {
+						const label   = g.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+						const checked = (defaultVal ?? []).includes(g) ? 'checked' : '';
+						return `<label><input type="checkbox" id="cs-gun-${g}" ${checked}> ${label}</label>`;
+					}).join('');
+					row.innerHTML = `<label>${field.label}</label><span class="cs-gun-checks">${checks}</span>`;
+				}
+
+				container.appendChild(row);
+			}
 		}
 
 		// ── Custom modal logic ──────────────────────────────────────
@@ -353,51 +369,24 @@
 		const csApply  = document.getElementById("cs-apply");
 		const csCancel = document.getElementById("cs-cancel");
 
-		// Slider definitions: [inputId, valueSpanId, formatter]
-		const sliders = [
-			["cs-health",  "cs-health-val",  v => `${v}`],
-			["cs-stamina", "cs-stamina-val", v => `${v}`],
-			["cs-ammo",    "cs-ammo-val",    v => `×${parseFloat(v).toFixed(2)}`],
-			["cs-enemies", "cs-enemies-val", v => `${v}`],
-			["cs-ehp",     "cs-ehp-val",     v => `×${parseFloat(v).toFixed(2)}`],
-			["cs-espd",    "cs-espd-val",    v => `×${parseFloat(v).toFixed(2)}`],
-			["cs-edmg",    "cs-edmg-val",    v => `${v}`],
-			["cs-fill",    "cs-fill-val",    v => `${parseFloat(v).toFixed(2)}`],
-			["cs-amb",     "cs-amb-val",     v => `${parseFloat(v).toFixed(2)}`],
-			["cs-fog",     "cs-fog-val",     v => `${parseFloat(v).toFixed(3)}`],
-			["cs-flash",   "cs-flash-val",   v => `${parseFloat(v).toFixed(2)}`],
-		];
-
-		sliders.forEach(([inputId, spanId, fmt]) => {
-			const input = document.getElementById(inputId);
-			const span  = document.getElementById(spanId);
-			input.addEventListener("input", () => { span.textContent = fmt(input.value); });
-		});
-
 		function openCustomModal() {
 			modal.classList.remove("hidden");
 		}
 
 		function applyCustom() {
 			const c = GameConfig.DIFFICULTY.CUSTOM;
-			c.maxHealth       = parseFloat(document.getElementById("cs-health").value);
-			c.maxStamina      = parseFloat(document.getElementById("cs-stamina").value);
-			c.ammoMultiplier  = parseFloat(document.getElementById("cs-ammo").value);
-			c.enemyCount      = parseInt(document.getElementById("cs-enemies").value, 10);
-			c.enemyHealthMult = parseFloat(document.getElementById("cs-ehp").value);
-			c.enemySpeedMult  = parseFloat(document.getElementById("cs-espd").value);
-			c.enemyDamage     = parseFloat(document.getElementById("cs-edmg").value);
-			c.fillRatio       = parseFloat(document.getElementById("cs-fill").value);
-			c.ambientIntensity    = parseFloat(document.getElementById("cs-amb").value);
-			c.fogDensity          = parseFloat(document.getElementById("cs-fog").value);
-			c.flashlightIntensity = parseFloat(document.getElementById("cs-flash").value);
-			c.autoReload = document.getElementById("cs-autoreload").checked;
-			const guns = [];
-			if (document.getElementById("cs-gun-pistol").checked)  guns.push('pistol');
-			if (document.getElementById("cs-gun-shotgun").checked) guns.push('shotgun');
-			if (document.getElementById("cs-gun-rifle").checked)   guns.push('rifle');
-			// At least one gun must be selected
-			c.availableGuns = guns.length > 0 ? guns : ['pistol'];
+			for (const field of GameConfig.DIFFICULTY_SCHEMA) {
+				if (field.type === 'range') {
+					const val = parseFloat(document.getElementById(`cs-input-${field.key}`).value);
+					// Use integer for step >= 1 fields (count, damage, etc.)
+					c[field.key] = field.step >= 1 ? Math.round(val) : val;
+				} else if (field.type === 'checkbox') {
+					c[field.key] = document.getElementById(`cs-input-${field.key}`).checked;
+				} else if (field.type === 'guns') {
+					const selected = field.options.filter(g => document.getElementById(`cs-gun-${g}`)?.checked);
+					c[field.key] = selected.length > 0 ? selected : [field.options[0]];
+				}
+			}
 			STATS.custom = c;
 			updateStats("custom");
 			modal.classList.add("hidden");
@@ -428,7 +417,8 @@
 			btn.addEventListener("touchstart",  (e) => { e.stopPropagation(); activate(e); }, { passive: true });
 		});
 
-		// Init with default
+		// Build modal inputs and init stats display
+		buildSliders();
 		updateStats("medium");
 	</script>
 	</body>

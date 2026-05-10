@@ -22,6 +22,7 @@ export const GameConfig = {
     ROTATION_SPEED: 0.03,
     STAMINA_DRAIN: 0.5,
     STAMINA_RECOVERY: 0.3,
+    SCREEN_SHAKE_DECAY: 0.8,
   },
 
   // Input configuration
@@ -81,6 +82,13 @@ export const GameConfig = {
     PATROL_WANDER_RANGE: 4,
     PATROL_MIN_DISTANCE: 0.1,
     STUCK_THRESHOLD: 20,
+
+    // AI state name constants — single source of truth for all setState() calls
+    AI_STATES: {
+      CHASE:  'chase',
+      PATROL: 'patrol',
+      SEARCH: 'search',
+    },
 
     // Combat
     ATTACK_DISTANCE: 0.8,
@@ -370,6 +378,44 @@ export const GameConfig = {
       availableGuns: ['pistol', 'shotgun', 'rifle', 'smg', 'sniper', 'grenade_launcher', 'plasma'],
     },
   },
+
+  /**
+   * Schema for every difficulty variable that should appear in the Custom modal.
+   * Adding a new entry here is the only step needed to expose a variable in the UI.
+   * Fields:
+   *   key          – property name on the difficulty object
+   *   group        – section header in the modal
+   *   type         – 'range' | 'checkbox' | 'guns'
+   *   label        – human-readable label
+   *   min/max/step – (range only) slider bounds
+   *   format       – (range only) fn(value: string) → display string
+   *   options      – (guns only) ordered list of gun ids
+   */
+  DIFFICULTY_SCHEMA: [
+    // Player
+    { key: 'maxHealth',           group: 'PLAYER',      type: 'range',    label: 'Health',           min: 20,   max: 200,  step: 5,     format: v => String(Math.round(v)) },
+    { key: 'maxStamina',          group: 'PLAYER',      type: 'range',    label: 'Stamina',          min: 20,   max: 200,  step: 5,     format: v => String(Math.round(v)) },
+    { key: 'staminaDrain',        group: 'PLAYER',      type: 'range',    label: 'Stamina drain',    min: 0.05, max: 2,    step: 0.05,  format: v => parseFloat(v).toFixed(2) },
+    { key: 'staminaRecovery',     group: 'PLAYER',      type: 'range',    label: 'Stamina recovery', min: 0.05, max: 1,    step: 0.05,  format: v => parseFloat(v).toFixed(2) },
+    // Weapons
+    { key: 'ammoMultiplier',      group: 'WEAPONS',     type: 'range',    label: 'Ammo multiplier',  min: 0.1,  max: 4,    step: 0.05,  format: v => `\u00d7${parseFloat(v).toFixed(2)}` },
+    // Enemies
+    { key: 'enemyCount',          group: 'ENEMIES',     type: 'range',    label: 'Count',            min: 5,    max: 200,  step: 5,     format: v => String(Math.round(v)) },
+    { key: 'enemyHealthMult',     group: 'ENEMIES',     type: 'range',    label: 'Health mult',      min: 0.25, max: 4,    step: 0.05,  format: v => `\u00d7${parseFloat(v).toFixed(2)}` },
+    { key: 'enemySpeedMult',      group: 'ENEMIES',     type: 'range',    label: 'Speed mult',       min: 0.25, max: 3,    step: 0.05,  format: v => `\u00d7${parseFloat(v).toFixed(2)}` },
+    { key: 'enemyDamage',         group: 'ENEMIES',     type: 'range',    label: 'Damage',           min: 1,    max: 50,   step: 1,     format: v => String(Math.round(v)) },
+    // Environment
+    { key: 'fillRatio',           group: 'ENVIRONMENT', type: 'range',    label: 'Map density',      min: 0.3,  max: 0.8,  step: 0.01,  format: v => parseFloat(v).toFixed(2) },
+    { key: 'smoothIterations',    group: 'ENVIRONMENT', type: 'range',    label: 'Map smoothing',    min: 0,    max: 6,    step: 1,     format: v => String(Math.round(v)) },
+    { key: 'ambientIntensity',    group: 'ENVIRONMENT', type: 'range',    label: 'Ambient light',    min: 0.1,  max: 3,    step: 0.05,  format: v => parseFloat(v).toFixed(2) },
+    { key: 'fogDensity',          group: 'ENVIRONMENT', type: 'range',    label: 'Fog density',      min: 0.01, max: 0.3,  step: 0.005, format: v => parseFloat(v).toFixed(3) },
+    { key: 'flashlightIntensity', group: 'ENVIRONMENT', type: 'range',    label: 'Flashlight',       min: 0,    max: 8,    step: 0.1,   format: v => parseFloat(v).toFixed(2) },
+    // Gameplay
+    { key: 'autoReload',          group: 'GAMEPLAY',    type: 'checkbox', label: 'Auto reload' },
+    { key: 'aimAssist',           group: 'GAMEPLAY',    type: 'checkbox', label: 'Aim assist' },
+    { key: 'availableGuns',       group: 'GAMEPLAY',    type: 'guns',     label: 'Available guns',
+      options: ['pistol', 'shotgun', 'rifle', 'smg', 'sniper', 'grenade_launcher', 'plasma'] },
+  ],
 
   // 3D Weapon rendering
   WEAPON_3D: {
