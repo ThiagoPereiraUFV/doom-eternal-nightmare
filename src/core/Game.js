@@ -138,13 +138,6 @@ export class Game {
       }
     });
 
-    // Touch look — works without pointer lock (mobile)
-    this.eventManager.on("touchlook", ({ dx }) => {
-      if (this.stateManager.is(GameStates.PLAYING) && this.player) {
-        this.player.angle += dx * 0.007;
-      }
-    });
-
     // Pause menu buttons
     const pauseResume = document.getElementById("pause-resume");
     const pauseExit = document.getElementById("pause-exit");
