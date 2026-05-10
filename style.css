@@ -171,12 +171,12 @@ body {
 
 #touch-prev-weapon {
 	bottom: 195px;
-	left: 220px;
+	left: 50px;
 }
 
 #touch-next-weapon {
 	bottom: 195px;
-	left: 295px;
+	left: 125px;
 }
 
 #touch-prev-weapon:active,
@@ -825,6 +825,7 @@ body {
 	align-items: center;
 	justify-content: center;
 	backdrop-filter: blur(4px);
+	touch-action: pan-y;
 }
 
 .custom-modal.hidden {
@@ -841,6 +842,7 @@ body {
 	overflow-y: auto;
 	-webkit-overflow-scrolling: touch;
 	touch-action: pan-y;
+	overscroll-behavior: contain;
 	display: flex;
 	flex-direction: column;
 	gap: 16px;

@@ -390,8 +390,12 @@
 		};
 		_tap(csApply,  applyCustom);
 		_tap(csCancel, () => modal.classList.add("hidden"));
-		// Close on backdrop click/tap
-		_tap(modal, (e) => { if (e.target === modal) modal.classList.add("hidden"); });
+		// Close on backdrop click/tap — only preventDefault when tapping the backdrop itself,
+		// NOT when touching inside the modal-box (would break scrolling)
+		modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.add("hidden"); });
+		modal.addEventListener("touchstart", (e) => {
+			if (e.target === modal) { e.preventDefault(); modal.classList.add("hidden"); }
+		}, { passive: false });
 
 		// ── Difficulty button wiring ────────────────────────────────
 		document.querySelectorAll(".diff-btn").forEach(btn => {
@@ -406,7 +410,7 @@
 				}
 			};
 			btn.addEventListener("click",      (e) => activate(e));
-			btn.addEventListener("touchstart",  (e) => { e.stopPropagation(); activate(e); }, { passive: true });
+			btn.addEventListener("touchstart",  (e) => { e.preventDefault(); e.stopPropagation(); activate(e); }, { passive: false });
 		});
 
 		// Build modal inputs and init stats display
