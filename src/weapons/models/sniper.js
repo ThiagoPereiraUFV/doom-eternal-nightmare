@@ -97,7 +97,7 @@ const SNIPER_CONFIG = {
   render: {
     basePosition: [0.22, -0.16, -0.45],
     baseRotationY: -0.09,
-    adsOffset: [-0.22, 0.05, 0],
+    adsOffset: [-0.22, 0.06, 0],
     adsRotation: 0.0,
     adsFOV: 22,
     scale: 3.0,
@@ -222,7 +222,7 @@ export class SniperRifle extends Weapon {
     addBox(0.058, 0.058, 0.22, mat.wood, 0, -0.008, -0.26);
     addBox(0.01, 0.02, 0.01, mat.metal, 0, -0.038, -0.12);
     addBox(0.01, 0.02, 0.01, mat.metal, 0, -0.04, 0.18);
-    addBox(0.02, 0.022, 0.01, mat.metal, 0, 0.08, -0.84);
+    addBox(0.02, 0.022, 0.01, mat.metal, 0, 0.05, -0.84);
   }
 
   fire(context) {
