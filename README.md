@@ -2,15 +2,18 @@
 
 ## 🎮 Project Overview
 
-A browser-based first-person shooter (FPS) game inspired by classic titles like DOOM and Wolfenstein 3D. Built using JavaScript and HTML5 Canvas, this project showcases advanced game development techniques, including raycasting, procedural map generation, AI state machines, and modular architecture following SOLID principles.
+A browser-based first-person shooter (FPS) game inspired by classic titles like DOOM and Wolfenstein 3D. Built using vanilla JavaScript and Three.js (WebGL), this project showcases advanced game development techniques, including true 3D rendering, procedural map generation, AI state machines, a procedural audio system, and modular architecture following SOLID principles. Ships as a PWA with full mobile touch-control support.
 
 ### Key Features
-- 🔫 Multiple weapons (Pistol, Shotgun, Rifle)
+- 🔫 7 weapons (Pistol, Shotgun, Rifle, SMG, Sniper, Grenade Launcher, Plasma Gun)
 - 🤖 Smart AI enemies with state machine (Patrol, Chase, Search)
 - 🗺️ Procedural map generation with cellular automata
-- 🎨 Ultra-realistic graphics (blood splatters, dynamic lighting, muzzle flashes)
+- 🎨 True 3D rendering via Three.js (WebGL) with dynamic lighting, fog, blood particles, explosions
 - 🏃 Stamina and sprint mechanics
-- 🔊 Procedural audio system
+- 🔊 Fully procedural audio system (Web Audio API — no audio files)
+- 📱 Mobile touch controls (virtual joystick + dual-zone look)
+- 🎮 5 difficulty presets + fully configurable custom difficulty
+- 📦 Progressive Web App (PWA) with offline support
 - 📦 Modular architecture following SOLID principles
 
 ---
@@ -48,51 +51,14 @@ A browser-based first-person shooter (FPS) game inspired by classic titles like 
 |---------|---------|---------|
 | **Factory** | `WeaponFactory`, `EnemyFactory` | Create objects without specifying exact class |
 | **Strategy** | `ChaseState`, `PatrolState`, `SearchState` | Interchangeable AI behaviors |
-| **Singleton** | `AudioSystem`, `GameStateManager` | Single instance of critical systems |
+| **Singleton** | `AudioSystem`, `GameStateManager`, `ResourceManager` | Single instance of critical systems |
 | **Observer** | `EventManager` | Publish/subscribe event system |
 | **State** | `GameStateManager` | Manage game state transitions |
+| **Object Pool** | Blood particles, shell casings | Reuse objects for performance |
 
 ---
 
-## 📁 File Structure
-
-```
-src/
-├── config/
-│   └── GameConfig.js          # Centralized configuration
-├── core/
-│   ├── EventManager.js        # Observer pattern events
-│   ├── InputManager.js        # Keyboard/mouse input
-│   ├── Game.js                # Main game coordinator
-│   └── Renderer.js            # Rendering engine
-├── entities/
-│   ├── Player.js              # Player entity
-│   ├── Enemy.js               # Enemy entity
-│   └── EnemyFactory.js        # Factory for enemies
-├── weapons/
-│   ├── Weapon.js              # Base weapon class
-│   ├── Pistol.js              # Pistol implementation
-│   ├── Shotgun.js             # Shotgun implementation
-│   ├── Rifle.js               # Rifle implementation
-│   └── WeaponFactory.js       # Weapon factory
-├── ai/
-│   ├── AIBehavior.js          # Base AI behavior
-│   ├── ChaseState.js          # Chase player state
-│   ├── PatrolState.js         # Patrol area state
-│   └── SearchState.js         # Search for player state
-├── systems/
-│   └── AudioSystem.js         # Audio management
-├── managers/
-│   └── GameStateManager.js   # State machine
-└── utils/
-    ├── Vector2D.js            # 2D vector math
-    ├── MapGenerator.js        # Procedural map generation
-    └── RayCaster.js           # Raycasting engine
-```
-
----
-
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 - Modern web browser (Chrome, Firefox, Edge)
@@ -128,6 +94,8 @@ npx http-server -p 8000
 
 ## 🎮 Controls
 
+### Keyboard & Mouse
+
 | Key | Action |
 |-----|--------|
 | `W` | Move Forward |
@@ -136,12 +104,17 @@ npx http-server -p 8000
 | `D` | Strafe Right |
 | `←` / `→` | Turn Left/Right |
 | `Shift` | Sprint (drains stamina) |
-| `Mouse Click` | Shoot |
-| `Right Click` | Aim (future feature) |
+| `Left Click` | Shoot |
+| `Right Click` | Aim Down Sights (ADS) |
 | `R` | Reload |
-| `1` / `2` / `3` | Switch Weapons |
+| `1`–`7` | Switch Weapon by slot |
 | `Q` | Previous Weapon |
 | `E` | Next Weapon |
+
+### Mobile / Touch
+- **Left zone** — virtual joystick (move + strafe)
+- **Right zone** — swipe to look
+- On-screen buttons: FIRE, ADS, RELOAD, PREV/NEXT WEAPON
 
 ---
 
@@ -243,29 +216,29 @@ EnemyFactory.registerAIState('flee', new FleeState());
 
 ```javascript
 // Subscribe to event
-EventManager.on('enemyKilled', (enemy) => {
+const unsub = eventManager.on('enemyKilled', (enemy) => {
   console.log('Enemy killed:', enemy.type);
 });
 
 // Emit event
-EventManager.emit('enemyKilled', enemy);
+eventManager.emit('enemyKilled', enemy);
 
-// One-time subscription
-EventManager.once('playerDied', () => {
-  console.log('Game over!');
-});
+// Unsubscribe
+unsub();
+// or: eventManager.off('enemyKilled', handler);
 ```
 
 ---
 
 ## 📊 Performance Optimizations
 
-- ✅ Object pooling for frequently created objects
-- ✅ Frustum culling for off-screen entities
-- ✅ Depth buffering for proper occlusion
-- ✅ Limited particle counts
-- ✅ Simplified post-processing effects
-- ✅ Efficient raycasting algorithm
+- ✅ Three.js WebGL rendering (instanced meshes per wall type)
+- ✅ Object pooling for blood particles and shell casings
+- ✅ Pixel ratio capped at 2 to limit GPU load
+- ✅ Shadow maps disabled for throughput
+- ✅ Separate weapon scene rendered on top (no fog overhead)
+- ✅ DDA raycaster for fast game-logic hit detection
+- ✅ Limited particle counts (blood pools, explosions, shells)
 
 ---
 
@@ -318,13 +291,11 @@ Test system interactions:
 ## 🔮 Future Enhancements
 
 - [ ] Multiplayer support
-- [ ] More weapon types (Grenade Launcher, Plasma Gun)
-- [ ] Power-ups and health packs
-- [ ] Multiple levels
+- [ ] Multiple levels / level progression
 - [ ] Boss battles
-- [ ] Sound effects library
-- [ ] Mobile touch controls
+- [ ] Power-ups and health packs
 - [ ] Save/Load game state
+- [ ] Weapon pickups in the map
 
 ---
 

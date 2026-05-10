@@ -21,7 +21,7 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - Use EventManager for decoupled communication between systems
 - Events should be named with descriptive action verbs
 - Subscribe to events in component initialization, unsubscribe on cleanup
-- `EventManager.on()` returns an unsubscribe function; `once()` for one-shot handlers
+- `EventManager.on()` returns an unsubscribe function; `EventManager.off()` for manual unsubscribe
 
 ## SOLID Principles
 
@@ -60,7 +60,7 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 
 ### Observer Pattern
 - EventManager implements Observer pattern
-- Systems subscribe to game events (`enemyKilled`, `enemyDamaged`, `weaponChanged`, `reloadStarted`, `reloadCompleted`, `playerDied`, `touchlook`, `keydown`, `mousedown`, `mouseup`)
+- Systems subscribe to game events (`enemyKilled`, `enemyDamaged`, `enemyHit`, `weaponChanged`, `weaponFired`, `reloadStarted`, `reloadCompleted`, `playerDamaged`, `playerHealed`, `playerDied`, `explosion`, `shellEjected`, `touchlook`, `keydown`, `keyup`, `mousedown`, `mouseup`)
 - Decouple event producers from consumers
 - Clean up subscriptions to prevent memory leaks
 
@@ -73,7 +73,7 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 ### Singleton Pattern
 - Use sparingly and only when truly needed
 - `GameStateManager`, `ResourceManager`, and `AudioSystem` are singletons (use `getInstance()`)
-- `EventManager` is instantiated once in `Game` and injected
+- `EventManager` is instantiated once in `Game` and injected (not a singleton — injected as dependency)
 - Avoid for entities that may need multiple instances
 
 ### Object Pool Pattern
@@ -117,7 +117,9 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - Main camera: `PerspectiveCamera(75°, …)` with `camera.rotation.order = "YXZ"`; ADS smoothly lerps FOV to 42°
 - Enemies are 3D `THREE.Group` meshes (body/head/eye/horn parts) tracked in `enemyMeshes` Map (`enemy.id → Group`)
 - Wall/floor textures are **procedurally generated on `<canvas>`** and wrapped as `THREE.CanvasTexture`; SVG sprites in `window.SVGSprites` are loaded by `ResourceManager` for other use but are not the source of wall visuals
-- Weapons render in a separate `weaponScene`/`weaponCamera(55°)` layered on top (no fog, own ambient + directional lights); muzzle flash via `PointLight` in `weaponScene`
+- Weapons render in a separate `weaponScene`/`weaponCamera(55°)` layered on top (no fog, own ambient + directional lights); muzzle flash via orange `PointLight` in `weaponScene` (blue for plasma)
+- Shell casings: cylinder geometry with bouncing physics (up to 3 bounces), fade out; spawned via `spawnShell(px, py, angle, shellType)`
+- Explosions: 20 sphere particles with orange→yellow color gradient, gravity; spawned via `spawnExplosion(wx, wy)`
 - Wall materials use `THREE.MeshBasicMaterial` (no lighting math); enemy/weapon parts use `MeshLambertMaterial`
 - `RayCaster` (DDA step-based, not Three.js `Raycaster`) handles ray-wall and ray-enemy intersection for **game logic** (shooting, line-of-sight), not for visual rendering
 - Window resize is handled via `_onResize()` which updates both cameras' aspect ratios and renderer size
@@ -131,8 +133,9 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 
 ### Difficulty System
 - Five presets: `EASY`, `MEDIUM`, `HARD`, `IMPOSSIBLE`, `CUSTOM` — defined in `GameConfig.DIFFICULTY`
-- Per-difficulty overrides: `maxHealth`, `maxStamina`, `staminaDrain`, `staminaRecovery`, `ammoMultiplier`, `enemyCount`, `enemyHealthMult`, `enemySpeedMult`, `enemyDamage`, `fillRatio`, `smoothIterations`, `ambientIntensity`, `fogDensity`, `flashlightIntensity`, `autoReload`, `availableGuns`
-- `HARD` restricts guns to `['pistol', 'shotgun']`; `IMPOSSIBLE` to `['pistol']` only
+- Per-difficulty overrides: `maxHealth`, `maxStamina`, `staminaDrain`, `staminaRecovery`, `ammoMultiplier`, `enemyCount`, `enemyHealthMult`, `enemySpeedMult`, `enemyDamage`, `fillRatio`, `smoothIterations`, `ambientIntensity`, `fogDensity`, `flashlightIntensity`, `autoReload`, `aimAssist`, `availableGuns`
+- `DIFFICULTY_SCHEMA` array drives the Custom difficulty modal UI — adding an entry here automatically adds a slider, checkbox, or gun picker to the modal; no other changes needed
+- `HARD` restricts guns to `['pistol', 'shotgun', 'rifle', 'smg']`; `IMPOSSIBLE` to `['pistol']` only
 - Selected at game start by reading `.diff-btn.selected` from the DOM; defaults to `MEDIUM`
 - Applied to `Renderer` via `applyDifficultyLighting()` and to `Player`/`Enemy` instances at spawn time
 
@@ -146,11 +149,13 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 
 ### Weapons System
 - Weapons extend base `Weapon` abstract class (throws if instantiated directly)
-- Each weapon defines: `damage`, `magazineSize`, `reserveAmmo`, `fireRate`, `spread`, `reloadTime`, `penetration`, `bulletSpeed`, `muzzleFlashIntensity`, `recoil`, `screenShake`, `pellets`
-- Registered types: `pistol`, `shotgun`, `rifle` — add new types via `WeaponFactory.register(type, WeaponClass)`
+- Each weapon defines: `damage`, `magazineSize`, `reserveAmmo`, `fireRate`, `spread`, `reloadTime`, `penetration`, `bulletSpeed`, `muzzleFlashIntensity`, `recoil`, `screenShake`, `pellets`; optional: `maxDistance`, `raycastStep`, `falloffRange`, `falloffMin`, `falloffScale`, `wallPenetrationCost`, `splashRadius`
+- Registered types (7 total): `pistol`, `shotgun`, `rifle`, `smg`, `sniper`, `grenade_launcher`, `plasma` — add new types via `WeaponFactory.register(type, WeaponClass)`
 - `fire(context)` receives `{ player, enemies, map, audioSystem, eventManager }` and performs an internal raycast to resolve hits
 - Reload lifecycle: `startReload()` → `updateReload()` (polls elapsed time) → `completeReload()` (adjusts magazine/reserve)
 - `canFire()` checks: not reloading, magazine > 0, fire rate cooldown elapsed
+- Penetrating weapons use `_penetratingRaycast()`; grenade launcher uses arc trajectory + splash damage within `splashRadius` (2.5 units)
+- Damage falloff: `_calcFalloffDamage(distance)` applies distance-based reduction capped at `falloffMin × base`
 - Keep weapon logic separate from player input handling
 
 ### Input & Controls
@@ -164,18 +169,20 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - `AudioSystem` is a singleton that generates all sounds **procedurally** via the Web Audio API
 - No audio files are loaded from disk; sounds are synthesized using oscillators and noise buffers
 - Internal helpers: `_noiseBurst({ freq, q, filterType, vol, attack, decay, dur })` for percussive/noise sounds, `_toneBurst({ type, freq, freqEnd, vol, attack, decay, dur })` for tonal sounds
-- Sound types: `'shoot'`, `'hit'`, `'death'`, `'footstep'`, `'reload'`, `'reload_end'`, `'empty'`, `'ambience'`
-- Weapon-specific gunshot profiles via `_getWeaponSoundProfile(weaponName)` — different body/snap/tail tuning for `shotgun`, `rifle`, and `pistol`
-- Background music is routed through a dedicated `musicGain` node (gain 0.75 relative to masterGain)
+- Sound types: `'shoot'`, `'explosion'`, `'hit'`, `'death'`, `'enemy_hurt'`, `'footstep'`, `'reload'`, `'reload_end'`, `'empty'`, `'ambience'`
+- Weapon-specific gunshot profiles via `_getWeaponSoundProfile(weaponName)` — different body/snap/tail tuning for `pistol`, `shotgun`, `rifle`, `smg`, `sniper`, `grenade_launcher`, and `plasma`
+- Background music is routed through a dedicated `musicGain` node (gain 0.75 relative to masterGain); 8-second procedural loops with bass, atmospheric pad, and tension notes
 - Master volume is controlled via `masterGain`; default value is `0.3`
 - `AudioContext` is created on first instantiation; call `audioSystem.resume()` on user gesture to comply with browser autoplay policy
+- Constants in `GameConfig.AUDIO`: `FOOTSTEP_INTERVAL` (400ms), `FOOTSTEP_INTERVAL_SPRINT` (300ms), `AMBIENCE_INTERVAL` (3000ms)
 
 ### Maps
 - `MapGenerator` creates procedural level layouts using cellular automata
 - Map data is a 2D array of integers: `0` = floor, `>0` = wall type
-- Wall types (1–4): CONCRETE, BRICK, METAL, STONE — assigned randomly during generation
-- `generate(width, height, options)` accepts `fillRatio`, `smoothIterations`, `wallThreshold` overrides (difficulty drives `fillRatio` and `smoothIterations`)
-- `generateSpawnMap(playerX, playerY, options)` creates a safe open zone (radius 12) around the player spawn and carves corridors; default map size is 30×30 (`SPAWN_SIZE`)
+- Wall types (1–4): CONCRETE, BRICK, METAL, STONE — assigned randomly during generation (thresholds: 0.25/0.5/0.75/1.0)
+- `generate(width, height, options)` accepts `fillRatio`, `smoothIterations`, `wallThreshold` overrides (difficulty drives `fillRatio` and `smoothIterations`); default 20×20
+- `generateSpawnMap(playerX, playerY, options)` creates a safe open zone (radius 12) around the player spawn and carves corridors; map size 30×30 (`SPAWN_SIZE`)
+- Generation stages: random fill → cellular automata smoothing → room carving (6–12 rooms) → corridor carving → column detail → wall type assignment
 
 ## Performance Considerations
 - Minimize object creation in game loop (reuse objects/pools)
