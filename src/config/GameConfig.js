@@ -37,8 +37,14 @@ export const GameConfig = {
 
   // Input configuration
   INPUT: {
+    // Pointer-lock mouse look multiplier.
+    MOUSE_SENSITIVITY: 0.002,
+
     // Touch look delta multiplier.
     TOUCH_SENSITIVITY: 0.003,
+
+    // Clamp vertical look so the camera never flips.
+    MAX_LOOK_PITCH: Math.PI * 0.45,
 
     // Control schemes the game can switch between.
     VALID_CONTROL_TYPES: ["keyboard", "touch"],

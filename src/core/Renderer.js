@@ -1398,16 +1398,18 @@ export class Renderer {
     // Formula: rotation.y = -PI/2 - player.angle
     this.camera.position.set(player.x, 0.5, player.y);
     this.camera.rotation.y = -Math.PI / 2 - player.angle;
-    this.camera.rotation.x = 0;
+    this.camera.rotation.x = player.pitch;
 
-    // Move flashlight with player — forward dir = (cos(angle), 0, sin(angle))
+    // Move flashlight with player — follow both yaw and pitch.
     if (this.playerLight) {
-      const dx = Math.cos(player.angle);
-      const dz = Math.sin(player.angle);
+      const pitchCos = Math.cos(player.pitch);
+      const dx = Math.cos(player.angle) * pitchCos;
+      const dy = Math.sin(player.pitch);
+      const dz = Math.sin(player.angle) * pitchCos;
       this.playerLight.position.set(player.x, 0.5, player.y);
       this.playerLight.target.position.set(
         player.x + dx * 8,
-        0.4,
+        0.5 + dy * 8,
         player.y + dz * 8,
       );
       this.playerLight.target.updateMatrixWorld();

@@ -11,6 +11,7 @@ export class Player {
     this.x = x;
     this.y = y;
     this.angle = 0;
+    this.pitch = 0;
     this.eventManager = eventManager;
     this.audioSystem = audioSystem;
 
@@ -168,6 +169,19 @@ export class Player {
    */
   rotate(angle) {
     this.angle += angle * GameConfig.PLAYER.ROTATION_SPEED;
+  }
+
+  /**
+   * Apply mouse / touch look deltas.
+   * @param {number} yawDelta - Horizontal look delta in radians
+   * @param {number} pitchDelta - Vertical look delta in radians
+   */
+  look(yawDelta, pitchDelta = 0) {
+    this.angle += yawDelta;
+    this.pitch = Math.max(
+      -GameConfig.INPUT.MAX_LOOK_PITCH,
+      Math.min(GameConfig.INPUT.MAX_LOOK_PITCH, this.pitch + pitchDelta),
+    );
   }
 
   /**
