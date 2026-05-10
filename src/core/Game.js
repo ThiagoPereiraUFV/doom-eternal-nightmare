@@ -101,7 +101,7 @@ export class Game {
   _setupEventListeners() {
     // Helper: bind both click and touchstart for mobile compatibility
     const _bindTap = (el, fn) => {
-      if (!el) return;
+      if (!el) { return; }
       el.onclick = fn;
       el.addEventListener("touchstart", (e) => { e.preventDefault(); fn(); }, { passive: false });
     };
@@ -115,11 +115,11 @@ export class Game {
       const startScreen = document.getElementById("startScreen");
       if (startScreen) {
         startScreen.onclick = (e) => {
-          if (e.target.closest(".diff-btn, .controls-card, #controls-desktop, #controls-touch")) return;
+          if (e.target.closest(".diff-btn, .controls-card, #controls-desktop, #controls-touch")) { return; }
           this.startGame();
         };
         startScreen.addEventListener("touchstart", (e) => {
-          if (e.target.closest(".diff-btn, .controls-card, #controls-desktop, #controls-touch")) return;
+          if (e.target.closest(".diff-btn, .controls-card, #controls-desktop, #controls-touch")) { return; }
           e.preventDefault();
           this.startGame();
         }, { passive: false });
@@ -140,8 +140,8 @@ export class Game {
     // Pause menu buttons
     const pauseResume = document.getElementById("pause-resume");
     const pauseExit = document.getElementById("pause-exit");
-    if (pauseResume) _bindTap(pauseResume, () => this.resumeGame());
-    if (pauseExit)   _bindTap(pauseExit,   () => this.exitToMenu());
+    if (pauseResume) { _bindTap(pauseResume, () => this.resumeGame()); }
+    if (pauseExit)   { _bindTap(pauseExit,   () => this.exitToMenu()); }
 
     // ── Touch buttons (mobile) — from #touch-controls set ───────────
     const touchFire = document.getElementById("touch-fire");
@@ -167,7 +167,7 @@ export class Game {
         e.stopPropagation();
         this._touchAdsActive = !this._touchAdsActive;
         this._isAiming = this._touchAdsActive;
-        if (this._touchAdsActive) this._applyAimAssist();
+        if (this._touchAdsActive) { this._applyAimAssist(); }
         touchAds.classList.toggle("active", this._touchAdsActive);
         this._syncCrosshair();
       }, { passive: false });
@@ -209,23 +209,23 @@ export class Game {
         return;
       }
 
-      if (this.stateManager.is(GameStates.PAUSED)) return;
+      if (this.stateManager.is(GameStates.PAUSED)) { return; }
 
-      if (lowerKey === "1") this.player?.switchWeapon(0);
-      if (lowerKey === "2") this.player?.switchWeapon(1);
-      if (lowerKey === "3") this.player?.switchWeapon(2);
-      if (lowerKey === "4") this.player?.switchWeapon(3);
-      if (lowerKey === "5") this.player?.switchWeapon(4);
-      if (lowerKey === "6") this.player?.switchWeapon(5);
-      if (lowerKey === "7") this.player?.switchWeapon(6);
-      if (lowerKey === "q") this.player?.previousWeapon();
-      if (lowerKey === "e") this.player?.nextWeapon();
-      if (lowerKey === "r") this.player?.reload();
+      if (lowerKey === "1") { this.player?.switchWeapon(0); }
+      if (lowerKey === "2") { this.player?.switchWeapon(1); }
+      if (lowerKey === "3") { this.player?.switchWeapon(2); }
+      if (lowerKey === "4") { this.player?.switchWeapon(3); }
+      if (lowerKey === "5") { this.player?.switchWeapon(4); }
+      if (lowerKey === "6") { this.player?.switchWeapon(5); }
+      if (lowerKey === "7") { this.player?.switchWeapon(6); }
+      if (lowerKey === "q") { this.player?.previousWeapon(); }
+      if (lowerKey === "e") { this.player?.nextWeapon(); }
+      if (lowerKey === "r") { this.player?.reload(); }
     });
 
     // Shooting via mousedown event (semi-auto weapons)
     this.eventManager.on("mousedown", (button) => {
-      if (!this.stateManager.is(GameStates.PLAYING) || !this.player) return;
+      if (!this.stateManager.is(GameStates.PLAYING) || !this.player) { return; }
       if (button === "left") {
         // Always fire on the initial press regardless of weapon type
         this._doShoot();
@@ -322,10 +322,10 @@ export class Game {
 
     let remaining = 5;
     let launched = false;
-    if (countdownEl) countdownEl.textContent = remaining;
+    if (countdownEl) { countdownEl.textContent = remaining; }
 
     const launch = () => {
-      if (launched) return;
+      if (launched) { return; }
       launched = true;
       clearInterval(tick);
       screen.classList.add("hidden");
@@ -338,7 +338,7 @@ export class Game {
 
     const tick = setInterval(() => {
       remaining -= 1;
-      if (countdownEl) countdownEl.textContent = remaining;
+      if (countdownEl) { countdownEl.textContent = remaining; }
       if (remaining <= 0) {
         launch();
       }
@@ -377,12 +377,12 @@ export class Game {
       this.touchInputManager.enable();
       // Show the #touch-controls set (fire, ads, reload, prev/next weapon)
       const tc = document.getElementById("touch-controls");
-      if (tc) tc.classList.add("active");
+      if (tc) { tc.classList.add("active"); }
       // Reset ADS toggle state
       this._touchAdsActive = false;
       this._isAiming = false;
       const adsBtn = document.getElementById("touch-ads");
-      if (adsBtn) adsBtn.classList.remove("active");
+      if (adsBtn) { adsBtn.classList.remove("active"); }
     }
 
     // Initialize game world
@@ -415,7 +415,7 @@ export class Game {
 
     // Hide touch controls
     const tc = document.getElementById("touch-controls");
-    if (tc) tc.classList.remove("active");
+    if (tc) { tc.classList.remove("active"); }
 
     // Reset state
     this.enemiesKilled = 0;
@@ -424,7 +424,7 @@ export class Game {
 
     // Show start screen again
     const startScreen = document.getElementById("startScreen");
-    if (startScreen) startScreen.style.display = "flex";
+    if (startScreen) { startScreen.style.display = "flex"; }
   }
 
   /**
@@ -442,7 +442,7 @@ export class Game {
    * Pause the game
    */
   pauseGame() {
-    if (!this.stateManager.is(GameStates.PLAYING)) return;
+    if (!this.stateManager.is(GameStates.PLAYING)) { return; }
 
     this.stateManager.setState(GameStates.PAUSED);
     this.audioSystem.stopMusic();
@@ -459,7 +459,7 @@ export class Game {
    * Resume the game
    */
   resumeGame() {
-    if (!this.stateManager.is(GameStates.PAUSED)) return;
+    if (!this.stateManager.is(GameStates.PAUSED)) { return; }
 
     const pauseMenu = document.getElementById("pauseMenu");
     pauseMenu.classList.remove("show");
@@ -501,7 +501,7 @@ export class Game {
     // Disable touch controls
     this.touchInputManager.disable();
     const tc = document.getElementById("touch-controls");
-    if (tc) tc.classList.remove("active");
+    if (tc) { tc.classList.remove("active"); }
 
     // Exit pointer lock
     if (this.controlType === 'keyboard') {
@@ -665,10 +665,10 @@ export class Game {
 
     if (this.controlType === 'keyboard') {
       // Keyboard controls
-      if (this.inputManager.isKeyPressed("w")) forward += 1;
-      if (this.inputManager.isKeyPressed("s")) forward -= 1;
-      if (this.inputManager.isKeyPressed("a")) strafe -= 1;
-      if (this.inputManager.isKeyPressed("d")) strafe += 1;
+      if (this.inputManager.isKeyPressed("w")) { forward += 1; }
+      if (this.inputManager.isKeyPressed("s")) { forward -= 1; }
+      if (this.inputManager.isKeyPressed("a")) { strafe -= 1; }
+      if (this.inputManager.isKeyPressed("d")) { strafe += 1; }
 
       this.player.isSprinting = this.inputManager.isKeyPressed("shift");
 
@@ -718,9 +718,11 @@ export class Game {
       !!this._touchAdsActive;
     if (aimingNow !== this._lastAimState) {
       this._isAiming = aimingNow;
+      if (this.player) { this.player.isAiming = aimingNow; }
       this._syncCrosshair();
       this._lastAimState = aimingNow;
     }
+    if (this.player) { this.player.isAiming = aimingNow; }
     this.renderer.setADS(this._isAiming);
   }
 
@@ -729,7 +731,7 @@ export class Game {
    * @private
    */
   _doShoot() {
-    if (!this.stateManager.is(GameStates.PLAYING) || !this.player) return;
+    if (!this.stateManager.is(GameStates.PLAYING) || !this.player) { return; }
     const result = this.player.shoot({
       enemies: this.enemies,
       map: this.map,
@@ -749,21 +751,21 @@ export class Game {
    * @private
    */
   _applyAimAssist() {
-    if (!this.difficulty?.aimAssist || !this.player || !this.enemies?.length) return;
+    if (!this.difficulty?.aimAssist || !this.player || !this.enemies?.length) { return; }
 
     const AIM_ASSIST_CONE = Math.PI / 6; // ±30°
     let bestEnemy = null;
     let bestAngleDelta = AIM_ASSIST_CONE;
 
     for (const enemy of this.enemies) {
-      if (enemy.isDead) continue;
+      if (enemy.isDead) { continue; }
       const dx = enemy.x - this.player.x;
       const dy = enemy.y - this.player.y;
       const angleToEnemy = Math.atan2(dy, dx);
       let delta = angleToEnemy - this.player.angle;
       // Normalize to [-π, π]
-      while (delta > Math.PI)  delta -= 2 * Math.PI;
-      while (delta < -Math.PI) delta += 2 * Math.PI;
+      while (delta > Math.PI)  { delta -= 2 * Math.PI; }
+      while (delta < -Math.PI) { delta += 2 * Math.PI; }
       if (Math.abs(delta) < Math.abs(bestAngleDelta)) {
         bestAngleDelta = delta;
         bestEnemy = enemy;
@@ -781,7 +783,7 @@ export class Game {
    */
   _flashCrosshair() {
     const el = document.getElementById("crosshair");
-    if (!el) return;
+    if (!el) { return; }
     el.classList.add("hit-flash");
     clearTimeout(this._crosshairFlashTimer);
     this._crosshairFlashTimer = setTimeout(() => {
@@ -795,7 +797,7 @@ export class Game {
    */
   _syncCrosshair() {
     const el = document.getElementById("crosshair");
-    if (!el) return;
+    if (!el) { return; }
     el.classList.toggle("ads", !!this._isAiming);
   }
 
@@ -887,10 +889,10 @@ export class Game {
     const loadingText = document.getElementById("loadingText");
     const loadingPercentage = document.getElementById("loadingPercentage");
 
-    if (loadingBar) loadingBar.style.width = percentage + "%";
-    if (loadingText) loadingText.textContent = text;
+    if (loadingBar) { loadingBar.style.width = percentage + "%"; }
+    if (loadingText) { loadingText.textContent = text; }
     if (loadingPercentage)
-      loadingPercentage.textContent = Math.floor(percentage) + "%";
+      { loadingPercentage.textContent = Math.floor(percentage) + "%"; }
   }
 
   /**
@@ -908,7 +910,7 @@ export class Game {
 
     this.touchInputManager.disable();
     const tcOver = document.getElementById("touch-controls");
-    if (tcOver) tcOver.classList.remove("active");
+    if (tcOver) { tcOver.classList.remove("active"); }
 
     setTimeout(() => {
       document.getElementById("gameOverScreen").classList.add("show");
@@ -930,7 +932,7 @@ export class Game {
 
     this.touchInputManager.disable();
     const tcVic = document.getElementById("touch-controls");
-    if (tcVic) tcVic.classList.remove("active");
+    if (tcVic) { tcVic.classList.remove("active"); }
 
     setTimeout(() => {
       document.getElementById("victoryScreen")?.classList.add("show");

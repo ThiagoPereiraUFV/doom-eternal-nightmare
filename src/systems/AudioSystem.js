@@ -53,7 +53,7 @@ export class AudioSystem {
     const frames = Math.ceil(sr * seconds);
     const buf    = this.audioContext.createBuffer(1, frames, sr);
     const data   = buf.getChannelData(0);
-    for (let i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
+    for (let i = 0; i < frames; i++) { data[i] = Math.random() * 2 - 1; }
     return buf;
   }
 
@@ -84,7 +84,7 @@ export class AudioSystem {
     const osc  = ctx.createOscillator();
     osc.type   = type;
     osc.frequency.setValueAtTime(freq, now);
-    if (freqEnd) osc.frequency.exponentialRampToValueAtTime(freqEnd, now + dur);
+    if (freqEnd) { osc.frequency.exponentialRampToValueAtTime(freqEnd, now + dur); }
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0.0001, now);
     gain.gain.linearRampToValueAtTime(vol, now + attack + 0.001);
@@ -96,11 +96,11 @@ export class AudioSystem {
   // ─── Weapon-type metadata ────────────────────────────────────────
   _getWeaponSoundProfile(weaponName) {
     const n = (weaponName ?? "").toLowerCase();
-    if (n === "shotgun")          return { body: 0.9, snap: 100, snapQ: 0.8, tail: 0.55, tailFreq: 90 };
-    if (n === "rifle")            return { body: 0.55, snap: 220, snapQ: 1.8, tail: 0.28, tailFreq: 160 };
-    if (n === "smg")              return { body: 0.40, snap: 240, snapQ: 2.0, tail: 0.20, tailFreq: 180 };
-    if (n === "sniper")           return { body: 1.0,  snap: 180, snapQ: 1.0, tail: 0.70, tailFreq: 80  };
-    if (n === "grenade_launcher") return { body: 1.0,  snap: 60,  snapQ: 0.5, tail: 0.80, tailFreq: 50  };
+    if (n === "shotgun")          { return { body: 0.9, snap: 100, snapQ: 0.8, tail: 0.55, tailFreq: 90 }; }
+    if (n === "rifle")            { return { body: 0.55, snap: 220, snapQ: 1.8, tail: 0.28, tailFreq: 160 }; }
+    if (n === "smg")              { return { body: 0.40, snap: 240, snapQ: 2.0, tail: 0.20, tailFreq: 180 }; }
+    if (n === "sniper")           { return { body: 1.0,  snap: 180, snapQ: 1.0, tail: 0.70, tailFreq: 80  }; }
+    if (n === "grenade_launcher") { return { body: 1.0,  snap: 60,  snapQ: 0.5, tail: 0.80, tailFreq: 50  }; }
     /* pistol default */          return { body: 0.7,  snap: 160, snapQ: 1.2, tail: 0.38, tailFreq: 110 };
   }
 
@@ -415,7 +415,7 @@ export class AudioSystem {
    * Generates procedural dark ambient music
    */
   startMusic() {
-    if (this.isMusicPlaying) return;
+    if (this.isMusicPlaying) { return; }
 
     this.isMusicPlaying = true;
     this._playMusicLoop();
@@ -434,7 +434,7 @@ export class AudioSystem {
    * @private
    */
   _playMusicLoop() {
-    if (!this.isMusicPlaying) return;
+    if (!this.isMusicPlaying) { return; }
 
     const now = this.audioContext.currentTime;
     const duration = 8; // 8-second loop
@@ -482,7 +482,7 @@ export class AudioSystem {
     // Clean up after the oscillator finishes
     bassOsc.onended = () => {
       const index = this.musicNodes.findIndex((n) => n.osc === bassOsc);
-      if (index > -1) this.musicNodes.splice(index, 1);
+      if (index > -1) { this.musicNodes.splice(index, 1); }
     };
 
     this.musicNodes.push({ osc: bassOsc, gain: bassGain });
@@ -523,7 +523,7 @@ export class AudioSystem {
       // Clean up after the oscillator finishes
       osc.onended = () => {
         const index = this.musicNodes.findIndex((n) => n.osc === osc);
-        if (index > -1) this.musicNodes.splice(index, 1);
+        if (index > -1) { this.musicNodes.splice(index, 1); }
       };
 
       this.musicNodes.push({ osc, gain });
@@ -568,7 +568,7 @@ export class AudioSystem {
         // Clean up after the oscillator finishes
         osc.onended = () => {
           const index = this.musicNodes.findIndex((n) => n.osc === osc);
-          if (index > -1) this.musicNodes.splice(index, 1);
+          if (index > -1) { this.musicNodes.splice(index, 1); }
         };
 
         this.musicNodes.push({ osc, gain });

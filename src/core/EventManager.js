@@ -36,7 +36,7 @@ export class EventManager {
    * @param {Function} callback - Callback to remove
    */
   off(eventName, callback) {
-    if (!this._events.has(eventName)) return;
+    if (!this._events.has(eventName)) { return; }
 
     const callbacks = this._events.get(eventName);
     const index = callbacks.indexOf(callback);
@@ -57,7 +57,7 @@ export class EventManager {
    * @param {...any} args - Arguments to pass to callbacks
    */
   emit(eventName, ...args) {
-    if (!this._events.has(eventName)) return;
+    if (!this._events.has(eventName)) { return; }
 
     const callbacks = this._events.get(eventName);
 

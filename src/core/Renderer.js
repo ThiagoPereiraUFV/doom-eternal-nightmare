@@ -6,6 +6,7 @@
  */
 
 import * as THREE from "three";
+import GameConfig from "../config/GameConfig.js";
 
 export class Renderer {
   constructor(canvas, _weaponCanvas, _resourceManager) {
@@ -303,7 +304,7 @@ export class Renderer {
         // Blood pools grow
         if (p.mesh.userData.growPool) {
           p.mesh.scale.multiplyScalar(1 + dt * 0.5);
-          if (p.mesh.scale.x > p.mesh.userData.maxScale) p.mesh.userData.growPool = false;
+          if (p.mesh.scale.x > p.mesh.userData.maxScale) { p.mesh.userData.growPool = false; }
         }
         // Fade after a while
         if (p.life > p.maxLife) {
@@ -343,7 +344,7 @@ export class Renderer {
     // Limit total blood particles for performance
     if (this._bloodParticles.length > 200) {
       const excess = this._bloodParticles.splice(0, this._bloodParticles.length - 200);
-      for (const p of excess) this.scene.remove(p.mesh);
+      for (const p of excess) { this.scene.remove(p.mesh); }
     }
   }
 
@@ -438,7 +439,7 @@ export class Renderer {
     // Limit shells for performance
     if (this._shells.length > 60) {
       const excess = this._shells.splice(0, this._shells.length - 60);
-      for (const s of excess) this.scene.remove(s.mesh);
+      for (const s of excess) { this.scene.remove(s.mesh); }
     }
   }
 
@@ -501,7 +502,7 @@ export class Renderer {
    * @param {THREE.Group} mesh
    */
   startDeathAnimation(mesh) {
-    if (!mesh) return;
+    if (!mesh) { return; }
     this._dyingEnemies.push({
       mesh,
       startTime: performance.now() / 1000,
@@ -549,7 +550,7 @@ export class Renderer {
         ctx.strokeStyle = "rgba(35,15,5,0.9)";
         ctx.lineWidth = 3;
         for (let col = -1; col <= S / bw + 1; col++)
-          ctx.strokeRect(col * bw + off + 1.5, row * bh + 1.5, bw - 3, bh - 3);
+          { ctx.strokeRect(col * bw + off + 1.5, row * bh + 1.5, bw - 3, bh - 3); }
       }
       ctx.globalCompositeOperation = "multiply";
       for (let row = 0; row < S / bh; row++) {
@@ -575,15 +576,15 @@ export class Renderer {
       for (let x = 0; x <= S; x += 64) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, S); ctx.stroke(); }
       ctx.fillStyle = "rgba(180,190,210,0.7)";
       for (let y = 32; y < S; y += 64)
-        for (let x = 32; x < S; x += 64) {
+        { for (let x = 32; x < S; x += 64) {
           ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
-        }
+        } }
     } else if (type === "stone") {
       ctx.strokeStyle = "rgba(20,18,10,0.9)"; ctx.lineWidth = 3;
       for (let row = 0; row < 7; row++) {
         const off = (row % 2) * 34;
         for (let col = -1; col < 6; col++)
-          ctx.strokeRect(col * 54 + off + 3, row * 40 + 3, 48, 34);
+          { ctx.strokeRect(col * 54 + off + 3, row * 40 + 3, 48, 34); }
       }
     }
 
@@ -610,8 +611,8 @@ export class Renderer {
     const ts = 64;
     ctx.strokeStyle = "rgba(0,0,0,0.65)"; ctx.lineWidth = 2;
     for (let y = 0; y < S; y += ts)
-      for (let x = 0; x < S; x += ts)
-        ctx.strokeRect(x + 1, y + 1, ts - 2, ts - 2);
+      { for (let x = 0; x < S; x += ts)
+        { ctx.strokeRect(x + 1, y + 1, ts - 2, ts - 2); } }
     const id = ctx.getImageData(0, 0, S, S);
     for (let i = 0; i < id.data.length; i += 4) {
       const n = (Math.random() - 0.5) * 16;
@@ -636,7 +637,7 @@ export class Renderer {
    */
   buildMap(map) {
     this.mapGroup.clear();
-    for (const { light } of this._wallLights) this.scene.remove(light);
+    for (const { light } of this._wallLights) { this.scene.remove(light); }
     this._wallLights = [];
 
     const rows = map.length;
@@ -670,7 +671,7 @@ export class Renderer {
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
         const tile = map[row][col];
-        if (!tile) continue;
+        if (!tile) { continue; }
         const name = typeNames[tile] || "concrete";
         buckets[name].push({ col, row });
 
@@ -688,7 +689,7 @@ export class Renderer {
 
     const baseGeo = new THREE.BoxGeometry(1, WALL_H, 1);
     for (const [typeName, walls] of Object.entries(buckets)) {
-      if (!walls.length) continue;
+      if (!walls.length) { continue; }
       const instanced = new THREE.InstancedMesh(
         baseGeo,
         this._wallMats[typeName],
@@ -766,7 +767,7 @@ export class Renderer {
         wL2.position.set(-0.44 + Math.sin(t * 2.6) * 0.1, 0.50 + Math.cos(t * 2.6) * 0.08, 0.08);
         wR2.position.set( 0.44 + Math.sin(t * 2.6 + 1) * 0.1, 0.50 + Math.cos(t * 2.6 + 1) * 0.08, 0.08);
         // Pulsing opacity
-        if (bM.transparent) bM.opacity = 0.5 + Math.sin(t * 2.2) * 0.15;
+        if (bM.transparent) { bM.opacity = 0.5 + Math.sin(t * 2.2) * 0.15; }
       };
 
     } else if (enemy.type === "brute") {
@@ -1000,9 +1001,6 @@ export class Renderer {
       // Rear sight U-notch
       addBox(0.024, 0.009, 0.005, m.steel,  0,        0.036,   0.085);
 
-      this.weaponGroup.position.set(0.14, -0.14, -0.33);
-      this.weaponGroup.rotation.y = -0.08;
-
     // ─── SHOTGUN — Mossberg 500 pump-action ───────────────────────
     } else if (ltype === "shotgun") {
       // Main barrel — single wide bore tube
@@ -1029,9 +1027,6 @@ export class Renderer {
       // Trigger guard + trigger
       addBox(0.060, 0.008, 0.090, m.metal,  0,       -0.046,   0.050);
       addBox(0.010, 0.026, 0.012, m.metal,  0,       -0.040,   0.042);
-
-      this.weaponGroup.position.set(0.17, -0.18, -0.34);
-      this.weaponGroup.rotation.y = -0.09;
 
     // ─── RIFLE — AR-15 / M4 carbine ──────────────────────────────
     } else if (ltype === "rifle") {
@@ -1076,9 +1071,6 @@ export class Renderer {
       addBox(0.018, 0.018, 0.018, m.metal,  0,        0.010,  -0.420);
       addBox(0.006, 0.016, 0.005, m.steel,  0,        0.025,  -0.420);  // post
 
-      this.weaponGroup.position.set(0.19, -0.155, -0.34);
-      this.weaponGroup.rotation.y = -0.09;
-
     // ─── SMG — MP5-style compact submachine gun ───────────────────
     } else if (ltype === "smg") {
       // Barrel — short, slightly threaded end
@@ -1111,9 +1103,6 @@ export class Renderer {
       // Pistol grip
       addBox(0.044, 0.095, 0.066, m.rubber, 0, -0.072,  0.068,  0.18);
       addBox(0.046, 0.008, 0.058, m.metal,  0, -0.120,  0.064,  0.18);
-
-      this.weaponGroup.position.set(0.13, -0.14, -0.30);
-      this.weaponGroup.rotation.y = -0.08;
 
     // ─── SNIPER — Bolt-action precision rifle (Remington 700 style) ───
     } else if (ltype === "sniper") {
@@ -1166,9 +1155,6 @@ export class Renderer {
       // Front sight (flip-up BUIS)
       addBox(0.020, 0.022, 0.010, m.metal,  0,  0.080, -0.840);
 
-      this.weaponGroup.position.set(0.22, -0.16, -0.38);
-      this.weaponGroup.rotation.y = -0.09;
-
     // ─── GRENADE LAUNCHER — M79 thumper style ────────────────────
     } else if (ltype === "grenade_launcher") {
       // Barrel — wide bore, break-action
@@ -1201,9 +1187,6 @@ export class Renderer {
       // Extra: grenade shell visible in chamber (partially)
       addCyl(0.038, 0.038, 0.060, new THREE.MeshLambertMaterial({ color: 0x556633 }),
              0, 0.020, -0.040, Math.PI / 2);
-
-      this.weaponGroup.position.set(0.18, -0.18, -0.36);
-      this.weaponGroup.rotation.y = -0.09;
 
     // ─── PLASMA GUN — Sci-fi energy weapon ───────────────────────
     } else if (ltype === "plasma") {
@@ -1247,9 +1230,13 @@ export class Renderer {
       addBox(0.004, 0.008, 0.008, new THREE.MeshBasicMaterial({ color: 0xff4400 }),
              -0.046, 0.028, -0.020); // red warning LED
 
-      this.weaponGroup.position.set(0.15, -0.145, -0.32);
-      this.weaponGroup.rotation.y = -0.08;
     }
+
+    const gunBuildCfg = GameConfig.WEAPON_3D.GUNS[ltype] || {};
+    const [baseX, baseY, baseZ] = gunBuildCfg.BASE_POSITION ?? [0.14, -0.14, -0.33];
+    const baseRotationY = gunBuildCfg.BASE_ROTATION_Y ?? -0.06;
+    this.weaponGroup.position.set(baseX, baseY, baseZ);
+    this.weaponGroup.rotation.y = baseRotationY;
 
     this._currentWeaponType = ltype;
   }
@@ -1284,7 +1271,7 @@ export class Renderer {
       mesh.position.set(enemy.x, 0, enemy.y);
       // Always face the camera (billboard-style Y rotation)
       mesh.lookAt(this.camera.position.x, 0, this.camera.position.z);
-      if (mesh.userData.animate) mesh.userData.animate(t);
+      if (mesh.userData.animate) { mesh.userData.animate(t); }
 
       // Hit flash: briefly turn red when recently damaged
       if (mesh.userData.hitFlashTimer > 0) {
@@ -1319,7 +1306,7 @@ export class Renderer {
    */
   triggerHitFlash(enemyId) {
     const mesh = this.enemyMeshes.get(enemyId);
-    if (mesh) mesh.userData.hitFlashTimer = 0.25;
+    if (mesh) { mesh.userData.hitFlashTimer = 0.25; }
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -1390,7 +1377,7 @@ export class Renderer {
    */
   renderWeapon(player) {
     const weapon = player.currentWeapon;
-    if (!weapon) return;
+    if (!weapon) { return; }
 
     const ltype = (weapon.name ?? "").toLowerCase();
     if (ltype !== this._currentWeaponType) {
@@ -1398,19 +1385,16 @@ export class Renderer {
     }
 
     const t      = performance.now() / 1000;
+    const aiming = !!player.isAiming;
     const bob    = typeof player.headBob      === "number" ? Math.sin(player.headBob) : 0;
     const recoil = typeof player.recoilOffset === "number" ? player.recoilOffset      : 0;
 
-    const bases = {
-      pistol:           [0.14,  -0.14,  -0.33],
-      shotgun:          [0.17,  -0.18,  -0.34],
-      rifle:            [0.19,  -0.155, -0.34],
-      smg:              [0.13,  -0.14,  -0.30],
-      sniper:           [0.22,  -0.16,  -0.38],
-      grenade_launcher: [0.18,  -0.18,  -0.36],
-      plasma:           [0.15,  -0.145, -0.32],
-    };
-    const [bx, by, bz] = bases[ltype] ?? [0.14, -0.14, -0.33];
+    const gunCfg = GameConfig.WEAPON_3D.GUNS[ltype] || {};
+    const [bx, by, bz] = gunCfg.BASE_POSITION ?? [0.14, -0.14, -0.33];
+    const [ax, ay, az] = aiming ? gunCfg.ADS_OFFSET ?? [0, 0, 0] : [0, 0, 0];
+    const hipYRot = gunCfg.BASE_ROTATION_Y ?? -0.06;
+    const aimYRot = (gunCfg.ADS_ROTATION ?? hipYRot) * 0.2;
+    const yRot = aiming ? aimYRot : hipYRot;
 
     // ── Reload animation ─────────────────────────────────────────
     // reloadTime is in ms; reloadStartTime is Date.now() epoch ms
@@ -1455,13 +1439,15 @@ export class Renderer {
     }
 
     // ── Apply all transforms ─────────────────────────────────────
+    const bobStrength = aiming ? 0.25 : 1.0;
     this.weaponGroup.position.set(
-      bx + Math.cos(t * 3) * bob * 0.006,
-      by + Math.sin(t * 6) * bob * 0.01 + reloadOffsetY,
-      bz + recoil * 0.05 + reloadOffsetZ,
+      bx + ax + Math.cos(t * 3) * bob * 0.006 * bobStrength,
+      by + ay + Math.sin(t * 6) * bob * 0.01 * bobStrength + reloadOffsetY,
+      bz + az + recoil * 0.05 + reloadOffsetZ,
     );
     this.weaponGroup.rotation.x = recoil * 0.12 + reloadTiltX;
-    this.weaponGroup.rotation.z = Math.sin(t * 3) * bob * 0.015 + reloadTiltZ;
+    this.weaponGroup.rotation.y = yRot;
+    this.weaponGroup.rotation.z = Math.sin(t * 3) * bob * 0.015 * bobStrength + reloadTiltZ;
   }
 
   /**

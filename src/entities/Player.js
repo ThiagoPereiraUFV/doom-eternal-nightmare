@@ -55,7 +55,7 @@ export class Player {
    * Switch to next weapon
    */
   nextWeapon() {
-    if (this.weapons.length === 0) return;
+    if (this.weapons.length === 0) { return; }
 
     this.currentWeaponIndex =
       (this.currentWeaponIndex + 1) % this.weapons.length;
@@ -67,7 +67,7 @@ export class Player {
    * Switch to previous weapon
    */
   previousWeapon() {
-    if (this.weapons.length === 0) return;
+    if (this.weapons.length === 0) { return; }
 
     this.currentWeaponIndex =
       (this.currentWeaponIndex - 1 + this.weapons.length) % this.weapons.length;

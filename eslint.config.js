@@ -57,6 +57,8 @@ export default [
       "eqeqeq": ["error", "always"],
       "no-var": "error",
       "prefer-const": "warn",
+      "curly": ["error", "all"],
+      "nonblock-statement-body-position": ["error", "below"],
     },
   },
 ];

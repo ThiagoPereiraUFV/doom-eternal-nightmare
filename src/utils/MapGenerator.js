@@ -123,7 +123,7 @@ export class MapGenerator {
 
     for (let ny = y - 1; ny <= y + 1; ny++) {
       for (let nx = x - 1; nx <= x + 1; nx++) {
-        if (nx === x && ny === y) continue;
+        if (nx === x && ny === y) { continue; }
 
         if (ny < 0 || ny >= map.length || nx < 0 || nx >= map[0].length) {
           count++; // Out of bounds counts as wall
@@ -222,12 +222,12 @@ export class MapGenerator {
       const x = 3 + Math.floor(Math.random() * (width  - 6));
       const y = 3 + Math.floor(Math.random() * (height - 6));
       // Only place on open floor cells surrounded by open space (don't block corridors)
-      if (map[y][x] !== 0) continue;
+      if (map[y][x] !== 0) { continue; }
       const openNeighbors = [[-1,0],[1,0],[0,-1],[0,1]].filter(([dx,dy]) => {
         const nx = x + dx, ny = y + dy;
         return ny >= 0 && ny < height && nx >= 0 && nx < width && map[ny][nx] === 0;
       }).length;
-      if (openNeighbors < 3) continue; // needs breathing room around it
+      if (openNeighbors < 3) { continue; } // needs breathing room around it
       map[y][x] = 1; // concrete pillar
       placed++;
     }

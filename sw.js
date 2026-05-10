@@ -86,9 +86,9 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       caches.open(CDN_CACHE_NAME).then(async (cache) => {
         const cached = await cache.match(request);
-        if (cached) return cached;
+        if (cached) { return cached; }
         const response = await fetch(request);
-        if (response.ok) cache.put(request, response.clone());
+        if (response.ok) { cache.put(request, response.clone()); }
         return response;
       })
     );

@@ -64,7 +64,7 @@ export class Enemy {
    * @param {number} deltaTime - Time since last frame
    */
   update(player, map, deltaTime) {
-    if (this.isDead) return;
+    if (this.isDead) { return; }
 
     if (this.stateObject && typeof this.stateObject.execute === "function") {
       this.stateObject.execute(this, player, map, deltaTime);
@@ -77,7 +77,7 @@ export class Enemy {
    * @param {EventManager} eventManager - Event manager for notifications
    */
   takeDamage(amount, eventManager) {
-    if (this.isDead) return;
+    if (this.isDead) { return; }
 
     this.health -= amount;
 

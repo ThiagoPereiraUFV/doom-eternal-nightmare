@@ -127,9 +127,9 @@ export class Weapon {
       }
       if (map[mapY][mapX] > 0) {
         hits.push({ type: "wall", distance, wallType: map[mapY][mapX] });
-        if (!isFinite(wallPenetrationCost)) break;
+        if (!isFinite(wallPenetrationCost)) { break; }
         penetrationLeft -= wallPenetrationCost;
-        if (penetrationLeft <= 0) break;
+        if (penetrationLeft <= 0) { break; }
         continue;
       }
 
@@ -156,7 +156,7 @@ export class Weapon {
    */
   _calcFalloffDamage(distance) {
     const { falloffRange, falloffMin, falloffScale, damage } = this;
-    if (distance < falloffRange) return damage;
+    if (distance < falloffRange) { return damage; }
     const min = damage * falloffMin;
     const falloff = Math.max(0, 1 - (distance - falloffRange) / (falloffRange * falloffScale));
     return min + (damage - min) * falloff;
@@ -198,7 +198,7 @@ export class Weapon {
    * @returns {boolean} True if reload completed
    */
   updateReload() {
-    if (!this.isReloading) return false;
+    if (!this.isReloading) { return false; }
 
     const currentTime = Date.now();
     if (currentTime - this.reloadStartTime >= this.reloadTime) {

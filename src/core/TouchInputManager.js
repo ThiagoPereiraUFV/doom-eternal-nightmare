@@ -116,7 +116,7 @@ export class TouchInputManager {
    */
   _handleJoystickMove(e) {
     e.preventDefault();
-    if (!this.joystick.active) return;
+    if (!this.joystick.active) { return; }
 
     const touch = e.touches[0];
     this.joystick.currentX = touch.clientX;
@@ -200,7 +200,7 @@ export class TouchInputManager {
    */
   _handleLookMove(e) {
     e.preventDefault();
-    if (!this.lookArea.active) return;
+    if (!this.lookArea.active) { return; }
 
     const touch = e.touches[0];
 

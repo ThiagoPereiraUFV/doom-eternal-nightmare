@@ -53,7 +53,7 @@ export class GrenadeL extends Weapon {
     let distance = 0;
     let iterations = 0;
 
-    if (!map || !map.length || !map[0]) return { x: x + Math.cos(angle) * maxDistance, y: y + Math.sin(angle) * maxDistance, distance: maxDistance };
+    if (!map || !map.length || !map[0]) { return { x: x + Math.cos(angle) * maxDistance, y: y + Math.sin(angle) * maxDistance, distance: maxDistance }; }
 
     while (distance < maxDistance && iterations < 300) {
       iterations++;
@@ -64,9 +64,9 @@ export class GrenadeL extends Weapon {
       const mapY = Math.floor(testY);
 
       if (mapX < 0 || mapX >= map[0].length || mapY < 0 || mapY >= map.length)
-        return { x: testX, y: testY, distance };
+        { return { x: testX, y: testY, distance }; }
       if (map[mapY][mapX] > 0)
-        return { x: testX - Math.cos(angle) * step, y: testY - Math.sin(angle) * step, distance };
+        { return { x: testX - Math.cos(angle) * step, y: testY - Math.sin(angle) * step, distance }; }
     }
     return { x: x + Math.cos(angle) * maxDistance, y: y + Math.sin(angle) * maxDistance, distance: maxDistance };
   }
