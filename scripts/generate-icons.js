@@ -6,17 +6,20 @@
  * Requires: npm install sharp  (or use the canvas-based fallback below)
  */
 
-const fs   = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
+import zlib from "zlib";
+import { fileURLToPath } from "url";
 
-const ICONS_DIR = path.join(__dirname, "icons");
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ICONS_DIR = path.join(__dirname, "..", "icons");
 const SVG_PATH  = path.join(ICONS_DIR, "icon.svg");
 
 // --- Try sharp (fast, no native deps on most systems) ------------------
-function trySharp() {
+async function trySharp() {
   try {
-    const sharp = require("sharp");
-    return sharp;
+    const mod = await import("sharp");
+    return mod.default;
   } catch {
     return null;
   }
@@ -59,7 +62,6 @@ async function generateWithSharp(sharp) {
 // A minimal 1×1 red PNG, upscaled via sharp is preferred.
 // Without sharp we write a raw RGB PNG at the right size.
 function writeFallbackPng(outPath, width, height, r, g, b) {
-  const zlib = require("zlib");
 
   function crc32(buf) {
     let crc = -1;
@@ -123,7 +125,7 @@ function writeFallbackPng(outPath, width, height, r, g, b) {
 (async () => {
   if (!fs.existsSync(ICONS_DIR)) fs.mkdirSync(ICONS_DIR);
 
-  const sharp = trySharp();
+  const sharp = await trySharp();
 
   if (sharp) {
     console.log("Generating PNG icons with sharp…");

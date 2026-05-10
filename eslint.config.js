@@ -3,13 +3,8 @@ export default [
     files: ["scripts/**/*.js"],
     languageOptions: {
       ecmaVersion: 2022,
-      sourceType: "commonjs",
+      sourceType: "module",
       globals: {
-        require: "readonly",
-        module: "readonly",
-        exports: "readonly",
-        __dirname: "readonly",
-        __filename: "readonly",
         process: "readonly",
         Buffer: "readonly",
         console: "readonly",
