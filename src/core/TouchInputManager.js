@@ -38,20 +38,13 @@ export class TouchInputManager {
     };
     
     // Touch button states
-    this.buttons = {
-      shoot: false,
-      reload: false,
-    };
+    this.buttons = {};
     
     // Elements
     this.touchControls = document.getElementById('touchControls');
     this.joystickElement = document.getElementById('touchJoystick');
     this.joystickStick = document.getElementById('joystickStick');
     this.lookAreaElement = document.getElementById('touchLookArea');
-    this.shootButton = document.getElementById('touchShoot');
-    this.reloadButton = document.getElementById('touchReload');
-    this.prevWeaponButton = document.getElementById('touchPrevWeapon');
-    this.nextWeaponButton = document.getElementById('touchNextWeapon');
     
     // Validate elements exist
     if (!this.touchControls || !this.joystickElement || !this.lookAreaElement) {
@@ -99,49 +92,6 @@ export class TouchInputManager {
       this.lookAreaElement.addEventListener('touchmove', (e) => this._handleLookMove(e));
       this.lookAreaElement.addEventListener('touchend', (e) => this._handleLookEnd(e));
       this.lookAreaElement.addEventListener('touchcancel', (e) => this._handleLookEnd(e));
-    }
-    
-    // Shoot button
-    if (this.shootButton) {
-      this.shootButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        this.buttons.shoot = true;
-        this.eventManager.emit('mousedown', 'left');
-      });
-      this.shootButton.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        this.buttons.shoot = false;
-        this.eventManager.emit('mouseup', 'left');
-      });
-    }
-    
-    // Reload button
-    if (this.reloadButton) {
-      this.reloadButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        this.buttons.reload = true;
-        this.eventManager.emit('keydown', 'r');
-      });
-      this.reloadButton.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        this.buttons.reload = false;
-        this.eventManager.emit('keyup', 'r');
-      });
-    }
-    
-    // Weapon prev/next buttons
-    if (this.prevWeaponButton) {
-      this.prevWeaponButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        this.eventManager.emit('keydown', 'q');
-      });
-    }
-    
-    if (this.nextWeaponButton) {
-      this.nextWeaponButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        this.eventManager.emit('keydown', 'e');
-      });
     }
   }
   
@@ -315,9 +265,6 @@ export class TouchInputManager {
     this.lookArea.active = false;
     this.lookArea.deltaX = 0;
     this.lookArea.deltaY = 0;
-    
-    this.buttons.shoot = false;
-    this.buttons.reload = false;
     
     if (this.joystickStick) {
       this.joystickStick.style.left = `${this.JOYSTICK_CENTER_POSITION}%`;
