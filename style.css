@@ -82,7 +82,7 @@ body {
 
 /* ─── Touch Controls ─────────────────────────────────────────────── */
 #touch-controls {
-	display: none; /* shown only on touch devices */
+	display: none; /* shown by JS when touch mode is detected */
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -92,6 +92,9 @@ body {
 	z-index: 600;
 }
 
+#touch-controls.active {
+	display: block;
+}
 
 
 #touch-look-zone {
@@ -182,6 +185,43 @@ body {
 	transform: scale(0.92);
 }
 
+#touch-prev-weapon,
+#touch-next-weapon {
+	position: absolute;
+	width: 60px;
+	height: 60px;
+	border-radius: 12px;
+	background: rgba(255, 204, 0, 0.25);
+	border: 2px solid rgba(255, 204, 0, 0.5);
+	color: #ffcc00;
+	font-family: 'Orbitron', sans-serif;
+	font-size: 20px;
+	font-weight: 700;
+	pointer-events: auto;
+	touch-action: none;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+#touch-prev-weapon {
+	bottom: 195px;
+	left: 220px;
+}
+
+#touch-next-weapon {
+	bottom: 195px;
+	left: 295px;
+}
+
+#touch-prev-weapon:active,
+#touch-next-weapon:active {
+	background: rgba(255, 204, 0, 0.45);
+	transform: scale(0.92);
+}
+
 #touch-ads {
 	position: absolute;
 	bottom: 195px;
@@ -208,6 +248,88 @@ body {
 	transform: scale(0.95);
 }
 /* ── end touch controls ─────────────────────────────────────────── */
+
+/* ─── Mission Briefing Screen ────────────────────────────────────── */
+#missionBriefingScreen {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: radial-gradient(circle at center, #0a0a0f 0%, #000000 100%);
+	z-index: 1100;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+#missionBriefingScreen.hidden {
+	display: none;
+}
+
+.briefing-content {
+	width: min(700px, 95vw);
+	max-height: 95dvh;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	padding: 24px 20px;
+}
+
+.briefing-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	border-bottom: 1px solid rgba(255, 0, 51, 0.35);
+	padding-bottom: 12px;
+}
+
+.briefing-title {
+	font-family: 'Orbitron', sans-serif;
+	font-size: clamp(14px, 4vw, 24px);
+	letter-spacing: 5px;
+	color: #ff0033;
+	text-shadow: 0 0 12px rgba(255, 0, 51, 0.5);
+}
+
+.briefing-countdown {
+	font-family: 'Orbitron', sans-serif;
+	font-size: clamp(28px, 7vw, 52px);
+	font-weight: 900;
+	color: #fff;
+	text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+	min-width: 48px;
+	text-align: right;
+	line-height: 1;
+}
+
+.briefing-stats {
+	margin: 0;
+	padding: 10px 14px;
+}
+
+.briefing-skip {
+	font-family: 'Orbitron', sans-serif;
+	font-size: 11px;
+	letter-spacing: 3px;
+	color: #666;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	padding: 10px 24px;
+	cursor: pointer;
+	align-self: center;
+	transition: color 0.2s, border-color 0.2s;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.briefing-skip:hover,
+.briefing-skip:active {
+	color: #fff;
+	border-color: rgba(255, 255, 255, 0.3);
+}
+/* ── end mission briefing ────────────────────────────────────────── */
 
 #crosshair {
 	position: absolute;
@@ -518,26 +640,24 @@ body {
 	background: radial-gradient(circle at center, #1a0505 0%, #000000 100%);
 	z-index: 1000;
 	display: flex;
-	align-items: flex-start;
+	align-items: center;
 	justify-content: center;
-	overflow-x: hidden;
-	overflow-y: auto;
-	-webkit-overflow-scrolling: touch;
+	overflow: hidden;
 }
 
 .start-content {
 	text-align: center;
 	max-width: 800px;
-	width: 100%;
-	padding: 40px 20px;
+	width: 95%;
+	padding: 0 16px;
 }
 
 .game-title {
 	font-family: 'Orbitron', sans-serif;
-	font-size: 100px;
+	font-size: clamp(36px, 8vw, 100px);
 	font-weight: 900;
 	color: #fff;
-	margin-bottom: 14px;
+	margin-bottom: 8px;
 	text-shadow: 4px 4px 0 #ff0000;
 	letter-spacing: 5px;
 }
@@ -553,7 +673,7 @@ body {
 }
 
 .menu-box {
-	margin: 60px 0;
+	margin: 24px 0;
 }
 
 .menu-item {
@@ -680,7 +800,7 @@ body {
 
 /* ─── Difficulty Selector ────────────────────────────────────────── */
 .difficulty-section {
-	margin: 28px 0 0;
+	margin: 16px 0 0;
 }
 
 .difficulty-label {
@@ -777,8 +897,10 @@ body {
 	box-shadow: 0 0 40px rgba(50, 136, 255, 0.15);
 	padding: 28px 32px;
 	width: min(540px, 94vw);
-	max-height: 90vh;
+	max-height: 90dvh;
 	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
+	touch-action: pan-y;
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
@@ -949,10 +1071,6 @@ body {
 	.difficulty-stats {
 		font-size: 11px;
 		gap: 10px;
-	}
-
-	.start-content {
-		padding: 0 12px;
 	}
 }
 

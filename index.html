@@ -59,6 +59,8 @@
 		<button id="touch-fire">FIRE</button>
 		<button id="touch-ads">ADS</button>
 		<button id="touch-reload">R</button>
+		<button id="touch-prev-weapon">&#9664;</button>
+		<button id="touch-next-weapon">&#9654;</button>
 		<button id="touch-jump" style="display:none"></button>
 	</div>
 
@@ -167,23 +169,37 @@
 						<button class="diff-btn diff-impossible" data-diff="impossible">
 							<span class="diff-name">IMPOSSIBLE</span>
 							<span class="diff-sub">One mistake — dead</span>
-						</button>					<button class="diff-btn diff-custom" data-diff="custom">
-						<span class="diff-name">CUSTOM</span>
-						<span class="diff-sub">Your rules</span>
-					</button>					</div>
-					<div class="difficulty-stats" id="diff-stats">
-						<span id="diff-stat-health">❤ 100</span>
-						<span id="diff-stat-stamina">⚡ 100</span>
-						<span id="diff-stat-ammo">🔹 ×1.0</span>
-						<span id="diff-stat-enemies">☠ 50 enemies</span>
-						<span id="diff-stat-light">💡 Normal</span>
-						<span id="diff-stat-autoreload">🔄 Auto-reload: On</span>
-						<span id="diff-stat-guns">🔫 All guns</span>
+						</button>
+						<button class="diff-btn diff-custom" data-diff="custom">
+							<span class="diff-name">CUSTOM</span>
+							<span class="diff-sub">Your rules</span>
+						</button>
 					</div>
 				</div>
 
 				<div class="menu-box">
 					<div class="menu-item active" id="start-btn">INITIATE MISSION</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Mission briefing overlay — shown for 5 s after INITIATE MISSION, before game starts -->
+		<div id="missionBriefingScreen" class="hidden">
+			<div class="briefing-content">
+				<div class="briefing-header">
+					<div class="briefing-title">MISSION BRIEFING</div>
+					<div class="briefing-countdown" id="briefingCountdown">5</div>
+				</div>
+
+				<!-- Difficulty stats (populated by JS before showing) -->
+				<div class="briefing-stats difficulty-stats" id="diff-stats">
+					<span id="diff-stat-health">❤ 100</span>
+					<span id="diff-stat-stamina">⚡ 100</span>
+					<span id="diff-stat-ammo">🔹 ×1.0</span>
+					<span id="diff-stat-enemies">☠ 50 enemies</span>
+					<span id="diff-stat-light">💡 Normal</span>
+					<span id="diff-stat-autoreload">🔄 Auto-reload: On</span>
+					<span id="diff-stat-guns">🔫 All guns</span>
 				</div>
 
 				<!-- Controls reference — keyboard on desktop, touch on mobile -->
@@ -195,7 +211,6 @@
 						<div class="ctrl-row"><span class="ctrl-key">LMB</span><span class="ctrl-desc">Shoot</span></div>
 						<div class="ctrl-row"><span class="ctrl-key">R</span><span class="ctrl-desc">Reload</span></div>
 						<div class="ctrl-row"><span class="ctrl-key">SHIFT</span><span class="ctrl-desc">Sprint</span></div>
-						<div class="ctrl-row"><span class="ctrl-key">1 2 3</span><span class="ctrl-desc">Pistol / Shotgun / Rifle</span></div>
 						<div class="ctrl-row"><span class="ctrl-key">Q / E</span><span class="ctrl-desc">Prev / Next weapon</span></div>
 						<div class="ctrl-row"><span class="ctrl-key">P</span><span class="ctrl-desc">Pause</span></div>
 					</div>
@@ -204,12 +219,16 @@
 				<div class="controls-card" id="controls-touch">
 					<div class="controls-card-title">TOUCH SCREEN</div>
 					<div class="controls-grid">
-						<div class="ctrl-row"><span class="ctrl-key ctrl-icon">◉</span><span class="ctrl-desc">Left thumb joystick — Move</span></div>
-						<div class="ctrl-row"><span class="ctrl-key ctrl-icon">👆</span><span class="ctrl-desc">Drag right side — Aim / Look</span></div>
+						<div class="ctrl-row"><span class="ctrl-key ctrl-icon">◉</span><span class="ctrl-desc">Left joystick — Move</span></div>
+						<div class="ctrl-row"><span class="ctrl-key ctrl-icon">👆</span><span class="ctrl-desc">Right drag — Look</span></div>
 						<div class="ctrl-row"><span class="ctrl-key ctrl-icon ctrl-red">FIRE</span><span class="ctrl-desc">Shoot</span></div>
+						<div class="ctrl-row"><span class="ctrl-key ctrl-icon ctrl-blue">ADS</span><span class="ctrl-desc">Toggle aim</span></div>
 						<div class="ctrl-row"><span class="ctrl-key ctrl-icon ctrl-blue">R</span><span class="ctrl-desc">Reload</span></div>
+						<div class="ctrl-row"><span class="ctrl-key ctrl-icon">◀ ▶</span><span class="ctrl-desc">Prev / Next weapon</span></div>
 					</div>
 				</div>
+
+				<button class="briefing-skip" id="briefingSkip">SKIP ▶</button>
 			</div>
 		</div>
 
@@ -220,23 +239,23 @@
 				<div class="custom-sliders">
 					<!-- Player -->
 					<div class="cs-group-label">PLAYER</div>
-					<div class="cs-row"><label>Health <span class="cs-val" id="cs-health-val">100</span></label><input type="range" id="cs-health" min="20" max="200" step="5" value="100"></div>
-					<div class="cs-row"><label>Stamina <span class="cs-val" id="cs-stamina-val">100</span></label><input type="range" id="cs-stamina" min="20" max="200" step="5" value="100"></div>
+					<div class="cs-row"><label>Health <span class="cs-val" id="cs-health-val">100</span></label><input type="range" id="cs-health" min="20" max="200" step="5" value="100" style="touch-action:auto"></div>
+					<div class="cs-row"><label>Stamina <span class="cs-val" id="cs-stamina-val">100</span></label><input type="range" id="cs-stamina" min="20" max="200" step="5" value="100" style="touch-action:auto"></div>
 					<!-- Weapons -->
 					<div class="cs-group-label">WEAPONS</div>
-					<div class="cs-row"><label>Ammo multiplier <span class="cs-val" id="cs-ammo-val">×1.00</span></label><input type="range" id="cs-ammo" min="0.1" max="4" step="0.05" value="1"></div>
+					<div class="cs-row"><label>Ammo multiplier <span class="cs-val" id="cs-ammo-val">×1.00</span></label><input type="range" id="cs-ammo" min="0.1" max="4" step="0.05" value="1" style="touch-action:auto"></div>
 					<!-- Enemies -->
 					<div class="cs-group-label">ENEMIES</div>
-					<div class="cs-row"><label>Count <span class="cs-val" id="cs-enemies-val">50</span></label><input type="range" id="cs-enemies" min="5" max="200" step="5" value="50"></div>
-					<div class="cs-row"><label>Health mult <span class="cs-val" id="cs-ehp-val">×1.00</span></label><input type="range" id="cs-ehp" min="0.25" max="4" step="0.05" value="1"></div>
-					<div class="cs-row"><label>Speed mult <span class="cs-val" id="cs-espd-val">×1.00</span></label><input type="range" id="cs-espd" min="0.25" max="3" step="0.05" value="1"></div>
-					<div class="cs-row"><label>Damage <span class="cs-val" id="cs-edmg-val">10</span></label><input type="range" id="cs-edmg" min="1" max="50" step="1" value="10"></div>
+					<div class="cs-row"><label>Count <span class="cs-val" id="cs-enemies-val">50</span></label><input type="range" id="cs-enemies" min="5" max="200" step="5" value="50" style="touch-action:auto"></div>
+					<div class="cs-row"><label>Health mult <span class="cs-val" id="cs-ehp-val">×1.00</span></label><input type="range" id="cs-ehp" min="0.25" max="4" step="0.05" value="1" style="touch-action:auto"></div>
+					<div class="cs-row"><label>Speed mult <span class="cs-val" id="cs-espd-val">×1.00</span></label><input type="range" id="cs-espd" min="0.25" max="3" step="0.05" value="1" style="touch-action:auto"></div>
+					<div class="cs-row"><label>Damage <span class="cs-val" id="cs-edmg-val">10</span></label><input type="range" id="cs-edmg" min="1" max="50" step="1" value="10" style="touch-action:auto"></div>
 					<!-- Environment -->
 					<div class="cs-group-label">ENVIRONMENT</div>
-					<div class="cs-row"><label>Map density <span class="cs-val" id="cs-fill-val">0.55</span></label><input type="range" id="cs-fill" min="0.3" max="0.8" step="0.01" value="0.55"></div>
-					<div class="cs-row"><label>Ambient light <span class="cs-val" id="cs-amb-val">1.20</span></label><input type="range" id="cs-amb" min="0.1" max="3" step="0.05" value="1.2"></div>
-					<div class="cs-row"><label>Fog density <span class="cs-val" id="cs-fog-val">0.06</span></label><input type="range" id="cs-fog" min="0.01" max="0.3" step="0.005" value="0.06"></div>
-					<div class="cs-row"><label>Flashlight <span class="cs-val" id="cs-flash-val">3.50</span></label><input type="range" id="cs-flash" min="0" max="8" step="0.1" value="3.5"></div>
+					<div class="cs-row"><label>Map density <span class="cs-val" id="cs-fill-val">0.55</span></label><input type="range" id="cs-fill" min="0.3" max="0.8" step="0.01" value="0.55" style="touch-action:auto"></div>
+					<div class="cs-row"><label>Ambient light <span class="cs-val" id="cs-amb-val">1.20</span></label><input type="range" id="cs-amb" min="0.1" max="3" step="0.05" value="1.2" style="touch-action:auto"></div>
+					<div class="cs-row"><label>Fog density <span class="cs-val" id="cs-fog-val">0.06</span></label><input type="range" id="cs-fog" min="0.01" max="0.3" step="0.005" value="0.06" style="touch-action:auto"></div>
+					<div class="cs-row"><label>Flashlight <span class="cs-val" id="cs-flash-val">3.50</span></label><input type="range" id="cs-flash" min="0" max="8" step="0.1" value="3.5" style="touch-action:auto"></div>
 					<!-- Gameplay -->
 					<div class="cs-group-label">GAMEPLAY</div>
 					<div class="cs-row cs-row-check"><label>Auto reload</label><input type="checkbox" id="cs-autoreload" checked></div>
@@ -293,9 +312,8 @@
 				<button class="touch-button" id="touchReload">R</button>
 			</div>
 			<div class="touch-weapon-switch">
-				<button class="touch-weapon-btn" id="touchWeapon1">1</button>
-				<button class="touch-weapon-btn" id="touchWeapon2">2</button>
-				<button class="touch-weapon-btn" id="touchWeapon3">3</button>
+				<button class="touch-weapon-btn" id="touchPrevWeapon">&#9664;</button>
+				<button class="touch-weapon-btn" id="touchNextWeapon">&#9654;</button>
 			</div>
 		</div>
 

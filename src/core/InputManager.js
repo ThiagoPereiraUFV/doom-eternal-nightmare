@@ -63,9 +63,9 @@ export class InputManager {
       // Never intercept touches on interactive UI elements — let click fire
       const el = t.target;
       const tag = (el?.tagName ?? "").toUpperCase();
-      if (tag === "BUTTON" || tag === "A") continue;
+      if (tag === "BUTTON" || tag === "A" || tag === "INPUT" || tag === "SELECT" || tag === "LABEL") continue;
       // Also skip if the touch is on any element inside an overlay / menu
-      if (el?.closest(".overlay-screen, #startScreen, #pauseMenu, .menu-item, .pause-menu-item, #start-btn")) continue;
+      if (el?.closest(".overlay-screen, #startScreen, #pauseMenu, .menu-item, .pause-menu-item, #start-btn, .custom-modal, #missionBriefingScreen")) continue;
 
       const inLeftZone =
         t.clientX < window.innerWidth * 0.40 &&
