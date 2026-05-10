@@ -6,10 +6,13 @@
  */
 
 import * as THREE from "three";
+import { GameConfig } from "../config/GameConfig.js";
 
 export class Renderer {
   constructor(canvas, _weaponCanvas, _resourceManager) {
     this.canvas = canvas;
+    this.aimFocusOverlay = document.getElementById("aimFocusOverlay");
+    this._adsVisualState = { aiming: false, profile: null };
 
     // ─── WebGL Renderer ───────────────────────────────────────────
     this.renderer = new THREE.WebGLRenderer({
@@ -144,6 +147,72 @@ export class Renderer {
       this.camera.fov += (target - this.camera.fov) * 0.18;
       this.camera.updateProjectionMatrix();
     }
+
+    this._updateADSOverlay(aiming, target);
+  }
+
+  _updateADSOverlay(aiming, targetFov) {
+    if (!this.aimFocusOverlay) {
+      return;
+    }
+
+    const focusConfig = GameConfig.EFFECTS.ADS_FOCUS;
+    const intensity = THREE.MathUtils.clamp(focusConfig.INTENSITY ?? 1, 0, 2);
+    const normalizedZoom = THREE.MathUtils.clamp((75 - targetFov) / 53, 0, 1);
+    const blur = THREE.MathUtils.lerp(
+      focusConfig.BLUR_MIN,
+      focusConfig.BLUR_MAX,
+      normalizedZoom,
+    );
+    const clearRadius = THREE.MathUtils.lerp(
+      focusConfig.CLEAR_RADIUS_MAX,
+      focusConfig.CLEAR_RADIUS_MIN,
+      normalizedZoom * intensity,
+    );
+    const feather = THREE.MathUtils.lerp(
+      focusConfig.FEATHER_MIN,
+      focusConfig.FEATHER_MAX,
+      normalizedZoom,
+    );
+    const tintAlpha = THREE.MathUtils.lerp(
+      focusConfig.TINT_MIN,
+      focusConfig.TINT_MAX,
+      normalizedZoom * intensity,
+    );
+    const profile = [
+      blur.toFixed(1),
+      clearRadius.toFixed(1),
+      feather.toFixed(1),
+      tintAlpha.toFixed(2),
+    ].join(":");
+
+    if (
+      this._adsVisualState.aiming === aiming &&
+      this._adsVisualState.profile === profile
+    ) {
+      return;
+    }
+
+    this._adsVisualState.aiming = aiming;
+    this._adsVisualState.profile = profile;
+
+    this.aimFocusOverlay.classList.toggle("active", aiming);
+    this.aimFocusOverlay.style.setProperty(
+      "--ads-focus-blur",
+      `${blur.toFixed(1)}px`,
+    );
+    this.aimFocusOverlay.style.setProperty(
+      "--ads-focus-clear-radius",
+      `${clearRadius.toFixed(1)}%`,
+    );
+    this.aimFocusOverlay.style.setProperty(
+      "--ads-focus-feather",
+      `${feather.toFixed(1)}%`,
+    );
+    this.aimFocusOverlay.style.setProperty(
+      "--ads-focus-tint",
+      `rgba(6, 8, 14, ${tintAlpha.toFixed(2)})`,
+    );
   }
 
   // ═══════════════════════════════════════════════════════════════

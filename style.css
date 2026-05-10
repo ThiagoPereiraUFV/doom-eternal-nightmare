@@ -86,6 +86,33 @@ body {
   z-index: 10;
 }
 
+#aimFocusOverlay {
+  --ads-focus-blur: 7px;
+  --ads-focus-clear-radius: 16%;
+  --ads-focus-feather: 7%;
+  --ads-focus-tint: rgba(6, 8, 14, 0.26);
+
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 40;
+  background: var(--ads-focus-tint);
+  backdrop-filter: blur(var(--ads-focus-blur)) saturate(0.86);
+  mask-image: radial-gradient(
+    circle at center,
+    transparent 0,
+    transparent var(--ads-focus-clear-radius),
+    #000 calc(var(--ads-focus-clear-radius) + var(--ads-focus-feather)),
+    #000 100%
+  );
+  transition: opacity 0.16s ease-out;
+}
+
+#aimFocusOverlay.active {
+  opacity: 1;
+}
+
 /* ─── Touch Controls ─────────────────────────────────────────────── */
 #touch-controls {
   display: none; /* shown by JS when touch mode is detected */

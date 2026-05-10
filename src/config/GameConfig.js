@@ -7,33 +7,49 @@
 export const GameConfig = {
   // Canvas settings
   CANVAS: {
+    // Logical weapon-view size used by the overlay renderer.
     WEAPON_WIDTH: 600,
     WEAPON_HEIGHT: 400,
   },
 
   // Player configuration
   PLAYER: {
+    // Default spawn tile in generated maps.
     SPAWN_X: 3,
     SPAWN_Y: 3,
+
+    // Core survivability values.
     MAX_HEALTH: 100,
     MAX_STAMINA: 100,
+
+    // Movement and turning speed tuning.
     MOVE_SPEED: 0.05,
     SPRINT_MULTIPLIER: 1.8,
     ROTATION_SPEED: 0.03,
+
+    // Stamina drain/recovery applied every update tick.
     STAMINA_DRAIN: 0.5,
     STAMINA_RECOVERY: 0.3,
+
+    // Per-frame decay applied to camera shake after firing or taking damage.
     SCREEN_SHAKE_DECAY: 0.8,
   },
 
   // Input configuration
   INPUT: {
+    // Touch look delta multiplier.
     TOUCH_SENSITIVITY: 0.003,
+
+    // Control schemes the game can switch between.
     VALID_CONTROL_TYPES: ["keyboard", "touch"],
   },
 
   // Rendering
   RENDERING: {
+    // Base field of view used for hip-fire.
     FOV: Math.PI / 3,
+
+    // Legacy raycast settings still used by gameplay logic and visibility checks.
     RAY_COUNT: 120,
     WALL_HEIGHT_RATIO: 0.6,
     MAX_RENDER_DISTANCE: 20,
@@ -41,16 +57,25 @@ export const GameConfig = {
 
   // Map generation
   MAP: {
+    // Default procedural map size used outside the spawn-map flow.
     DEFAULT_SIZE: 20,
+
+    // Larger intro/spawn arena size.
     SPAWN_SIZE: 30,
+
+    // Cellular automata controls.
     FILL_RATIO: 0.55,
     SMOOTHING_ITERATIONS: 3,
     WALL_THRESHOLD: 4,
+
+    // Safe-zone and corridor carving around the player spawn.
     SPAWN_SAFE_ZONE: 12,
     SPAWN_CORRIDOR_LENGTH: 20,
     SPAWN_CORRIDOR_GRID: 5,
     MAIN_CORRIDOR_START: 10,
     MAIN_CORRIDOR_SPACING: 12,
+
+    // Integer wall ids and cumulative random thresholds.
     WALL_TYPES: {
       CONCRETE: 1,
       BRICK: 2,
@@ -64,6 +89,7 @@ export const GameConfig = {
 
   // Enemy configuration
   ENEMY: {
+    // Spawn budget and placement constraints.
     DEFAULT_SPAWN_COUNT: 50,
     MAX_SPAWN_ATTEMPTS: 1000,
     SPAWN_MIN_OFFSET: 10,
@@ -97,7 +123,7 @@ export const GameConfig = {
     ATTACK_COOLDOWN: 1000,
     ATTACK_DAMAGE: 10,
 
-    // Types
+    // Enemy archetypes used by EnemyFactory.
     TYPES: {
       DEMON: {
         type: "demon",
@@ -128,26 +154,61 @@ export const GameConfig = {
 
   // Combat
   COMBAT: {
+    // Minimum damage multiplier once range falloff bottoms out.
     DAMAGE_FALLOFF_MIN: 0.3,
+
+    // Distance where ranged damage starts to lose effectiveness.
     DAMAGE_FALLOFF_RANGE: 15,
+
+    // Hitbox radius used by weapon raycasts.
     ENEMY_HIT_RADIUS: 0.3,
     ENEMY_HIT_RADIUS_SQ: 0.09, // pre-computed 0.3^2
+
+    // Camera feedback and post-death delay.
     SCREEN_SHAKE_INTENSITY: 12,
     GAME_OVER_DELAY: 500,
   },
 
   // Visual effects
   EFFECTS: {
+    // Cap and cull distance for blood splatter effects.
     MAX_BLOOD_SPLATTERS: 100,
     BLOOD_RENDER_DISTANCE: 6,
+
+    // Global screen-space effect timings.
     MUZZLE_FLASH_DURATION: 50,
     VIGNETTE_INTENSITY: 0.3,
+
+    // ADS focus overlay tuning.
+    ADS_FOCUS: {
+      // Master multiplier for how aggressive the blur/tint feels.
+      INTENSITY: 1,
+
+      // Blur radius range in px as zoom increases.
+      BLUR_MIN: 2,
+      BLUR_MAX: 6,
+
+      // Central clear window size in percent of viewport.
+      CLEAR_RADIUS_MIN: 20,
+      CLEAR_RADIUS_MAX: 40,
+
+      // Soft edge width between the clear center and blurred periphery.
+      FEATHER_MIN: 6,
+      FEATHER_MAX: 8,
+
+      // Peripheral darkening range layered with the blur mask.
+      TINT_MIN: 0,
+      TINT_MAX: 0,
+    },
   },
 
   // Audio
   AUDIO: {
+    // Step cadence in ms for walking and sprinting.
     FOOTSTEP_INTERVAL: 400,
     FOOTSTEP_INTERVAL_SPRINT: 300,
+
+    // Ambient loop timing and relative music bus gain.
     AMBIENCE_INTERVAL: 3000,
     MUSIC_VOLUME: 0.75,
     MUSIC_LOOP_DURATION: 8, // seconds
@@ -156,6 +217,7 @@ export const GameConfig = {
   // Difficulty presets
   // Each key overrides the corresponding base config at game start.
   DIFFICULTY: {
+    // Beginner preset: high survivability and generous resources.
     EASY: {
       id: "easy",
       label: "EASY",
@@ -192,6 +254,8 @@ export const GameConfig = {
         "plasma",
       ],
     },
+
+    // Default preset: balanced values across combat, map density, and lighting.
     MEDIUM: {
       id: "medium",
       label: "MEDIUM",
@@ -223,6 +287,8 @@ export const GameConfig = {
         "plasma",
       ],
     },
+
+    // Pressure preset: reduced resources and tougher enemies.
     HARD: {
       id: "hard",
       label: "HARD",
@@ -246,6 +312,8 @@ export const GameConfig = {
       aimAssist: false,
       availableGuns: ["pistol", "shotgun", "rifle", "smg"],
     },
+
+    // Punishing preset: low health, dense maps, and minimal lighting support.
     IMPOSSIBLE: {
       id: "impossible",
       label: "IMPOSSIBLE",
@@ -269,6 +337,7 @@ export const GameConfig = {
       aimAssist: false,
       availableGuns: ["pistol"],
     },
+
     // Custom difficulty — defaults mirror MEDIUM; overridden at runtime by the UI
     CUSTOM: {
       id: "custom",
@@ -492,23 +561,36 @@ export const GameConfig = {
 
   // 3D Weapon rendering
   WEAPON_3D: {
+    // Default anchored screen position for the weapon rig.
     POSITION_X_RATIO: 0.65,
     POSITION_Y_RATIO: 0.85,
     AIM_CENTER_Y_RATIO: 0.4,
+
+    // Idle motion and recoil recovery.
     BOB_INTENSITY: 5,
     RECOIL_DECAY: 0.85,
     SWAY_DAMPENING: 0.85,
+
+    // Sprite skew/perspective compensation for fake depth.
     PERSPECTIVE_STRENGTH: 0.15,
     PERSPECTIVE_VERTICAL_SKEW: 0.1,
     PERSPECTIVE_HORIZONTAL_SKEW: 0.05,
+
+    // Drop-shadow tuning for the weapon overlay.
     SHADOW_ALPHA: 0.3,
     SHADOW_OFFSET: 5,
+
+    // Post-lighting color grading on weapon sprites.
     BRIGHTNESS: 1.2,
     CONTRAST: 1.1,
     SATURATION: 1.3,
+
+    // Highlight pass for metallic edges.
     HIGHLIGHT_ALPHA: 0.1,
     HIGHLIGHT_BRIGHTNESS: 2,
     HIGHLIGHT_OFFSET: -2,
+
+    // Final sprite placement offsets after transforms are applied.
     SPRITE_HORIZONTAL_OFFSET: 0.5,
     SPRITE_VERTICAL_OFFSET: 0.8,
   },
