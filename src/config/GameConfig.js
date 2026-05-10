@@ -359,7 +359,7 @@ export const GameConfig = {
       maxStamina:     50,
       staminaDrain:   1.2,
       staminaRecovery:0.1,
-      ammoMultiplier: 0.35,
+      ammoMultiplier: 25,
       enemyCount:     120,
       enemyHealthMult:2.2,
       enemySpeedMult: 1.6,
