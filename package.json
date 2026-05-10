@@ -7,13 +7,15 @@
     "lint:css": "stylelint **/*.css",
     "lint:html": "htmlhint **/*.html",
     "lint": "yarn lint:js && yarn lint:css && yarn lint:html",
-    "lint:ci": "yarn lint:js --max-warnings=0 && yarn lint:css --max-warnings=0 && yarn lint:html",
+    "lint:ci": "yarn lint:js --max-warnings=0 && yarn lint:css --max-warnings=0 && yarn lint:html && prettier --check \"**/*.{js,css,html}\"",
     "lint:fix": "eslint src/**/*.js scripts/**/*.js sw.js --fix && stylelint **/*.css --fix && htmlhint **/*.html",
+    "format": "prettier --write \"**/*.{js,css,html}\"",
     "validate": "yarn lint"
   },
   "devDependencies": {
     "eslint": "^10.3.0",
     "htmlhint": "^1.9.2",
+    "prettier": "^3.8.3",
     "sharp": "^0.34.5",
     "stylelint": "^17.11.0",
     "stylelint-config-standard": "^40.0.0"
