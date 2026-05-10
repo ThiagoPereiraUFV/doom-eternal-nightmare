@@ -1208,10 +1208,52 @@ export class Renderer {
       this.weaponGroup.add(mesh);
       return mesh;
     };
+    const addTorus = (
+      radius,
+      tube,
+      mat,
+      px,
+      py,
+      pz,
+      rx = 0,
+      ry = 0,
+      rz = 0,
+    ) => {
+      const mesh = new THREE.Mesh(
+        new THREE.TorusGeometry(radius, tube, 10, 24),
+        mat,
+      );
+      mesh.position.set(px, py, pz);
+      mesh.rotation.set(rx, ry, rz);
+      this.weaponGroup.add(mesh);
+      return mesh;
+    };
+    const addRing = (
+      outerRadius,
+      innerRadius,
+      mat,
+      px,
+      py,
+      pz,
+      rx = 0,
+      ry = 0,
+      rz = 0,
+    ) => {
+      const mesh = new THREE.Mesh(
+        new THREE.RingGeometry(innerRadius, outerRadius, 24),
+        mat,
+      );
+      mesh.position.set(px, py, pz);
+      mesh.rotation.set(rx, ry, rz);
+      this.weaponGroup.add(mesh);
+      return mesh;
+    };
 
     const builder = {
       addBox,
       addCyl,
+      addTorus,
+      addRing,
       mat: m,
       THREE,
     };

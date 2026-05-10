@@ -114,7 +114,74 @@ export class SniperRifle extends Weapon {
    * Build the sniper mesh.
    * @param {Object} builder
    */
-  buildModel({ addBox, addCyl, mat }) {
+  buildModel({ addBox, addCyl, addTorus, addRing, mat, THREE }) {
+    const innerMats = new Map();
+    const capMats = new Map();
+    const getInnerMat = (material) => {
+      if (!innerMats.has(material)) {
+        const inner = material.clone();
+        inner.side = THREE.BackSide;
+        innerMats.set(material, inner);
+      }
+      return innerMats.get(material);
+    };
+    const getCapMat = (material) => {
+      if (!capMats.has(material)) {
+        const cap = material.clone();
+        cap.side = THREE.DoubleSide;
+        capMats.set(material, cap);
+      }
+      return capMats.get(material);
+    };
+    const addTube = (
+      outerRadius,
+      innerRadius,
+      length,
+      material,
+      px,
+      py,
+      pz,
+    ) => {
+      addCyl(
+        outerRadius,
+        outerRadius,
+        length,
+        material,
+        px,
+        py,
+        pz,
+        Math.PI / 2,
+        true,
+      );
+      addCyl(
+        innerRadius,
+        innerRadius,
+        length,
+        getInnerMat(material),
+        px,
+        py,
+        pz,
+        Math.PI / 2,
+        true,
+      );
+      addRing(
+        outerRadius,
+        innerRadius,
+        getCapMat(material),
+        px,
+        py,
+        pz - length / 2,
+      );
+      addRing(
+        outerRadius,
+        innerRadius,
+        getCapMat(material),
+        px,
+        py,
+        pz + length / 2,
+      );
+    };
+
     addCyl(0.018, 0.015, 0.72, mat.bright, 0, 0.014, -0.52, Math.PI / 2);
     addCyl(0.024, 0.02, 0.08, mat.bright, 0, 0.014, -0.18, Math.PI / 2);
     addCyl(0.026, 0.026, 0.05, mat.metal, 0, 0.014, -0.876, Math.PI / 2);
@@ -134,14 +201,15 @@ export class SniperRifle extends Weapon {
     addBox(0.082, 0.012, 0.24, mat.metal, 0, 0.064, 0.01);
     addBox(0.09, 0.018, 0.036, mat.metal, 0, 0.074, -0.05);
     addBox(0.09, 0.018, 0.036, mat.metal, 0, 0.074, 0.06);
-    addCyl(0.03, 0.03, 0.31, mat.dark, 0, 0.1, 0.005, Math.PI / 2);
+    addTube(0.03, 0.024, 0.31, mat.dark, 0, 0.1, 0.005);
     addCyl(0.024, 0.024, 0.12, mat.scope, 0, 0.1, -0.19, Math.PI / 2, true);
-    addCyl(0.022, 0.022, 0.008, mat.glass, 0, 0.1, -0.13, Math.PI / 2);
-    addCyl(0.034, 0.034, 0.08, mat.dark, 0, 0.1, -0.24, Math.PI / 2);
-    addCyl(0.024, 0.024, 0.08, mat.dark, 0, 0.1, 0.2, Math.PI / 2);
-    addCyl(0.028, 0.028, 0.036, mat.dark, 0, 0.1, 0.245, Math.PI / 2);
-    addCyl(0.012, 0.012, 0.032, mat.metal, 0, 0.13, 0.002, 0);
-    addCyl(0.012, 0.012, 0.032, mat.metal, 0, 0.1, 0.002, 0, Math.PI / 2);
+    addCyl(0.022, 0.022, 0.008, mat.glass, 0, 0.1, -0.13, Math.PI / 2, true);
+    addTube(0.034, 0.03, 0.08, mat.dark, 0, 0.1, -0.24);
+    addTube(0.024, 0.019, 0.08, mat.dark, 0, 0.1, 0.2);
+    addTube(0.028, 0.024, 0.036, mat.dark, 0, 0.1, 0.245);
+    addTorus(0.03, 0.005, mat.dark, 0, 0.1, -0.15);
+    addTorus(0.03, 0.005, mat.dark, 0, 0.1, 0.16);
+    addTorus(0.026, 0.005, mat.dark, 0, 0.1, 0.24);
     addBox(0.01, 0.062, 0.01, mat.metal, 0.044, 0.048, 0.03);
     addCyl(0.016, 0.016, 0.02, mat.metal, 0.044, 0.014, 0.03);
     addBox(0.062, 0.008, 0.09, mat.metal, 0, -0.05, 0.06);
