@@ -3,7 +3,7 @@
  * High damage, high fire rate, low spread
  */
 
-import { Weapon } from "./Weapon.js";
+import { Weapon } from "../Weapon.js";
 
 const RIFLE_CONFIG = {
   maxDistance: 60,

@@ -3,7 +3,7 @@
  * Balanced weapon with moderate damage and fire rate
  */
 
-import { Weapon } from "./Weapon.js";
+import { Weapon } from "../Weapon.js";
 
 const PISTOL_CONFIG = {
   maxDistance: 50,

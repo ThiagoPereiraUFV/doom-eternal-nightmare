@@ -3,7 +3,7 @@
  * High fire rate, moderate damage, large magazine
  */
 
-import { Weapon } from "./Weapon.js";
+import { Weapon } from "../Weapon.js";
 
 const SMG_CONFIG = {
   maxDistance: 45,

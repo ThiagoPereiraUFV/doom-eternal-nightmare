@@ -3,7 +3,7 @@
  * High damage, low fire rate, fires multiple pellets
  */
 
-import { Weapon } from "./Weapon.js";
+import { Weapon } from "../Weapon.js";
 
 const SHOTGUN_CONFIG = {
   maxDistance: 30,

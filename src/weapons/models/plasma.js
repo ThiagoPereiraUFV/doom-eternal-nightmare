@@ -3,7 +3,7 @@
  * High penetration, sci-fi feel, moderate fire rate, no falloff damage
  */
 
-import { Weapon } from "./Weapon.js";
+import { Weapon } from "../Weapon.js";
 
 const PLASMA_CONFIG = {
   maxDistance: 60,

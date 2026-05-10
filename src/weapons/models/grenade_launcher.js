@@ -3,7 +3,7 @@
  * Explosive area damage, low fire rate, affects multiple enemies in blast radius
  */
 
-import { Weapon } from "./Weapon.js";
+import { Weapon } from "../Weapon.js";
 
 const GRENADE_CONFIG = {
   maxDistance: 20,

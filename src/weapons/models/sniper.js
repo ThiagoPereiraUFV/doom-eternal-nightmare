@@ -3,7 +3,7 @@
  * Very high damage, low fire rate, high penetration, scope zoom
  */
 
-import { Weapon } from "./Weapon.js";
+import { Weapon } from "../Weapon.js";
 
 const SNIPER_CONFIG = {
   maxDistance: 80,
