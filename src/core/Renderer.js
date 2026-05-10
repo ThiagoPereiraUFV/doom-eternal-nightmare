@@ -841,7 +841,7 @@ export class Renderer {
 
     const rows = map.length;
     const cols = map[0].length;
-    const WALL_H = 2.6;
+    const WALL_H = 2;
     const typeNames = ["", "concrete", "brick", "metal", "stone"];
 
     // Floor
