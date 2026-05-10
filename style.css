@@ -962,6 +962,7 @@ body {
 	border-radius: 2px;
 	outline: none;
 	cursor: pointer;
+	touch-action: auto;
 }
 
 .cs-row input[type="range"]::-webkit-slider-thumb {

@@ -327,18 +327,12 @@ export class Game {
     screen.classList.remove("hidden");
 
     let remaining = 5;
+    let launched = false;
     if (countdownEl) countdownEl.textContent = remaining;
 
-    const tick = setInterval(() => {
-      remaining -= 1;
-      if (countdownEl) countdownEl.textContent = remaining;
-      if (remaining <= 0) {
-        clearInterval(tick);
-        launch();
-      }
-    }, 1000);
-
     const launch = () => {
+      if (launched) return;
+      launched = true;
       clearInterval(tick);
       screen.classList.add("hidden");
       if (skipBtn) {
@@ -347,6 +341,14 @@ export class Game {
       }
       this._startGameActual();
     };
+
+    const tick = setInterval(() => {
+      remaining -= 1;
+      if (countdownEl) countdownEl.textContent = remaining;
+      if (remaining <= 0) {
+        launch();
+      }
+    }, 1000);
 
     const onSkipTouch = (e) => { e.preventDefault(); launch(); };
     if (skipBtn) {
