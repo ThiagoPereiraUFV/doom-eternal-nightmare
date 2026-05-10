@@ -4,55 +4,65 @@
  * Following OCP - new weapons can be registered
  */
 
-import { Pistol } from "./Pistol.js";
-import { Shotgun } from "./Shotgun.js";
-import { Rifle } from "./Rifle.js";
-import { SMG } from "./SMG.js";
-import { SniperRifle } from "./SniperRifle.js";
-import { GrenadeL } from "./GrenadeL.js";
-import { PlasmaGun } from "./PlasmaGun.js";
-
 export class WeaponFactory {
   static _weaponTypes = new Map();
+  static _initialized = false;
 
   /**
-   * Initialize default weapon types
+   * Initialize the weapon factory.
+   * The factory is agnostic to concrete weapon modules and only caches loaded classes.
    */
-  static init() {
-    this.register("pistol", Pistol);
-    this.register("shotgun", Shotgun);
-    this.register("rifle", Rifle);
-    this.register("smg", SMG);
-    this.register("sniper", SniperRifle);
-    this.register("grenade_launcher", GrenadeL);
-    this.register("plasma", PlasmaGun);
+  static async init() {
+    if (this._initialized) { return; }
+    this._initialized = true;
   }
 
   /**
-   * Register a new weapon type
+   * Register a new weapon type locally.
    * @param {string} type - Weapon type identifier
-   * @param {Class} WeaponClass - Weapon class constructor
+   * @param {Class|string} WeaponClassOrPath - Weapon constructor or module path
    */
-  static register(type, WeaponClass) {
-    this._weaponTypes.set(type.toLowerCase(), WeaponClass);
+  static register(type, WeaponClassOrPath) {
+    this._weaponTypes.set(type.toLowerCase(), WeaponClassOrPath);
   }
 
   /**
-   * Create a weapon instance
+   * Create a weapon instance.
    * @param {string} type - Weapon type ('pistol', 'shotgun', 'rifle')
-   * @returns {Weapon} Weapon instance
-   * @example
-   * const pistol = WeaponFactory.create('pistol');
-   * const shotgun = WeaponFactory.create('shotgun');
+   * @returns {Promise<Weapon>} Weapon instance
    */
-  static create(type) {
-    const WeaponClass = this._weaponTypes.get(type.toLowerCase());
+  static async create(type) {
+    const typeKey = type.toLowerCase();
+    let entry = this._weaponTypes.get(typeKey);
 
-    if (!WeaponClass) {
-      throw new Error(`Unknown weapon type: ${type}`);
+    if (!entry) {
+      entry = await this._loadWeaponModule(typeKey);
+      if (!entry) {
+        throw new Error(`Unknown weapon type: ${type}`);
+      }
+      this._weaponTypes.set(typeKey, entry);
     }
 
-    return new WeaponClass();
+    if (typeof entry === "string") {
+      entry = await this._importModuleClass(entry);
+      this._weaponTypes.set(typeKey, entry);
+    }
+
+    return new entry();
+  }
+
+  static async _loadWeaponModule(typeKey) {
+    const path = `./models/${typeKey}.js`;
+    return this._importModuleClass(path);
+  }
+
+  static async _importModuleClass(path) {
+    try {
+      const module = await import(path);
+      return module.default || Object.values(module).find((exported) => typeof exported === "function");
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -72,8 +82,5 @@ export class WeaponFactory {
     return this._weaponTypes.has(type.toLowerCase());
   }
 }
-
-// Initialize default weapons
-WeaponFactory.init();
 
 export default WeaponFactory;

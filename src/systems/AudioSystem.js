@@ -93,16 +93,6 @@ export class AudioSystem {
     osc.start(now); osc.stop(now + dur);
   }
 
-  // ─── Weapon-type metadata ────────────────────────────────────────
-  _getWeaponSoundProfile(weaponName) {
-    const n = (weaponName ?? "").toLowerCase();
-    if (n === "shotgun")          { return { body: 0.9, snap: 100, snapQ: 0.8, tail: 0.55, tailFreq: 90 }; }
-    if (n === "rifle")            { return { body: 0.55, snap: 220, snapQ: 1.8, tail: 0.28, tailFreq: 160 }; }
-    if (n === "smg")              { return { body: 0.40, snap: 240, snapQ: 2.0, tail: 0.20, tailFreq: 180 }; }
-    if (n === "sniper")           { return { body: 1.0,  snap: 180, snapQ: 1.0, tail: 0.70, tailFreq: 80  }; }
-    if (n === "grenade_launcher") { return { body: 1.0,  snap: 60,  snapQ: 0.5, tail: 0.80, tailFreq: 50  }; }
-    /* pistol default */          return { body: 0.7,  snap: 160, snapQ: 1.2, tail: 0.38, tailFreq: 110 };
-  }
 
   /** Simple convolver reverb — convolves a signal with exponential noise impulse */
   _createReverb(seconds = 0.8, decay = 2.0) {
@@ -121,77 +111,40 @@ export class AudioSystem {
     return conv;
   }
 
+  _playAudioSequence(sequence = []) {
+    if (!Array.isArray(sequence)) { return; }
+    for (const op of sequence) {
+      const delayMs = Math.round((op.offset ?? 0) * 1000);
+      setTimeout(() => {
+        if (op.action === "noiseBurst") {
+          this._noiseBurst(op);
+        } else if (op.action === "toneBurst") {
+          this._toneBurst(op);
+        }
+      }, delayMs);
+    }
+  }
+
   /**
    * Play a sound effect.
    * @param {string} type - 'shoot', 'hit', 'death', 'footstep', 'reload',
    *                        'reload_end', 'empty', 'ambience'
-   * @param {Object} options - { weaponName }
+   * @param {Object} options - { weapon }
    */
   playSound(type, options = {}) {
+    const weapon = options.weapon;
     switch (type) {
 
       // ── Gunshot ─────────────────────────────────────────────────
       case "shoot": {
-        const wn = (options.weaponName ?? "").toLowerCase();
-
-        // ── Plasma: sci-fi zap ───────────────────────────────────
-        if (wn === "plasma") {
-          this._toneBurst({ type: "sawtooth", freq: 440, freqEnd: 180,
-            vol: 0.35, attack: 0, decay: 0.12, dur: 0.16 });
-          this._noiseBurst({ freq: 3200, q: 4, filterType: "bandpass",
-            vol: 0.25, attack: 0, decay: 0.06, dur: 0.10 });
-          this._toneBurst({ type: "sine", freq: 880, freqEnd: 220,
-            vol: 0.20, attack: 0, decay: 0.18, dur: 0.22 });
-          break;
-        }
-
-        // ── Sniper: long deep crack with echo ───────────────────
-        if (wn === "sniper") {
-          this._noiseBurst({ freq: 50, q: 0.4, filterType: "lowpass",
-            vol: 1.0, attack: 0, decay: 0.22, dur: 0.28 });
-          this._noiseBurst({ freq: 3500, q: 0.5, filterType: "highpass",
-            vol: 0.5, attack: 0, decay: 0.04, dur: 0.06 });
-          this._noiseBurst({ freq: 120, q: 2, filterType: "bandpass",
-            vol: 0.65, attack: 0.01, decay: 0.55, dur: 0.65 });
-          this._toneBurst({ type: "sine", freq: 38, freqEnd: 18,
-            vol: 0.40, decay: 0.30, dur: 0.36 });
-          // Echo 1
-          setTimeout(() => this._noiseBurst({ freq: 80, q: 1, filterType: "lowpass",
-            vol: 0.22, attack: 0, decay: 0.30, dur: 0.38 }), 140);
-          // Echo 2
-          setTimeout(() => this._noiseBurst({ freq: 70, q: 1, filterType: "lowpass",
-            vol: 0.10, attack: 0, decay: 0.25, dur: 0.32 }), 300);
-          break;
-        }
-
-        // ── Grenade launcher: deep hollow thump ─────────────────
-        if (wn === "grenade_launcher") {
-          this._noiseBurst({ freq: 35, q: 0.4, filterType: "lowpass",
-            vol: 1.0, attack: 0, decay: 0.30, dur: 0.36 });
-          this._toneBurst({ type: "sine", freq: 55, freqEnd: 28,
-            vol: 0.45, attack: 0.01, decay: 0.28, dur: 0.34 });
-          this._noiseBurst({ freq: 120, q: 1.5, filterType: "bandpass",
-            vol: 0.40, attack: 0, decay: 0.20, dur: 0.28 });
-          break;
-        }
-
-        // ── Standard: pistol/shotgun/rifle/SMG ──────────────────
-        const p = this._getWeaponSoundProfile(wn);
-        // Low-end body thump
-        this._noiseBurst({ freq: 55, q: 0.5, filterType: "lowpass",
-          vol: p.body, attack: 0, decay: 0.18, dur: 0.22 });
-        // Mid crack / snap
-        this._noiseBurst({ freq: p.snap, q: p.snapQ, filterType: "bandpass",
-          vol: 0.5, attack: 0, decay: 0.08, dur: 0.12 });
-        // High transient click (the actual mechanical "crack")
-        this._noiseBurst({ freq: 2800, q: 0.6, filterType: "highpass",
-          vol: 0.35, attack: 0, decay: 0.025, dur: 0.04 });
-        // Resonant tail / room reverb illusion
-        this._noiseBurst({ freq: p.tailFreq, q: 3, filterType: "bandpass",
-          vol: p.tail, attack: 0.01, decay: 0.35, dur: 0.45 });
-        // Sub thump
-        this._toneBurst({ type: "sine", freq: 42, freqEnd: 22,
-          vol: 0.3, decay: 0.18, dur: 0.22 });
+        const sequence = weapon?.audio?.shoot ?? weapon?.audio?.default ?? [
+          { action: "noiseBurst", freq: 55, q: 0.5, filterType: "lowpass", vol: 0.7, attack: 0, decay: 0.18, dur: 0.22 },
+          { action: "noiseBurst", freq: 160, q: 1.2, filterType: "bandpass", vol: 0.5, attack: 0, decay: 0.08, dur: 0.12 },
+          { action: "noiseBurst", freq: 2800, q: 0.6, filterType: "highpass", vol: 0.35, attack: 0, decay: 0.025, dur: 0.04 },
+          { action: "noiseBurst", freq: 110, q: 3, filterType: "bandpass", vol: 0.38, attack: 0.01, decay: 0.35, dur: 0.45 },
+          { action: "toneBurst", type: "sine", freq: 42, freqEnd: 22, vol: 0.3, decay: 0.18, dur: 0.22 },
+        ];
+        this._playAudioSequence(sequence);
         break;
       }
 

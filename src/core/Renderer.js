@@ -6,7 +6,6 @@
  */
 
 import * as THREE from "three";
-import GameConfig from "../config/GameConfig.js";
 
 export class Renderer {
   constructor(canvas, _weaponCanvas, _resourceManager) {
@@ -78,14 +77,9 @@ export class Renderer {
     this._wallLights = [];
 
     // ─── Muzzle flash ─────────────────────────────────────────────
-    this.muzzleFlashLight = new THREE.PointLight(0xff9922, 0, 4);
+    this.muzzleFlashLight = new THREE.PointLight(0xff9922, 0, 5);
     this.muzzleFlashLight.position.set(0, 0, -0.5);
     this.weaponScene.add(this.muzzleFlashLight);
-
-    // ─── Plasma muzzle flash (blue) ────────────────────────────────
-    this.plasmaMuzzleLight = new THREE.PointLight(0x00aaff, 0, 5);
-    this.plasmaMuzzleLight.position.set(0, 0, -0.5);
-    this.weaponScene.add(this.plasmaMuzzleLight);
 
     // ─── Setup ────────────────────────────────────────────────────
     this._setupLighting();
@@ -945,7 +939,7 @@ export class Renderer {
   // Weapon 3D Models
   // ═══════════════════════════════════════════════════════════════
 
-  _buildWeaponModel(type) {
+  _buildWeaponModel(weapon) {
     this.weaponGroup.clear();
     const m = this._wMat;
 
@@ -969,276 +963,26 @@ export class Renderer {
       return mesh;
     };
 
-    const ltype = (type ?? "").toLowerCase();
+    const builder = {
+      addBox,
+      addCyl,
+      mat: m,
+      THREE,
+    };
 
-    // ─── PISTOL — Glock-style polymer striker pistol ───────────────
-    if (ltype === "pistol") {
-      // Slide: flat-top, wider than frame, runs full length
-      addBox(0.072, 0.052, 0.310, m.metal,  0,        0.006,  -0.018);
-      // Slide serration grooves (rear half — visible grip ridges)
-      addBox(0.076, 0.056, 0.004, m.dark,   0,        0.006,   0.085);
-      addBox(0.076, 0.056, 0.004, m.dark,   0,        0.006,   0.065);
-      addBox(0.076, 0.056, 0.004, m.dark,   0,        0.006,   0.045);
-      // Barrel — stainless, protruding forward of slide
-      addCyl(0.019, 0.019, 0.095, m.steel,  0,        0.003,  -0.218, Math.PI / 2);
-      // Barrel bushing collar ring
-      addCyl(0.026, 0.026, 0.009, m.bright, 0,        0.003,  -0.176, Math.PI / 2);
-      // Frame / receiver — polymer, slightly narrower and lower
-      addBox(0.062, 0.036, 0.260, m.dark,   0,       -0.034,  -0.005);
-      // Dust cover (forward frame section below barrel)
-      addBox(0.060, 0.024, 0.044, m.dark,   0,       -0.034,  -0.140);
-      // Trigger guard — thin loop approximation
-      addBox(0.058, 0.007, 0.082, m.dark,   0,       -0.057,   0.018);  // bottom rail
-      addBox(0.058, 0.024, 0.007, m.dark,   0,       -0.047,  -0.022);  // front vertical
-      // Trigger — small finger-shaped tab
-      addBox(0.008, 0.022, 0.013, m.bright, 0,       -0.048,   0.013);
-      // Grip — backstrap angled rearward
-      addBox(0.058, 0.116, 0.090, m.rubber, 0,       -0.111,   0.091,  0.20);
-      // Magazine floor plate (protrudes slightly below grip)
-      addBox(0.052, 0.008, 0.072, m.metal,  0,       -0.172,   0.086,  0.20);
-      // Front sight post
-      addBox(0.006, 0.013, 0.005, m.steel,  0,        0.038,  -0.175);
-      // Rear sight U-notch
-      addBox(0.024, 0.009, 0.005, m.steel,  0,        0.036,   0.085);
-
-    // ─── SHOTGUN — Mossberg 500 pump-action ───────────────────────
-    } else if (ltype === "shotgun") {
-      // Main barrel — single wide bore tube
-      addCyl(0.034, 0.034, 0.640, m.bright, 0,        0.040,  -0.260, Math.PI / 2);
-      // Barrel rib (flat sight rib on top of barrel)
-      addBox(0.012, 0.006, 0.640, m.steel,  0,        0.074,  -0.260);
-      // Front bead sight (tiny sphere approximated as small box)
-      addBox(0.012, 0.012, 0.012, m.steel,  0,        0.082,  -0.580);
-      // Magazine tube (below barrel, runs most of barrel length)
-      addCyl(0.022, 0.022, 0.530, m.metal,  0,        0.006,  -0.205, Math.PI / 2);
-      // Pump forend — wider, textured section on magazine tube
-      addCyl(0.030, 0.030, 0.130, m.wood,   0,        0.006,  -0.310, Math.PI / 2);
-      addBox(0.064, 0.030, 0.120, m.wood,   0,        0.005,  -0.310);  // flat bottom grip surface
-      // Receiver — the action housing
-      addBox(0.100, 0.096, 0.200, m.dark,   0,        0.010,   0.030);
-      // Ejection port (bright slit on right of receiver)
-      addBox(0.006, 0.038, 0.090, m.bright, 0.052,    0.022,   0.018);
-      // Safety button on top of receiver
-      addBox(0.018, 0.010, 0.018, m.metal,  0,        0.062,   0.010);
-      // Stock — straight Monte Carlo style
-      addBox(0.076, 0.076, 0.310, m.wood,   0,        0.006,   0.235, -0.07);
-      // Recoil pad (rubber end of stock)
-      addBox(0.078, 0.082, 0.014, m.rubber, 0,        0.005,   0.394, -0.07);
-      // Trigger guard + trigger
-      addBox(0.060, 0.008, 0.090, m.metal,  0,       -0.046,   0.050);
-      addBox(0.010, 0.026, 0.012, m.metal,  0,       -0.040,   0.042);
-
-    // ─── RIFLE — AR-15 / M4 carbine ──────────────────────────────
-    } else if (ltype === "rifle") {
-      // Barrel — free-floating, government profile (thicker at chamber)
-      addCyl(0.018, 0.016, 0.560, m.bright, 0,        0.010,  -0.430, Math.PI / 2);
-      addCyl(0.022, 0.018, 0.060, m.bright, 0,        0.010,  -0.180, Math.PI / 2);  // barrel step
-      // Flash hider / A2 birdcage (3 slots)
-      addCyl(0.024, 0.024, 0.044, m.metal,  0,        0.010,  -0.685, Math.PI / 2);
-      addBox(0.006, 0.050, 0.044, m.dark,   0,        0.010,  -0.685);  // slot cut
-      // Handguard — M-LOK / KeyMod profile (5-sided approximation)
-      addBox(0.058, 0.058, 0.300, m.dark,   0,        0.010,  -0.270);
-      addBox(0.062, 0.014, 0.300, m.metal,  0,        0.042,  -0.270);  // top rail
-      addBox(0.062, 0.014, 0.300, m.dark,   0,       -0.042,  -0.270);  // bottom rail
-      // M-LOK slots (decorative cuts)
-      addBox(0.064, 0.010, 0.030, m.metal,  0,        0.010,  -0.200);
-      addBox(0.064, 0.010, 0.030, m.metal,  0,        0.010,  -0.310);
-      // Upper receiver — flat top with Picatinny rail
-      addBox(0.068, 0.062, 0.200, m.dark,   0,        0.010,   0.000);
-      addBox(0.072, 0.012, 0.200, m.metal,  0,        0.048,   0.000);  // top rail
-      // Charging handle (small T-handle at rear of upper)
-      addBox(0.042, 0.016, 0.020, m.metal,  0,        0.050,   0.090);
-      addBox(0.008, 0.032, 0.008, m.metal,  0,        0.058,   0.090);  // T-part
-      // Carry handle / rear iron sight (low profile BUIS)
-      addBox(0.030, 0.030, 0.032, m.metal,  0,        0.072,  -0.005);
-      addBox(0.006, 0.012, 0.005, m.steel,  0,        0.090,  -0.005);  // aperture
-      // Lower receiver
-      addBox(0.068, 0.058, 0.160, m.dark,   0,       -0.026,   0.025);
-      // Trigger guard
-      addBox(0.060, 0.007, 0.080, m.metal,  0,       -0.062,   0.055);
-      addBox(0.060, 0.024, 0.007, m.metal,  0,       -0.052,   0.019);
-      // Pistol grip — A2 style, angled
-      addBox(0.046, 0.110, 0.072, m.rubber, 0,       -0.096,   0.072,  0.20);
-      // Magazine — 30-round STANAG, slight forward tilt
-      addBox(0.050, 0.140, 0.072, m.dark,   0,       -0.096,  -0.018, -0.05);
-      addBox(0.052, 0.010, 0.064, m.metal,  0,       -0.168,  -0.018, -0.05);  // mag floor plate
-      // Buffer tube / stock — collapsible
-      addBox(0.044, 0.044, 0.200, m.metal,  0,       -0.008,   0.135);
-      // Stock — 6-position collapsible style
-      addBox(0.072, 0.072, 0.120, m.dark,   0,       -0.006,   0.230);
-      addBox(0.076, 0.014, 0.120, m.rubber, 0,       -0.038,   0.230);  // cheekweld
-      // Front sight post (gas block / FSB style)
-      addBox(0.018, 0.018, 0.018, m.metal,  0,        0.010,  -0.420);
-      addBox(0.006, 0.016, 0.005, m.steel,  0,        0.025,  -0.420);  // post
-
-    // ─── SMG — MP5-style compact submachine gun ───────────────────
-    } else if (ltype === "smg") {
-      // Barrel — short, slightly threaded end
-      addCyl(0.014, 0.014, 0.220, m.bright, 0,  0.006, -0.220, Math.PI / 2);
-      addCyl(0.018, 0.018, 0.022, m.metal,  0,  0.006, -0.332, Math.PI / 2); // end cap
-      // Upper receiver
-      addBox(0.058, 0.058, 0.230, m.dark,   0,  0.012,  0.000);
-      addBox(0.062, 0.010, 0.230, m.metal,  0,  0.044,  0.000); // top rail
-      // Charging handle
-      addBox(0.016, 0.016, 0.020, m.metal,  0,  0.052,  0.055);
-      // Front sight tower
-      addBox(0.010, 0.032, 0.012, m.metal,  0,  0.044, -0.210);
-      addBox(0.004, 0.010, 0.004, m.steel,  0,  0.060, -0.210);
-      // Rear diopter sight
-      addBox(0.022, 0.014, 0.010, m.metal,  0,  0.044,  0.090);
-      // Lower receiver
-      addBox(0.056, 0.044, 0.200, m.dark,   0, -0.020,  0.010);
-      // Trigger group
-      addBox(0.052, 0.008, 0.070, m.metal,  0, -0.050,  0.042);
-      addBox(0.010, 0.022, 0.010, m.bright, 0, -0.044,  0.034);
-      // Handguard — polymer ribbed
-      addBox(0.048, 0.048, 0.140, m.dark,   0, -0.008, -0.140);
-      addBox(0.050, 0.010, 0.140, m.metal,  0,  0.028, -0.140); // rib top
-      // Magazine — box mag, forward-tilted
-      addBox(0.044, 0.130, 0.058, m.dark,   0, -0.074, -0.044, -0.08);
-      addBox(0.046, 0.008, 0.050, m.metal,  0, -0.136, -0.044, -0.08);
-      // Stock — folding polymer
-      addBox(0.040, 0.040, 0.180, m.dark,   0, -0.005,  0.170);
-      addBox(0.042, 0.038, 0.060, m.rubber, 0, -0.005,  0.270);
-      // Pistol grip
-      addBox(0.044, 0.095, 0.066, m.rubber, 0, -0.072,  0.068,  0.18);
-      addBox(0.046, 0.008, 0.058, m.metal,  0, -0.120,  0.064,  0.18);
-
-    // ─── SNIPER — Bolt-action precision rifle (Remington 700 style) ───
-    } else if (ltype === "sniper") {
-      // Long heavy barrel with fluted profile
-      addCyl(0.018, 0.015, 0.720, m.bright, 0,  0.014, -0.520, Math.PI / 2);
-      addCyl(0.024, 0.020, 0.080, m.bright, 0,  0.014, -0.180, Math.PI / 2); // barrel step near receiver
-      // Muzzle brake — slotted
-      addCyl(0.026, 0.026, 0.050, m.metal,  0,  0.014, -0.876, Math.PI / 2);
-      addBox(0.006, 0.036, 0.050, m.dark,   0,  0.014, -0.876); // slot
-      // Barrel flutes (visual)
-      for (let fi = 0; fi < 5; fi++) {
-        addBox(0.006, 0.022, 0.560, m.metal, 0, 0.014 + Math.sin(fi * 1.26) * 0.012, -0.460);
-      }
-      // Receiver — large action body
-      addBox(0.078, 0.082, 0.240, m.dark,   0,  0.016,  0.010);
-      addBox(0.082, 0.012, 0.240, m.metal,  0,  0.064,  0.010); // flat top rail
-      // Scope base rings
-      addBox(0.090, 0.018, 0.036, m.metal,  0,  0.074, -0.050);
-      addBox(0.090, 0.018, 0.036, m.metal,  0,  0.074,  0.060);
-      // Scope body — large magnification scope
-      addCyl(0.030, 0.030, 0.310, m.dark,   0,  0.100,  0.005, Math.PI / 2);
-      addCyl(0.024, 0.024, 0.120, m.dark,   0,  0.100, -0.190, Math.PI / 2); // objective bell
-      addCyl(0.034, 0.034, 0.080, m.dark,   0,  0.100, -0.240, Math.PI / 2); // obj bell flare
-      addCyl(0.024, 0.024, 0.080, m.dark,   0,  0.100,  0.200, Math.PI / 2); // eyepiece
-      addCyl(0.028, 0.028, 0.036, m.dark,   0,  0.100,  0.245, Math.PI / 2); // eyepiece flare
-      // Turrets on scope
-      addCyl(0.012, 0.012, 0.032, m.metal,  0,  0.130,  0.002, 0);          // elevation
-      addCyl(0.012, 0.012, 0.032, m.metal,  0,  0.100,  0.002, 0, Math.PI / 2); // windage
-      // Bolt handle — round knob
-      addBox(0.010, 0.062, 0.010, m.metal,  0.044, 0.048,  0.030);
-      addCyl(0.016, 0.016, 0.020, m.metal,  0.044, 0.014,  0.030);
-      // Trigger guard
-      addBox(0.062, 0.008, 0.090, m.metal,  0, -0.050,  0.060);
-      addBox(0.062, 0.026, 0.008, m.metal,  0, -0.040,  0.022);
-      // Trigger
-      addBox(0.008, 0.026, 0.010, m.bright, 0, -0.046,  0.054);
-      // Stock — walnut classic stock
-      addBox(0.068, 0.072, 0.340, m.wood,   0, -0.010,  0.250, -0.04);
-      // Pistol grip area of stock
-      addBox(0.060, 0.100, 0.100, m.wood,   0, -0.066,  0.092,  0.14);
-      // Monte Carlo comb
-      addBox(0.066, 0.040, 0.180, m.wood,   0,  0.024,  0.310, -0.03);
-      // Recoil pad
-      addBox(0.070, 0.082, 0.018, m.rubber, 0, -0.010,  0.424, -0.04);
-      // Forend / handstop
-      addBox(0.058, 0.058, 0.220, m.wood,   0, -0.008, -0.260);
-      // Swivel studs
-      addBox(0.010, 0.020, 0.010, m.metal,  0, -0.038, -0.120);
-      addBox(0.010, 0.020, 0.010, m.metal,  0, -0.040,  0.180);
-      // Front sight (flip-up BUIS)
-      addBox(0.020, 0.022, 0.010, m.metal,  0,  0.080, -0.840);
-
-    // ─── GRENADE LAUNCHER — M79 thumper style ────────────────────
-    } else if (ltype === "grenade_launcher") {
-      // Barrel — wide bore, break-action
-      addCyl(0.040, 0.038, 0.480, m.bright, 0,  0.020, -0.310, Math.PI / 2);
-      // Barrel rib
-      addBox(0.010, 0.008, 0.480, m.steel,  0,  0.062, -0.310);
-      // Muzzle flare (wide open bore)
-      addCyl(0.046, 0.040, 0.020, m.bright, 0,  0.020, -0.550, Math.PI / 2);
-      // Receiver / action body
-      addBox(0.100, 0.100, 0.200, m.dark,   0,  0.020,  0.042);
-      // Hinge pin and barrel latch
-      addCyl(0.010, 0.010, 0.106, m.metal,  0,  0.020, -0.062, 0, Math.PI / 2);
-      addBox(0.040, 0.024, 0.024, m.metal,  0,  0.066, -0.040);
-      // Sight ramp
-      addBox(0.020, 0.060, 0.010, m.metal,  0,  0.082, -0.280);
-      addBox(0.006, 0.014, 0.005, m.steel,  0,  0.098, -0.280);
-      // Trigger guard
-      addBox(0.068, 0.008, 0.090, m.metal,  0, -0.044,  0.052);
-      addBox(0.068, 0.026, 0.008, m.metal,  0, -0.034,  0.018);
-      // Trigger
-      addBox(0.010, 0.030, 0.010, m.bright, 0, -0.040,  0.044);
-      // Stock — short, pistol-grip
-      addBox(0.078, 0.084, 0.290, m.wood,   0,  0.014,  0.242, -0.06);
-      addBox(0.080, 0.084, 0.018, m.rubber, 0,  0.014,  0.397, -0.06);
-      // Pistol grip — large for single shot control
-      addBox(0.058, 0.120, 0.086, m.rubber, 0, -0.076,  0.078,  0.24);
-      addBox(0.060, 0.010, 0.078, m.metal,  0, -0.138,  0.076,  0.24);
-      // Forend
-      addBox(0.070, 0.080, 0.160, m.wood,   0,  0.020, -0.210);
-      // Extra: grenade shell visible in chamber (partially)
-      addCyl(0.038, 0.038, 0.060, new THREE.MeshLambertMaterial({ color: 0x556633 }),
-             0, 0.020, -0.040, Math.PI / 2);
-
-    // ─── PLASMA GUN — Sci-fi energy weapon ───────────────────────
-    } else if (ltype === "plasma") {
-      // Main body — sleek futuristic housing
-      addBox(0.090, 0.080, 0.380, m.dark,   0,  0.004,  0.000);
-      // Side panels — energy cell indicators
-      addBox(0.010, 0.068, 0.280, new THREE.MeshLambertMaterial({ color: 0x001133 }),
-             -0.050, 0.004, -0.040);
-      addBox(0.010, 0.068, 0.280, new THREE.MeshLambertMaterial({ color: 0x001133 }),
-              0.050, 0.004, -0.040);
-      // Plasma emitter barrel — glowing coil
-      addCyl(0.030, 0.026, 0.200, m.dark,   0,  0.004, -0.290, Math.PI / 2);
-      addCyl(0.034, 0.034, 0.020, m.dark,   0,  0.004, -0.392, Math.PI / 2); // emitter lip
-      // Plasma coil rings (glowing blue)
-      const plasmaRingMat = new THREE.MeshBasicMaterial({ color: 0x00aaff });
-      for (let ri = 0; ri < 4; ri++) {
-        addCyl(0.036, 0.036, 0.006, plasmaRingMat, 0, 0.004, -0.200 - ri * 0.040, Math.PI / 2);
-      }
-      // Energy core — central glowing orb area
-      addBox(0.070, 0.060, 0.100, new THREE.MeshLambertMaterial({ color: 0x003366 }),
-             0,  0.004,  0.060);
-      // Power cell bulge
-      addCyl(0.028, 0.028, 0.080, new THREE.MeshLambertMaterial({ color: 0x0044aa }),
-             0,  0.004,  0.050, 0);
-      // Top rail / sighting bar
-      addBox(0.010, 0.012, 0.360, m.metal,  0,  0.048,  0.000);
-      // Rear targeting reticle
-      addBox(0.030, 0.014, 0.008, m.metal,  0,  0.048,  0.168);
-      // Pistol grip — angular
-      addBox(0.050, 0.110, 0.072, m.rubber, 0, -0.072,  0.090,  0.16);
-      addBox(0.052, 0.010, 0.064, m.dark,   0, -0.128,  0.088,  0.16);
-      // Trigger guard
-      addBox(0.058, 0.008, 0.084, m.dark,   0, -0.046,  0.058);
-      addBox(0.010, 0.026, 0.010, new THREE.MeshBasicMaterial({ color: 0x0088ff }),
-             0, -0.044,  0.050); // glowing trigger
-      // Side status LEDs
-      const ledMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
-      addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.100);
-      addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.060);
-      addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.020);
-      addBox(0.004, 0.008, 0.008, new THREE.MeshBasicMaterial({ color: 0xff4400 }),
-             -0.046, 0.028, -0.020); // red warning LED
-
+    if (weapon && typeof weapon.buildModel === "function") {
+      weapon.buildModel(builder);
+    } else {
+      addBox(0.08, 0.05, 0.30, m.metal, 0, 0, -0.08);
     }
 
-    const gunBuildCfg = GameConfig.WEAPON_3D.GUNS[ltype] || {};
-    const [baseX, baseY, baseZ] = gunBuildCfg.BASE_POSITION ?? [0.14, -0.14, -0.33];
-    const baseRotationY = gunBuildCfg.BASE_ROTATION_Y ?? -0.06;
+    const gunBuildCfg = weapon?.render || {};
+    const [baseX, baseY, baseZ] = gunBuildCfg.basePosition ?? [0.14, -0.14, -0.33];
+    const baseRotationY = gunBuildCfg.baseRotationY ?? -0.06;
     this.weaponGroup.position.set(baseX, baseY, baseZ);
     this.weaponGroup.rotation.y = baseRotationY;
 
-    this._currentWeaponType = ltype;
+    this._currentWeaponType = (weapon?.name ?? "").toLowerCase();
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -1381,7 +1125,7 @@ export class Renderer {
 
     const ltype = (weapon.name ?? "").toLowerCase();
     if (ltype !== this._currentWeaponType) {
-      this._buildWeaponModel(weapon.name);
+      this._buildWeaponModel(weapon);
     }
 
     const t      = performance.now() / 1000;
@@ -1389,11 +1133,11 @@ export class Renderer {
     const bob    = typeof player.headBob      === "number" ? Math.sin(player.headBob) : 0;
     const recoil = typeof player.recoilOffset === "number" ? player.recoilOffset      : 0;
 
-    const gunCfg = GameConfig.WEAPON_3D.GUNS[ltype] || {};
-    const [bx, by, bz] = gunCfg.BASE_POSITION ?? [0.14, -0.14, -0.33];
-    const [ax, ay, az] = aiming ? gunCfg.ADS_OFFSET ?? [0, 0, 0] : [0, 0, 0];
-    const hipYRot = gunCfg.BASE_ROTATION_Y ?? -0.06;
-    const aimYRot = (gunCfg.ADS_ROTATION ?? hipYRot) * 0.2;
+    const gunRenderCfg = weapon.render || {};
+    const [bx, by, bz] = gunRenderCfg.basePosition ?? [0.14, -0.14, -0.33];
+    const [ax, ay, az] = aiming ? gunRenderCfg.adsOffset ?? [0, 0, 0] : [0, 0, 0];
+    const hipYRot = gunRenderCfg.baseRotationY ?? -0.06;
+    const aimYRot = (gunRenderCfg.adsRotation ?? hipYRot) * 0.2;
     const yRot = aiming ? aimYRot : hipYRot;
 
     // ── Reload animation ─────────────────────────────────────────
@@ -1452,18 +1196,17 @@ export class Renderer {
 
   /**
    * Briefly flash the muzzle light on weapon fire.
-   * @param {string} [weaponName] - weapon type for color selection
+   * @param {Object} [weapon] - Weapon instance with render/audio metadata
    */
-  triggerMuzzleFlash(weaponName) {
-    const lname = (weaponName ?? "").toLowerCase();
-    if (lname === "plasma") {
-      this.plasmaMuzzleLight.intensity = 6.0;
-      setTimeout(() => { this.plasmaMuzzleLight.intensity = 0; }, 80);
-    } else {
-      const intensity = lname === "sniper" ? 8.0 : lname === "grenade_launcher" ? 7.0 : 5.0;
-      this.muzzleFlashLight.intensity = intensity;
-      setTimeout(() => { this.muzzleFlashLight.intensity = 0; }, 90);
-    }
+  triggerMuzzleFlash(weapon) {
+    const muzzleConfig = weapon?.render?.muzzleFlash || {};
+    const intensity = muzzleConfig.intensity ?? 5.0;
+    const color = muzzleConfig.color ?? 0xff9922;
+    const duration = muzzleConfig.duration ?? 0.09;
+
+    this.muzzleFlashLight.color.setHex(color);
+    this.muzzleFlashLight.intensity = intensity;
+    setTimeout(() => { this.muzzleFlashLight.intensity = 0; }, duration * 1000);
   }
 
   _onResize() {

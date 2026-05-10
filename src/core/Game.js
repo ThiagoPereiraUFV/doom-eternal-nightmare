@@ -324,7 +324,7 @@ export class Game {
     let launched = false;
     if (countdownEl) { countdownEl.textContent = remaining; }
 
-    const launch = () => {
+    const launch = async () => {
       if (launched) { return; }
       launched = true;
       clearInterval(tick);
@@ -333,7 +333,7 @@ export class Game {
         skipBtn.onclick = null;
         skipBtn.removeEventListener("touchstart", onSkipTouch);
       }
-      this._startGameActual();
+      await this._startGameActual();
     };
 
     const tick = setInterval(() => {
@@ -355,7 +355,7 @@ export class Game {
    * Actually initialise and run the game after the briefing.
    * @private
    */
-  _startGameActual() {
+  async _startGameActual() {
     // Auto-detect control type from device capabilities
     this.controlType = this._detectControlType();
 
@@ -386,7 +386,7 @@ export class Game {
     }
 
     // Initialize game world
-    this._initializeWorld();
+    await this._initializeWorld();
 
     // Start game loop
     this.stateManager.setState(GameStates.PLAYING);
@@ -526,7 +526,7 @@ export class Game {
    * Initialize game world
    * @private
    */
-  _initializeWorld() {
+  async _initializeWorld() {
     const diff = this.difficulty;
 
     // Generate map with difficulty-adjusted maze complexity
@@ -549,16 +549,19 @@ export class Game {
     this.player.stamina    = diff.maxStamina;
     this.player.maxStamina = diff.maxStamina;
 
+    // Initialize weapon factory before creating weapon instances
+    await WeaponFactory.init();
+
     // Add weapons — only those allowed by difficulty
     const ammoMult = diff.ammoMultiplier;
     const availableGuns = diff.availableGuns ?? ['pistol', 'shotgun', 'rifle'];
     for (const type of availableGuns) {
-      if (WeaponFactory.hasType(type)) {
-        const weapon = WeaponFactory.create(type);
-        const configKey = type.toUpperCase().replace(/-/g, '_');
-        const wConf = GameConfig.WEAPONS[configKey];
-        weapon.reserveAmmo = Math.round((wConf?.reserveAmmo ?? weapon.reserveAmmo ?? 30) * ammoMult);
+      try {
+        const weapon = await WeaponFactory.create(type);
+        weapon.reserveAmmo = Math.round((weapon.reserveAmmo ?? 30) * ammoMult);
         this.player.addWeapon(weapon);
+      } catch (error) {
+        console.warn(`WeaponFactory could not create weapon '${type}':`, error);
       }
     }
 
@@ -739,8 +742,7 @@ export class Game {
       eventManager: this.eventManager,
     });
     if (result?.success) {
-      const wName = this.player.currentWeapon?.name?.toLowerCase() ?? "pistol";
-      this.renderer.triggerMuzzleFlash(wName);
+      this.renderer.triggerMuzzleFlash(this.player.currentWeapon);
       this._flashCrosshair();
     }
   }

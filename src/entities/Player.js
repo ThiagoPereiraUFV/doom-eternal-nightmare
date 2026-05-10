@@ -180,7 +180,7 @@ export class Player {
 
     if (result.success) {
       // Play weapon-specific gunshot sound
-      this.audioSystem.playSound("shoot", { weaponName: this.currentWeapon.name });
+      this.audioSystem.playSound("shoot", { weapon: this.currentWeapon });
 
       // Apply recoil
       this.recoilOffset += result.recoil || 0;
@@ -229,7 +229,7 @@ export class Player {
    */
   reload() {
     if (this.currentWeapon && this.currentWeapon.startReload()) {
-      this.audioSystem.playSound("reload", { weaponName: this.currentWeapon.name });
+      this.audioSystem.playSound("reload", { weapon: this.currentWeapon });
       this.eventManager.emit("reloadStarted", this.currentWeapon);
     }
   }
@@ -274,7 +274,7 @@ export class Player {
     // Update weapon reload
     if (this.currentWeapon) {
       if (this.currentWeapon.updateReload()) {
-        this.audioSystem.playSound("reload_end", { weaponName: this.currentWeapon.name });
+        this.audioSystem.playSound("reload_end", { weapon: this.currentWeapon });
         this.eventManager.emit("reloadCompleted", this.currentWeapon);
       }
     }

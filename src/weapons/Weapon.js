@@ -28,8 +28,10 @@ export class Weapon {
     this.recoil = stats.recoil || 20;
     this.screenShake = stats.screenShake || 5;
     this.pellets = stats.pellets || 1;
+    this.render = stats.render || {};
+    this.audio = stats.audio || {};
 
-    // Raycast & falloff config — sourced from per-weapon GameConfig entries
+    // Raycast & falloff config — sourced from per-weapon defaults and GameConfig falloff constants
     this.maxDistance = stats.maxDistance ?? 50;
     this.raycastStep = stats.raycastStep ?? 0.1;
     this.falloffRange = stats.falloffRange ?? GameConfig.COMBAT.DAMAGE_FALLOFF_RANGE;
@@ -40,6 +42,15 @@ export class Weapon {
     this.lastFireTime = 0;
     this.isReloading = false;
     this.reloadStartTime = 0;
+  }
+
+  /**
+   * Build the first-person weapon mesh.
+   * @param {Object} builder - { addBox, addCyl, mat, THREE }
+   */
+  buildModel(builder) {
+    const { addBox, mat } = builder;
+    addBox(0.08, 0.05, 0.30, mat.metal, 0, 0, -0.08);
   }
 
   /**

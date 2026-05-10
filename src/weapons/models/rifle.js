@@ -1,0 +1,125 @@
+/**
+ * Rifle - Concrete Weapon Implementation
+ * High damage, high fire rate, low spread
+ */
+
+import { Weapon } from "./Weapon.js";
+
+const RIFLE_CONFIG = {
+  maxDistance: 60,
+  falloffMin: 0.5,
+  falloffScale: 2,
+  damage: 30,
+  magazineSize: 30,
+  reserveAmmo: 90,
+  fireRate: 150,
+  spread: 0.02,
+  reloadTime: 2000,
+  penetration: 2,
+  bulletSpeed: 70,
+  muzzleFlashIntensity: 1.0,
+  recoil: 15,
+  screenShake: 3,
+  audio: {
+    shoot: [
+      { action: "noiseBurst", freq: 55, q: 0.5, filterType: "lowpass", vol: 0.55, attack: 0, decay: 0.18, dur: 0.22 },
+      { action: "noiseBurst", freq: 220, q: 1.8, filterType: "bandpass", vol: 0.5, attack: 0, decay: 0.08, dur: 0.12 },
+      { action: "noiseBurst", freq: 2800, q: 0.6, filterType: "highpass", vol: 0.35, attack: 0, decay: 0.025, dur: 0.04 },
+      { action: "noiseBurst", freq: 160, q: 3, filterType: "bandpass", vol: 0.28, attack: 0.01, decay: 0.35, dur: 0.45 },
+      { action: "toneBurst", type: "sine", freq: 42, freqEnd: 22, vol: 0.3, decay: 0.18, dur: 0.22 },
+    ],
+  },
+  render: {
+    basePosition: [0.19, -0.155, -0.34],
+    baseRotationY: -0.09,
+    adsOffset: [-0.19, 0.08, -0.09],
+    adsRotation: 0.0,
+    scale: 3.0,
+    muzzleFlash: { intensity: 5.0 },
+  },
+};
+
+export class Rifle extends Weapon {
+  constructor() {
+    super("RIFLE", RIFLE_CONFIG);
+    this.isAutoFire = true; // fires continuously while shoot is held
+  }
+
+  /**
+   * Build the rifle mesh.
+   * @param {Object} builder
+   */
+  buildModel({ addBox, addCyl, mat }) {
+    addCyl(0.018, 0.016, 0.560, mat.bright, 0,        0.010,  -0.430, Math.PI / 2);
+    addCyl(0.022, 0.018, 0.060, mat.bright, 0,        0.010,  -0.180, Math.PI / 2);
+    addCyl(0.024, 0.024, 0.044, mat.metal,  0,        0.010,  -0.685, Math.PI / 2);
+    addBox(0.006, 0.050, 0.044, mat.dark,   0,        0.010,  -0.685);
+    addBox(0.058, 0.058, 0.300, mat.dark,   0,        0.010,  -0.270);
+    addBox(0.062, 0.014, 0.300, mat.metal,  0,        0.042,  -0.270);
+    addBox(0.062, 0.014, 0.300, mat.dark,   0,       -0.042,  -0.270);
+    addBox(0.064, 0.010, 0.030, mat.metal,  0,        0.010,  -0.200);
+    addBox(0.064, 0.010, 0.030, mat.metal,  0,        0.010,  -0.310);
+    addBox(0.068, 0.062, 0.200, mat.dark,   0,        0.010,   0.000);
+    addBox(0.072, 0.012, 0.200, mat.metal,  0,        0.048,   0.000);
+    addBox(0.042, 0.016, 0.020, mat.metal,  0,        0.050,   0.090);
+    addBox(0.008, 0.032, 0.008, mat.metal,  0,        0.058,   0.090);
+    addBox(0.030, 0.030, 0.032, mat.metal,  0,        0.072,  -0.005);
+    addBox(0.006, 0.012, 0.005, mat.steel,  0,        0.090,  -0.005);
+    addBox(0.068, 0.058, 0.160, mat.dark,   0,       -0.026,   0.025);
+    addBox(0.060, 0.007, 0.080, mat.metal,  0,       -0.062,   0.055);
+    addBox(0.060, 0.024, 0.007, mat.metal,  0,       -0.052,   0.019);
+    addBox(0.046, 0.110, 0.072, mat.rubber, 0,       -0.096,   0.072,  0.20);
+    addBox(0.050, 0.140, 0.072, mat.dark,   0,       -0.096,  -0.018, -0.05);
+    addBox(0.052, 0.010, 0.064, mat.metal,  0,       -0.168,  -0.018, -0.05);
+    addBox(0.044, 0.044, 0.200, mat.metal,  0,       -0.008,   0.135);
+    addBox(0.072, 0.072, 0.120, mat.dark,   0,       -0.006,   0.230);
+    addBox(0.076, 0.014, 0.120, mat.rubber, 0,       -0.038,   0.230);
+    addBox(0.018, 0.018, 0.018, mat.metal,  0,        0.010,  -0.420);
+    addBox(0.006, 0.016, 0.005, mat.steel,  0,        0.025,  -0.420);
+  }
+
+  /**
+   * Fire the rifle
+   * @param {Object} context - Shooting context
+   * @returns {Object} Fire result
+   */
+  fire(context) {
+    if (!this.canFire()) {
+      return { success: false, reason: "cannot_fire" };
+    }
+
+    const { player, enemies, map, eventManager } = context;
+
+    // Consume ammo
+    this.consumeAmmo();
+
+    // Calculate shot direction with minimal spread
+    const spreadAngle = (Math.random() - 0.5) * this.spread;
+    const shotAngle = player.angle + spreadAngle;
+
+    // Perform raycast with penetration
+    const hits = this._penetratingRaycast(
+      player.x,
+      player.y,
+      shotAngle,
+      map,
+      enemies,
+    );
+
+    // Emit fire event
+    eventManager?.emit("weaponFired", {
+      weapon: this,
+      angle: shotAngle,
+      hits,
+    });
+
+    return {
+      success: true,
+      hits,
+      recoil: this.recoil,
+      screenShake: this.screenShake,
+    };
+  }
+}
+
+export default Rifle;
