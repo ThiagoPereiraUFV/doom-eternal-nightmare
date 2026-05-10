@@ -95,7 +95,7 @@ const SNIPER_CONFIG = {
     ],
   },
   render: {
-    basePosition: [0.22, -0.16, -0.38],
+    basePosition: [0.22, -0.16, -0.45],
     baseRotationY: -0.09,
     adsOffset: [-0.22, 0.05, 0],
     adsRotation: 0.0,
