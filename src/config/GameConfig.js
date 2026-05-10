@@ -273,6 +273,7 @@ export const GameConfig = {
       flashlightIntensity: 5.0,
       // Gameplay
       autoReload:   true,
+      aimAssist:    true,
       availableGuns: ['pistol', 'shotgun', 'rifle', 'smg', 'sniper', 'grenade_launcher', 'plasma'],
     },
     MEDIUM: {
@@ -295,6 +296,7 @@ export const GameConfig = {
       flashlightIntensity: 3.5,
       // Gameplay
       autoReload:   true,
+      aimAssist:    true,
       availableGuns: ['pistol', 'shotgun', 'rifle', 'smg', 'sniper', 'grenade_launcher', 'plasma'],
     },
     HARD: {
@@ -317,6 +319,7 @@ export const GameConfig = {
       flashlightIntensity: 2.2,
       // Gameplay
       autoReload:   false,
+      aimAssist:    false,
       availableGuns: ['pistol', 'shotgun', 'rifle', 'smg'],
     },
     IMPOSSIBLE: {
@@ -339,6 +342,7 @@ export const GameConfig = {
       flashlightIntensity: 1.4,
       // Gameplay
       autoReload:   false,
+      aimAssist:    false,
       availableGuns: ['pistol'],
     },
     // Custom difficulty — defaults mirror MEDIUM; overridden at runtime by the UI
@@ -362,6 +366,7 @@ export const GameConfig = {
       flashlightIntensity: 3.5,
       // Gameplay
       autoReload:   true,
+      aimAssist:    false,
       availableGuns: ['pistol', 'shotgun', 'rifle', 'smg', 'sniper', 'grenade_launcher', 'plasma'],
     },
   },

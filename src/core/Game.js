@@ -168,6 +168,7 @@ export class Game {
         e.stopPropagation();
         this._touchAdsActive = !this._touchAdsActive;
         this._isAiming = this._touchAdsActive;
+        if (this._touchAdsActive) this._applyAimAssist();
         touchAds.classList.toggle("active", this._touchAdsActive);
         this._syncCrosshair();
       }, { passive: false });
@@ -232,6 +233,7 @@ export class Game {
       }
       if (button === "right") {
         this._isAiming = true;
+        this._applyAimAssist();
         this._syncCrosshair();
       }
     });
@@ -729,6 +731,38 @@ export class Game {
       const wName = this.player.currentWeapon?.name?.toLowerCase() ?? "pistol";
       this.renderer.triggerMuzzleFlash(wName);
       this._flashCrosshair();
+    }
+  }
+
+  /**
+   * Snap player angle toward the nearest alive enemy within a ±30° cone.
+   * Only fires when difficulty.aimAssist is true.
+   * @private
+   */
+  _applyAimAssist() {
+    if (!this.difficulty?.aimAssist || !this.player || !this.enemies?.length) return;
+
+    const AIM_ASSIST_CONE = Math.PI / 6; // ±30°
+    let bestEnemy = null;
+    let bestAngleDelta = AIM_ASSIST_CONE;
+
+    for (const enemy of this.enemies) {
+      if (enemy.isDead) continue;
+      const dx = enemy.x - this.player.x;
+      const dy = enemy.y - this.player.y;
+      const angleToEnemy = Math.atan2(dy, dx);
+      let delta = angleToEnemy - this.player.angle;
+      // Normalize to [-π, π]
+      while (delta > Math.PI)  delta -= 2 * Math.PI;
+      while (delta < -Math.PI) delta += 2 * Math.PI;
+      if (Math.abs(delta) < Math.abs(bestAngleDelta)) {
+        bestAngleDelta = delta;
+        bestEnemy = enemy;
+      }
+    }
+
+    if (bestEnemy !== null) {
+      this.player.angle += bestAngleDelta;
     }
   }
 
