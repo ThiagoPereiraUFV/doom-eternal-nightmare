@@ -50,9 +50,8 @@ export class TouchInputManager {
     this.lookAreaElement = document.getElementById('touchLookArea');
     this.shootButton = document.getElementById('touchShoot');
     this.reloadButton = document.getElementById('touchReload');
-    this.weapon1Button = document.getElementById('touchWeapon1');
-    this.weapon2Button = document.getElementById('touchWeapon2');
-    this.weapon3Button = document.getElementById('touchWeapon3');
+    this.prevWeaponButton = document.getElementById('touchPrevWeapon');
+    this.nextWeaponButton = document.getElementById('touchNextWeapon');
     
     // Validate elements exist
     if (!this.touchControls || !this.joystickElement || !this.lookAreaElement) {
@@ -130,25 +129,18 @@ export class TouchInputManager {
       });
     }
     
-    // Weapon buttons
-    if (this.weapon1Button) {
-      this.weapon1Button.addEventListener('touchstart', (e) => {
+    // Weapon prev/next buttons
+    if (this.prevWeaponButton) {
+      this.prevWeaponButton.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        this.eventManager.emit('keydown', '1');
+        this.eventManager.emit('keydown', 'q');
       });
     }
     
-    if (this.weapon2Button) {
-      this.weapon2Button.addEventListener('touchstart', (e) => {
+    if (this.nextWeaponButton) {
+      this.nextWeaponButton.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        this.eventManager.emit('keydown', '2');
-      });
-    }
-    
-    if (this.weapon3Button) {
-      this.weapon3Button.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        this.eventManager.emit('keydown', '3');
+        this.eventManager.emit('keydown', 'e');
       });
     }
   }

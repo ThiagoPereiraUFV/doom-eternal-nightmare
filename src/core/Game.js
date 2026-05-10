@@ -151,7 +151,7 @@ export class Game {
     if (pauseResume) _bindTap(pauseResume, () => this.resumeGame());
     if (pauseExit)   _bindTap(pauseExit,   () => this.exitToMenu());
 
-    // ── Touch buttons (mobile) ───────────────────────────────────
+    // ── Touch buttons (mobile) — from #touch-controls set ───────────
     const touchFire = document.getElementById("touch-fire");
     if (touchFire) {
       // touchstart = first shot; holding is handled by _updatePlayer auto-fire loop
@@ -167,28 +167,17 @@ export class Game {
       touchFire.addEventListener("touchcancel", () => { this._touchFireActive = false; }, { passive: true });
     }
 
+    // ADS toggle — tap once to enable, tap again to disable (persists)
     const touchAds = document.getElementById("touch-ads");
     if (touchAds) {
       touchAds.addEventListener("touchstart", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        this._touchAdsActive = true;
-        this._isAiming = true;
-        touchAds.classList.add("active");
+        this._touchAdsActive = !this._touchAdsActive;
+        this._isAiming = this._touchAdsActive;
+        touchAds.classList.toggle("active", this._touchAdsActive);
         this._syncCrosshair();
       }, { passive: false });
-      touchAds.addEventListener("touchend", () => {
-        this._touchAdsActive = false;
-        this._isAiming = false;
-        touchAds.classList.remove("active");
-        this._syncCrosshair();
-      }, { passive: true });
-      touchAds.addEventListener("touchcancel", () => {
-        this._touchAdsActive = false;
-        this._isAiming = false;
-        touchAds.classList.remove("active");
-        this._syncCrosshair();
-      }, { passive: true });
     }
 
     const touchReload = document.getElementById("touch-reload");
@@ -197,6 +186,24 @@ export class Game {
         e.preventDefault();
         e.stopPropagation();
         this.player?.reload();
+      }, { passive: false });
+    }
+
+    // Weapon prev/next buttons (touch)
+    const touchPrev = document.getElementById("touch-prev-weapon");
+    if (touchPrev) {
+      touchPrev.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.player?.previousWeapon();
+      }, { passive: false });
+    }
+    const touchNext = document.getElementById("touch-next-weapon");
+    if (touchNext) {
+      touchNext.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.player?.nextWeapon();
       }, { passive: false });
     }
 
@@ -289,7 +296,7 @@ export class Game {
   }
 
   /**
-   * Start new game
+   * Start new game — show 5-second mission briefing first
    */
   startGame() {
     // Read selected difficulty from UI
@@ -297,6 +304,64 @@ export class Game {
     const diffId = (sel?.dataset?.diff ?? "medium").toUpperCase();
     this.difficulty = GameConfig.DIFFICULTY[diffId] ?? GameConfig.DIFFICULTY.MEDIUM;
 
+    // Hide start screen and show briefing
+    document.getElementById("startScreen").style.display = "none";
+    this._showMissionBriefing();
+  }
+
+  /**
+   * Show the 5-second mission briefing overlay, then launch the game.
+   * @private
+   */
+  _showMissionBriefing() {
+    const screen = document.getElementById("missionBriefingScreen");
+    const countdownEl = document.getElementById("briefingCountdown");
+    const skipBtn = document.getElementById("briefingSkip");
+
+    if (!screen) {
+      // Fallback: start immediately if briefing element is missing
+      this._startGameActual();
+      return;
+    }
+
+    screen.classList.remove("hidden");
+
+    let remaining = 5;
+    let launched = false;
+    if (countdownEl) countdownEl.textContent = remaining;
+
+    const launch = () => {
+      if (launched) return;
+      launched = true;
+      clearInterval(tick);
+      screen.classList.add("hidden");
+      if (skipBtn) {
+        skipBtn.onclick = null;
+        skipBtn.removeEventListener("touchstart", onSkipTouch);
+      }
+      this._startGameActual();
+    };
+
+    const tick = setInterval(() => {
+      remaining -= 1;
+      if (countdownEl) countdownEl.textContent = remaining;
+      if (remaining <= 0) {
+        launch();
+      }
+    }, 1000);
+
+    const onSkipTouch = (e) => { e.preventDefault(); launch(); };
+    if (skipBtn) {
+      skipBtn.onclick = launch;
+      skipBtn.addEventListener("touchstart", onSkipTouch, { passive: false });
+    }
+  }
+
+  /**
+   * Actually initialise and run the game after the briefing.
+   * @private
+   */
+  _startGameActual() {
     // Auto-detect control type from device capabilities
     this.controlType = this._detectControlType();
 
@@ -311,18 +376,23 @@ export class Game {
     // Enable touch controls for touch mode
     if (this.controlType === 'touch') {
       this.touchInputManager.enable();
+      // Show the #touch-controls set (fire, ads, reload, prev/next weapon)
+      const tc = document.getElementById("touch-controls");
+      if (tc) tc.classList.add("active");
+      // Reset ADS toggle state
+      this._touchAdsActive = false;
+      this._isAiming = false;
+      const adsBtn = document.getElementById("touch-ads");
+      if (adsBtn) adsBtn.classList.remove("active");
     }
 
     // Initialize game world
     this._initializeWorld();
 
-    // Hide start screen
-    document.getElementById("startScreen").style.display = "none";
-
     // Start game loop
     this.stateManager.setState(GameStates.PLAYING);
     this.audioSystem.startAmbience();
-    this.audioSystem.startMusic(); // Start background music
+    this.audioSystem.startMusic();
     this.lastFrameTime = performance.now();
     this._gameLoop();
   }
@@ -344,9 +414,14 @@ export class Game {
     document.getElementById("victoryScreen").classList.remove("show");
     document.getElementById("pauseMenu").classList.remove("show");
 
+    // Hide touch controls
+    const tc = document.getElementById("touch-controls");
+    if (tc) tc.classList.remove("active");
+
     // Reset state
     this.enemiesKilled = 0;
     this.bloodSplatters = [];
+    this.controlType = null;
 
     // Show start screen again
     const startScreen = document.getElementById("startScreen");
@@ -421,6 +496,8 @@ export class Game {
 
     // Disable touch controls
     this.touchInputManager.disable();
+    const tc = document.getElementById("touch-controls");
+    if (tc) tc.classList.remove("active");
 
     // Exit pointer lock
     if (this.controlType === 'keyboard') {
@@ -794,6 +871,8 @@ export class Game {
     }
 
     this.touchInputManager.disable();
+    const tcOver = document.getElementById("touch-controls");
+    if (tcOver) tcOver.classList.remove("active");
 
     setTimeout(() => {
       document.getElementById("gameOverScreen").classList.add("show");
@@ -814,6 +893,8 @@ export class Game {
     }
 
     this.touchInputManager.disable();
+    const tcVic = document.getElementById("touch-controls");
+    if (tcVic) tcVic.classList.remove("active");
 
     setTimeout(() => {
       document.getElementById("victoryScreen")?.classList.add("show");
