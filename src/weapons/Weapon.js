@@ -4,6 +4,8 @@
  * Following LSP - all weapons are substitutable
  */
 
+import { GameConfig } from "../config/GameConfig.js";
+
 export class Weapon {
   constructor(name, stats) {
     if (new.target === Weapon) {
@@ -27,6 +29,14 @@ export class Weapon {
     this.screenShake = stats.screenShake || 5;
     this.pellets = stats.pellets || 1;
 
+    // Raycast & falloff config — sourced from per-weapon GameConfig entries
+    this.maxDistance = stats.maxDistance ?? 50;
+    this.raycastStep = stats.raycastStep ?? 0.1;
+    this.falloffRange = stats.falloffRange ?? GameConfig.COMBAT.DAMAGE_FALLOFF_RANGE;
+    this.falloffMin = stats.falloffMin ?? GameConfig.COMBAT.DAMAGE_FALLOFF_MIN;
+    this.falloffScale = stats.falloffScale ?? 1;
+    this.wallPenetrationCost = stats.wallPenetrationCost ?? Infinity;
+
     this.lastFireTime = 0;
     this.isReloading = false;
     this.reloadStartTime = 0;
@@ -37,8 +47,119 @@ export class Weapon {
    * @param {Object} target - Target to shoot at
    * @abstract
    */
-  fire(target) {
+  fire(_target) {
     throw new Error("fire() must be implemented by subclass");
+  }
+
+  /**
+   * Ray march — returns first wall or enemy hit
+   * @protected
+   */
+  _raycast(x, y, angle, map, enemies) {
+    const { maxDistance, raycastStep: step } = this;
+    const maxIterations = Math.ceil(maxDistance / step) + 200;
+    const hitRadiusSq = GameConfig.COMBAT.ENEMY_HIT_RADIUS_SQ;
+
+    if (!map || !map.length || !map[0]) {
+      return { type: "miss", distance: maxDistance };
+    }
+
+    let distance = 0;
+    let iterations = 0;
+    while (distance < maxDistance && iterations < maxIterations) {
+      iterations++;
+      distance += step;
+      const testX = x + Math.cos(angle) * distance;
+      const testY = y + Math.sin(angle) * distance;
+      const mapX = Math.floor(testX);
+      const mapY = Math.floor(testY);
+
+      if (mapX < 0 || mapX >= map[0].length || mapY < 0 || mapY >= map.length) {
+        return { type: "wall", distance };
+      }
+      if (map[mapY][mapX] > 0) {
+        return { type: "wall", distance, wallType: map[mapY][mapX] };
+      }
+
+      for (const enemy of enemies) {
+        if (!enemy.isDead) {
+          const dx = enemy.x - testX;
+          const dy = enemy.y - testY;
+          if (dx * dx + dy * dy < hitRadiusSq) {
+            return { type: "enemy", enemy, distance, damage: this._calcFalloffDamage(distance), x: testX, y: testY };
+          }
+        }
+      }
+    }
+    return { type: "miss", distance: maxDistance };
+  }
+
+  /**
+   * Penetrating ray march — returns all hits, supports wall pass-through
+   * @protected
+   */
+  _penetratingRaycast(x, y, angle, map, enemies) {
+    const { maxDistance, raycastStep: step, penetration, wallPenetrationCost } = this;
+    const maxIterations = Math.ceil(maxDistance / step) + 200;
+    const hitRadiusSq = GameConfig.COMBAT.ENEMY_HIT_RADIUS_SQ;
+
+    if (!map || !map.length || !map[0]) {
+      return [{ type: "miss", distance: maxDistance }];
+    }
+
+    const hits = [];
+    const hitEnemies = new Set();
+    let penetrationLeft = penetration;
+    let distance = 0;
+    let iterations = 0;
+
+    while (distance < maxDistance && iterations < maxIterations && penetrationLeft > 0) {
+      iterations++;
+      distance += step;
+      const testX = x + Math.cos(angle) * distance;
+      const testY = y + Math.sin(angle) * distance;
+      const mapX = Math.floor(testX);
+      const mapY = Math.floor(testY);
+
+      if (mapX < 0 || mapX >= map[0].length || mapY < 0 || mapY >= map.length) {
+        hits.push({ type: "wall", distance });
+        break;
+      }
+      if (map[mapY][mapX] > 0) {
+        hits.push({ type: "wall", distance, wallType: map[mapY][mapX] });
+        if (!isFinite(wallPenetrationCost)) break;
+        penetrationLeft -= wallPenetrationCost;
+        if (penetrationLeft <= 0) break;
+        continue;
+      }
+
+      for (const enemy of enemies) {
+        if (!enemy.isDead && !hitEnemies.has(enemy.id)) {
+          const dx = enemy.x - testX;
+          const dy = enemy.y - testY;
+          if (dx * dx + dy * dy < hitRadiusSq) {
+            hitEnemies.add(enemy.id);
+            hits.push({ type: "enemy", enemy, distance, damage: this._calcFalloffDamage(distance), x: testX, y: testY });
+            penetrationLeft--;
+            break;
+          }
+        }
+      }
+    }
+
+    return hits.length ? hits : [{ type: "miss", distance: maxDistance }];
+  }
+
+  /**
+   * Distance-based damage falloff using per-weapon config
+   * @protected
+   */
+  _calcFalloffDamage(distance) {
+    const { falloffRange, falloffMin, falloffScale, damage } = this;
+    if (distance < falloffRange) return damage;
+    const min = damage * falloffMin;
+    const falloff = Math.max(0, 1 - (distance - falloffRange) / (falloffRange * falloffScale));
+    return min + (damage - min) * falloff;
   }
 
   /**

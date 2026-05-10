@@ -8,8 +8,6 @@
 
 const fs   = require("fs");
 const path = require("path");
-const http = require("http");
-const { execSync } = require("child_process");
 
 const ICONS_DIR = path.join(__dirname, "icons");
 const SVG_PATH  = path.join(ICONS_DIR, "icon.svg");

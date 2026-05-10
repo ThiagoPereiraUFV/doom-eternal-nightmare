@@ -23,7 +23,7 @@ export class AIBehavior {
    * @param {number} deltaTime - Time since last frame
    * @abstract
    */
-  execute(enemy, player, map, deltaTime) {
+  execute(_enemy, _player, _map, _deltaTime) {
     throw new Error("execute() must be implemented by subclass");
   }
 
@@ -31,15 +31,7 @@ export class AIBehavior {
    * Enter the state (optional override)
    * @param {Enemy} enemy - Enemy entering the state
    */
-  enter(enemy) {
-    // Optional: Subclasses can override
-  }
-
-  /**
-   * Exit the state (optional override)
-   * @param {Enemy} enemy - Enemy exiting the state
-   */
-  exit(enemy) {
+  enter(_enemy) {
     // Optional: Subclasses can override
   }
 
@@ -109,8 +101,10 @@ export class AIBehavior {
       const newX = entity.x + moveX;
       const newY = entity.y + moveY;
 
-      // Check collision
-      if (map[Math.floor(newY)][Math.floor(newX)] === 0) {
+      // Check collision with map bounds guard
+      const nx = Math.floor(newX);
+      const ny = Math.floor(newY);
+      if (ny >= 0 && ny < map.length && nx >= 0 && nx < map[0].length && map[ny][nx] === 0) {
         entity.x = newX;
         entity.y = newY;
         return true;

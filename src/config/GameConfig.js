@@ -82,6 +82,8 @@ export const GameConfig = {
     PATROL_WANDER_RANGE: 4,
     PATROL_MIN_DISTANCE: 0.1,
     STUCK_THRESHOLD: 20,
+    PATROL_SPEED_MULT: 0.5,
+    SEARCH_SPEED_MULT: 0.7,
 
     // AI state name constants — single source of truth for all setState() calls
     AI_STATES: {
@@ -128,6 +130,7 @@ export const GameConfig = {
   WEAPONS: {
     PISTOL: {
       name: "PISTOL",
+      maxDistance: 50,
       damage: 20,
       magazineSize: 12,
       reserveAmmo: 48,
@@ -142,6 +145,9 @@ export const GameConfig = {
     },
     SHOTGUN: {
       name: "SHOTGUN",
+      maxDistance: 30,
+      falloffRange: 10,
+      falloffMin: 0.2,
       damage: 15,
       magazineSize: 8,
       reserveAmmo: 24,
@@ -157,6 +163,9 @@ export const GameConfig = {
     },
     RIFLE: {
       name: "RIFLE",
+      maxDistance: 60,
+      falloffMin: 0.5,
+      falloffScale: 2,
       damage: 30,
       magazineSize: 30,
       reserveAmmo: 90,
@@ -171,6 +180,8 @@ export const GameConfig = {
     },
     SMG: {
       name: "SMG",
+      maxDistance: 45,
+      raycastStep: 0.08,
       damage: 14,
       magazineSize: 35,
       reserveAmmo: 140,
@@ -185,6 +196,9 @@ export const GameConfig = {
     },
     SNIPER: {
       name: "SNIPER",
+      maxDistance: 80,
+      raycastStep: 0.05,
+      falloffMin: 1.0,
       damage: 120,
       magazineSize: 5,
       reserveAmmo: 20,
@@ -199,6 +213,7 @@ export const GameConfig = {
     },
     GRENADE_LAUNCHER: {
       name: "GRENADE_LAUNCHER",
+      maxDistance: 20,
       damage: 80,
       magazineSize: 6,
       reserveAmmo: 24,
@@ -214,6 +229,10 @@ export const GameConfig = {
     },
     PLASMA: {
       name: "PLASMA",
+      maxDistance: 60,
+      raycastStep: 0.08,
+      falloffMin: 1.0,
+      wallPenetrationCost: 2,
       damage: 45,
       magazineSize: 40,
       reserveAmmo: 160,
@@ -232,6 +251,8 @@ export const GameConfig = {
   COMBAT: {
     DAMAGE_FALLOFF_MIN: 0.3,
     DAMAGE_FALLOFF_RANGE: 15,
+    ENEMY_HIT_RADIUS: 0.3,
+    ENEMY_HIT_RADIUS_SQ: 0.09, // pre-computed 0.3^2
     SCREEN_SHAKE_INTENSITY: 12,
     GAME_OVER_DELAY: 500,
   },
@@ -249,7 +270,7 @@ export const GameConfig = {
     FOOTSTEP_INTERVAL: 400,
     FOOTSTEP_INTERVAL_SPRINT: 300,
     AMBIENCE_INTERVAL: 3000,
-    MUSIC_VOLUME: 0.25,
+    MUSIC_VOLUME: 0.75,
     MUSIC_LOOP_DURATION: 8, // seconds
   },
 

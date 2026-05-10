@@ -21,20 +21,17 @@ export class Pistol extends Weapon {
       return { success: false, reason: "cannot_fire" };
     }
 
-    const { player, enemies, map, audioSystem, eventManager } = context;
+    const { player, enemies, map, eventManager } = context;
 
     // Consume ammo
     this.consumeAmmo();
-
-    // Play shoot sound
-    audioSystem?.playSound("shoot");
 
     // Calculate shot direction with spread
     const spreadAngle = (Math.random() - 0.5) * this.spread;
     const shotAngle = player.angle + spreadAngle;
 
     // Perform raycast to find hit
-    const hit = this._performRaycast(
+    const hit = this._raycast(
       player.x,
       player.y,
       shotAngle,
@@ -55,79 +52,6 @@ export class Pistol extends Weapon {
       recoil: this.recoil,
       screenShake: this.screenShake,
     };
-  }
-
-  /**
-   * Perform raycast to find what was hit
-   * @private
-   */
-  _performRaycast(x, y, angle, map, enemies) {
-    const maxDistance = 50;
-    const step = 0.1;
-    let distance = 0;
-    let iterations = 0;
-    const maxIterations = 1000; // Safety limit
-
-    // Validate map
-    if (!map || !map.length || !map[0]) {
-      return { type: "miss", distance: maxDistance };
-    }
-
-    while (distance < maxDistance && iterations < maxIterations) {
-      iterations++;
-      distance += step;
-      const testX = x + Math.cos(angle) * distance;
-      const testY = y + Math.sin(angle) * distance;
-
-      const mapX = Math.floor(testX);
-      const mapY = Math.floor(testY);
-
-      // Check wall collision
-      if (mapX < 0 || mapX >= map[0].length || mapY < 0 || mapY >= map.length) {
-        return { type: "wall", distance };
-      }
-      if (map[mapY][mapX] > 0) {
-        return { type: "wall", distance, wallType: map[mapY][mapX] };
-      }
-
-      // Check enemy collision
-      for (const enemy of enemies) {
-        if (!enemy.isDead) {
-          const enemyDist = Math.sqrt(
-            Math.pow(enemy.x - testX, 2) + Math.pow(enemy.y - testY, 2),
-          );
-          if (enemyDist < 0.3) {
-            const damage = this._calculateDamage(distance);
-            return {
-              type: "enemy",
-              enemy,
-              distance,
-              damage,
-              x: testX,
-              y: testY,
-            };
-          }
-        }
-      }
-    }
-
-    return { type: "miss", distance: maxDistance };
-  }
-
-  /**
-   * Calculate damage based on distance
-   * @private
-   */
-  _calculateDamage(distance) {
-    const falloffRange = GameConfig.COMBAT.DAMAGE_FALLOFF_RANGE;
-    const minDamage = this.damage * GameConfig.COMBAT.DAMAGE_FALLOFF_MIN;
-
-    if (distance < falloffRange) {
-      return this.damage;
-    }
-
-    const falloff = Math.max(0, 1 - (distance - falloffRange) / falloffRange);
-    return minDamage + (this.damage - minDamage) * falloff;
   }
 }
 

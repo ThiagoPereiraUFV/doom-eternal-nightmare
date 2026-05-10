@@ -737,13 +737,6 @@ export class Renderer {
       g.add(m);
       return m;
     };
-    const cyl = (rt, rb, h, mat, px, py, pz, rx = 0, rz = 0) => {
-      const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, 8), mat);
-      m.position.set(px, py, pz);
-      m.rotation.set(rx, 0, rz);
-      g.add(m);
-      return m;
-    };
 
     if (enemy.type === "ghost") {
       // Detailed ghost: ethereal form with trailing wisp tails
@@ -848,10 +841,10 @@ export class Renderer {
       // Arms: one outstretched, one hanging
       const aUpperL = box(0.14, 0.52, 0.14, bM, -0.28, 0.62, 0.14, -0.9, 0, 0);
       const aForeL  = box(0.12, 0.45, 0.12, bM, -0.28, 0.98, 0.38, -0.95, 0, 0.05);
-      const handL   = sphere(0.09, bM, -0.28, 1.20, 0.52, 6);
+      sphere(0.09, bM, -0.28, 1.20, 0.52, 6);
       const aUpperR = box(0.14, 0.52, 0.14, bM,  0.28, 0.58, 0.04, 0.12, 0, 0.05);
       const aForeR  = box(0.12, 0.45, 0.12, bM,  0.28, 0.18, 0.04, 0.06, 0, 0);
-      const handR   = sphere(0.09, bM, 0.28, -0.06, 0.04, 6);
+      sphere(0.09, bM, 0.28, -0.06, 0.04, 6);
       // Legs: lopsided
       const lL = box(0.16, 0.50, 0.16, bM, -0.12, 0.25, 0);
       const lR = box(0.16, 0.50, 0.16, bM,  0.12, 0.25, 0);

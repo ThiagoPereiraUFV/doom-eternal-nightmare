@@ -18,12 +18,12 @@ export class ChaseState extends AIBehavior {
    * @param {Array} map - Game map
    * @param {number} deltaTime - Time since last frame
    */
-  execute(enemy, player, map, deltaTime) {
+  execute(enemy, player, map, _deltaTime) {
     const distance = this._distance(enemy.x, enemy.y, player.x, player.y);
 
     // If player is too far, switch to search state
     if (distance > GameConfig.ENEMY.LOSE_CHASE_DISTANCE) {
-      enemy.setState("search");
+      enemy.setState(GameConfig.ENEMY.AI_STATES.SEARCH);
       return;
     }
 

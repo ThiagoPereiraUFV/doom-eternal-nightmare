@@ -29,13 +29,13 @@ export class SearchState extends AIBehavior {
    * @param {Array} map - Game map
    * @param {number} deltaTime - Time since last frame
    */
-  execute(enemy, player, map, deltaTime) {
+  execute(enemy, player, map, _deltaTime) {
     const distance = this._distance(enemy.x, enemy.y, player.x, player.y);
 
     // If player is close and visible, switch to chase
     if (distance < GameConfig.ENEMY.CHASE_DISTANCE) {
       if (this._isPathClear(enemy.x, enemy.y, player.x, player.y, map)) {
-        enemy.setState("chase");
+        enemy.setState(GameConfig.ENEMY.AI_STATES.CHASE);
         return;
       }
     }
@@ -52,19 +52,19 @@ export class SearchState extends AIBehavior {
       if (distToTarget < GameConfig.ENEMY.SEARCH_ARRIVAL_THRESHOLD) {
         // Reached search point, give up and return to patrol
         enemy.searchTarget = null;
-        enemy.setState("patrol");
+        enemy.setState(GameConfig.ENEMY.AI_STATES.PATROL);
       } else {
         this._moveTowards(
           enemy,
           enemy.searchTarget.x,
           enemy.searchTarget.y,
-          enemy.speed * 0.7, // Move moderately fast while searching
+          enemy.speed * GameConfig.ENEMY.SEARCH_SPEED_MULT, // Move moderately fast while searching
           map,
         );
       }
     } else {
       // No search target, return to patrol
-      enemy.setState("patrol");
+      enemy.setState(GameConfig.ENEMY.AI_STATES.PATROL);
     }
   }
 

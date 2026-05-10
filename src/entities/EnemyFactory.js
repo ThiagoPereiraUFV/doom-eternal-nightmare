@@ -19,14 +19,14 @@ export class EnemyFactory {
    */
   static init() {
     // Register enemy types
-    Object.entries(GameConfig.ENEMY.TYPES).forEach(([key, config]) => {
+    Object.entries(GameConfig.ENEMY.TYPES).forEach(([_key, config]) => {
       this.registerType(config.type, config);
     });
 
     // Register AI states
-    this.registerAIState("chase", new ChaseState());
-    this.registerAIState("patrol", new PatrolState());
-    this.registerAIState("search", new SearchState());
+    this.registerAIState(GameConfig.ENEMY.AI_STATES.CHASE,  new ChaseState());
+    this.registerAIState(GameConfig.ENEMY.AI_STATES.PATROL, new PatrolState());
+    this.registerAIState(GameConfig.ENEMY.AI_STATES.SEARCH, new SearchState());
   }
 
   /**
@@ -58,7 +58,7 @@ export class EnemyFactory {
    * const demon = EnemyFactory.create('demon', 10, 10);
    * const zombie = EnemyFactory.create('zombie', 15, 15, 'chase');
    */
-  static create(type, x, y, initialState = "patrol") {
+  static create(type, x, y, initialState = GameConfig.ENEMY.AI_STATES.PATROL) {
     const config = this._enemyTypes.get(type.toLowerCase());
 
     if (!config) {
@@ -72,7 +72,7 @@ export class EnemyFactory {
     if (stateObject) {
       enemy.setState(stateObject);
     } else {
-      enemy.setState(this._aiStates.get("patrol"));
+      enemy.setState(this._aiStates.get(GameConfig.ENEMY.AI_STATES.PATROL));
     }
 
     // Override setState to use factory states

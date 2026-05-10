@@ -737,7 +737,7 @@ const loadedSprites = {
   walls: {},
 };
 
-// Make SVGSprites globally available
+// Make SVGSprites and preloadSprites globally available
 window.SVGSprites = SVGSprites;
 
 async function preloadSprites(onProgress) {
@@ -809,3 +809,4 @@ async function preloadSprites(onProgress) {
   );
   updateProgress();
 }
+window.preloadSprites = preloadSprites;

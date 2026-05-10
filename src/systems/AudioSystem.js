@@ -4,6 +4,8 @@
  * Following SRP - only audio management
  */
 
+import { GameConfig } from "../config/GameConfig.js";
+
 export class AudioSystem {
   static _instance = null;
 
@@ -24,7 +26,7 @@ export class AudioSystem {
     // Background music
     this.musicGain = this.audioContext.createGain();
     this.musicGain.connect(this.masterGain);
-    this.musicGain.gain.value = 0.75; // Background music volume
+    this.musicGain.gain.value = GameConfig.AUDIO.MUSIC_VOLUME; // Background music volume
     this.currentMusic = null;
     this.musicNodes = [];
     this.isMusicPlaying = false;
@@ -126,9 +128,6 @@ export class AudioSystem {
    * @param {Object} options - { weaponName }
    */
   playSound(type, options = {}) {
-    const ctx = this.audioContext;
-    const now = ctx.currentTime;
-
     switch (type) {
 
       // ── Gunshot ─────────────────────────────────────────────────
@@ -535,7 +534,7 @@ export class AudioSystem {
    * Create tension notes
    * @private
    */
-  _createTensionNotes(startTime, duration) {
+  _createTensionNotes(startTime, _duration) {
     const tensionTimes = [2, 4.5, 6.8];
     const frequencies = [440, 494, 523]; // A4, B4, C5
 
@@ -589,7 +588,7 @@ export class AudioSystem {
         gain.gain.setValueAtTime(gain.gain.value, now);
         gain.gain.linearRampToValueAtTime(0, now + 0.1);
         osc.stop(now + 0.1);
-      } catch (e) {
+      } catch {
         // Node might already be stopped
       }
     });
@@ -642,7 +641,7 @@ export class AudioSystem {
    */
   unmute() {
     this.masterGain.gain.value = this._previousVolume || 0.3;
-    this.musicGain.gain.value = this._previousMusicVolume || 0.25;
+    this.musicGain.gain.value = this._previousMusicVolume ?? GameConfig.AUDIO.MUSIC_VOLUME;
   }
 
   /**

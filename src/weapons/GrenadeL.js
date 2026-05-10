@@ -19,7 +19,7 @@ export class GrenadeL extends Weapon {
 
     const { player, enemies, map, audioSystem, eventManager } = context;
     this.consumeAmmo();
-    audioSystem?.playSound("shoot", { weaponName: "grenade_launcher" });
+    // shoot sound played by Player.shoot(); play explosion after landing
 
     const shotAngle = player.angle + (Math.random() - 0.5) * this.spread;
     // Find where the grenade lands (wall or max range)
@@ -48,8 +48,8 @@ export class GrenadeL extends Weapon {
   }
 
   _findLandingPoint(x, y, angle, map) {
-    const maxDistance = 20;
-    const step = 0.1;
+    const maxDistance = this.maxDistance;
+    const step = this.raycastStep;
     let distance = 0;
     let iterations = 0;
 

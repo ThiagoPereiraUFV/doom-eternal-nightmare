@@ -88,7 +88,6 @@ export class RayCaster {
 
         // Determine which side of the wall was hit
         const cellX = hitX - mapX;
-        const cellY = hitY - mapY;
 
         if (Math.abs(cellX - 0) < 0.02 || Math.abs(cellX - 1) < 0.02) {
           side = 0; // Vertical wall

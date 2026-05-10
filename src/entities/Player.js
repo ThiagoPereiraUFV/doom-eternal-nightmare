@@ -5,7 +5,6 @@
  */
 
 import { GameConfig } from "../config/GameConfig.js";
-import { Vector2D } from "../utils/Vector2D.js";
 
 export class Player {
   constructor(x, y, eventManager, audioSystem) {
@@ -95,7 +94,7 @@ export class Player {
    * @param {Array} map - Game map
    * @param {number} deltaTime - Time since last frame
    */
-  move(forward, strafe, map, deltaTime) {
+  move(forward, strafe, map, _deltaTime) {
     // Calculate movement speed
     let speed = GameConfig.PLAYER.MOVE_SPEED;
 
@@ -271,7 +270,7 @@ export class Player {
    * Update player state
    * @param {number} deltaTime - Time since last frame
    */
-  update(deltaTime) {
+  update(_deltaTime) {
     // Update weapon reload
     if (this.currentWeapon) {
       if (this.currentWeapon.updateReload()) {
@@ -281,11 +280,11 @@ export class Player {
     }
 
     // Decay recoil
-    this.recoilOffset *= 0.85;
+    this.recoilOffset *= GameConfig.WEAPON_3D.RECOIL_DECAY;
 
     // Decay screen shake
-    this.screenShake.x *= 0.8;
-    this.screenShake.y *= 0.8;
+    this.screenShake.x *= GameConfig.PLAYER.SCREEN_SHAKE_DECAY;
+    this.screenShake.y *= GameConfig.PLAYER.SCREEN_SHAKE_DECAY;
   }
 
   /**

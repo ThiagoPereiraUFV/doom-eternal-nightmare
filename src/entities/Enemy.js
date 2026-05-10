@@ -91,8 +91,8 @@ export class Enemy {
       }
     } else {
       // Switch to chase state when damaged
-      if (this.currentState !== "chase") {
-        this.setState("chase");
+      if (this.currentState !== GameConfig.ENEMY.AI_STATES.CHASE) {
+        this.setState(GameConfig.ENEMY.AI_STATES.CHASE);
       }
 
       if (eventManager) {

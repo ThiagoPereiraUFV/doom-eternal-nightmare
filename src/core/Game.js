@@ -90,8 +90,7 @@ export class Game {
 
         this.stateManager.setState(GameStates.MENU);
       }, 500);
-    } catch (error) {
-      this._updateLoadingScreen(0, "Error loading resources. Please refresh.");
+    } catch {
     }
   }
 
@@ -363,9 +362,14 @@ export class Game {
     // Resume audio context (required for browser autoplay policies)
     this.audioSystem.resume();
 
-    // Request pointer lock for keyboard controls
+    // Request pointer lock for keyboard controls — must be inside a user gesture.
+    // Attach a one-time handler so the first click/keydown after game start triggers it.
     if (this.controlType === 'keyboard') {
-      this.canvas.requestPointerLock();
+      const requestLock = () => {
+        this.canvas.requestPointerLock();
+      };
+      this.canvas.addEventListener('click', requestLock, { once: true });
+      document.addEventListener('keydown', requestLock, { once: true });
     }
 
     // Enable touch controls for touch mode
@@ -464,7 +468,12 @@ export class Game {
     this.audioSystem.startMusic();
 
     if (this.controlType === 'keyboard') {
-      this.canvas.requestPointerLock();
+      this.canvas.requestPointerLock().catch(() => {
+        // If the gesture context was lost, re-request on next interaction
+        const requestLock = () => { this.canvas.requestPointerLock(); };
+        this.canvas.addEventListener('click', requestLock, { once: true });
+        document.addEventListener('keydown', requestLock, { once: true });
+      });
     }
 
     this.lastFrameTime = performance.now(); // Reset frame time to prevent jump

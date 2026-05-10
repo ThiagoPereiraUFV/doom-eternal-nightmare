@@ -112,7 +112,7 @@ export class GameStateManager {
       callbacks.forEach((callback) => {
         try {
           callback(...args);
-        } catch (error) {
+        } catch {
           // Silently handle errors in state callbacks
         }
       });
