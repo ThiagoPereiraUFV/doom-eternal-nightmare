@@ -1181,23 +1181,40 @@ export class Renderer {
     return g;
   }
 
+  _clonePreviewMaterials(group) {
+    group.traverse((child) => {
+      if (!child.isMesh || !child.material) {
+        return;
+      }
+
+      if (Array.isArray(child.material)) {
+        child.material = child.material.map((material) => material.clone());
+        return;
+      }
+
+      child.material = child.material.clone();
+    });
+
+    return group;
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // Weapon 3D Models
   // ═══════════════════════════════════════════════════════════════
 
-  _buildWeaponModel(weapon) {
-    this.weaponGroup.clear();
+  _populateWeaponGroup(group, weapon) {
+    group.clear();
     const m = this._wMat;
 
-    // Helper: add a BoxGeometry mesh to weaponGroup
+    // Helper: add a BoxGeometry mesh to the target group.
     const addBox = (w, h, d, mat, px, py, pz, rx = 0, ry = 0, rz = 0) => {
       const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
       mesh.position.set(px, py, pz);
       mesh.rotation.set(rx, ry, rz);
-      this.weaponGroup.add(mesh);
+      group.add(mesh);
       return mesh;
     };
-    // Helper: add a CylinderGeometry mesh (rx rotates barrel to horizontal)
+    // Helper: add a CylinderGeometry mesh (rx rotates barrel to horizontal).
     const addCyl = (rt, rb, h, mat, px, py, pz, rx = 0, openEnded = false) => {
       const mesh = new THREE.Mesh(
         new THREE.CylinderGeometry(rt, rb, h, 12, 1, openEnded),
@@ -1205,7 +1222,7 @@ export class Renderer {
       );
       mesh.position.set(px, py, pz);
       mesh.rotation.x = rx;
-      this.weaponGroup.add(mesh);
+      group.add(mesh);
       return mesh;
     };
     const addTorus = (
@@ -1225,7 +1242,7 @@ export class Renderer {
       );
       mesh.position.set(px, py, pz);
       mesh.rotation.set(rx, ry, rz);
-      this.weaponGroup.add(mesh);
+      group.add(mesh);
       return mesh;
     };
     const addRing = (
@@ -1245,7 +1262,7 @@ export class Renderer {
       );
       mesh.position.set(px, py, pz);
       mesh.rotation.set(rx, ry, rz);
-      this.weaponGroup.add(mesh);
+      group.add(mesh);
       return mesh;
     };
 
@@ -1263,6 +1280,10 @@ export class Renderer {
     } else {
       addBox(0.08, 0.05, 0.3, m.metal, 0, 0, -0.08);
     }
+  }
+
+  _buildWeaponModel(weapon) {
+    this._populateWeaponGroup(this.weaponGroup, weapon);
 
     const gunBuildCfg = weapon?.render || {};
     const [baseX, baseY, baseZ] = gunBuildCfg.basePosition ?? [
@@ -1345,6 +1366,16 @@ export class Renderer {
     if (mesh) {
       mesh.userData.hitFlashTimer = 0.25;
     }
+  }
+
+  createEnemyPreview(type) {
+    return this._clonePreviewMaterials(this._createEnemyMesh({ type }));
+  }
+
+  createWeaponPreview(weapon) {
+    const previewGroup = new THREE.Group();
+    this._populateWeaponGroup(previewGroup, weapon);
+    return this._clonePreviewMaterials(previewGroup);
   }
 
   // ═══════════════════════════════════════════════════════════════

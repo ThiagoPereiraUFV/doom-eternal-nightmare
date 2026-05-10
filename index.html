@@ -212,6 +212,78 @@
 
         <div class="menu-box">
           <div class="menu-item active" id="start-btn">INITIATE MISSION</div>
+          <div class="menu-item" id="model-viewer-open">VIEW 3D ARCHIVE</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="modelViewerScreen" class="overlay-screen hidden">
+      <div class="model-viewer-shell">
+        <div class="model-viewer-header">
+          <div>
+            <div class="model-viewer-kicker">ARCHIVE ACCESS</div>
+            <div class="model-viewer-title">MODEL VIEWER</div>
+          </div>
+          <button id="model-viewer-close" class="model-viewer-close">
+            CLOSE
+          </button>
+        </div>
+
+        <div class="model-viewer-stage">
+          <div class="model-viewer-sidebar">
+            <div class="model-viewer-copy">
+              Inspect every enemy and weapon model in full 360 rotation.
+            </div>
+
+            <div class="model-viewer-tabs">
+              <button
+                id="model-viewer-tab-enemies"
+                class="model-viewer-tab active"
+                type="button"
+              >
+                ENEMIES
+              </button>
+              <button
+                id="model-viewer-tab-weapons"
+                class="model-viewer-tab"
+                type="button"
+              >
+                WEAPONS
+              </button>
+            </div>
+
+            <div class="model-viewer-name" id="model-viewer-name">DEMON</div>
+            <div class="model-viewer-meta" id="model-viewer-meta">
+              Enemy specimen
+            </div>
+            <div class="model-viewer-index" id="model-viewer-index">1 / 4</div>
+
+            <div class="model-viewer-note">
+              Drag the model to rotate it manually. It will keep spinning when
+              idle.
+            </div>
+          </div>
+
+          <div class="model-viewer-canvas-wrap">
+            <canvas id="modelViewerCanvas"></canvas>
+
+            <div class="model-viewer-actions">
+              <button
+                id="model-viewer-prev"
+                class="model-viewer-action"
+                type="button"
+              >
+                PREV
+              </button>
+              <button
+                id="model-viewer-next"
+                class="model-viewer-action"
+                type="button"
+              >
+                NEXT
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

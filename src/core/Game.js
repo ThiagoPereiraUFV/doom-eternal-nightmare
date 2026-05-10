@@ -12,6 +12,7 @@ import { InputManager } from "./InputManager.js";
 import { TouchInputManager } from "./TouchInputManager.js";
 import { AudioSystem } from "../systems/AudioSystem.js";
 import { Renderer } from "./Renderer.js";
+import { MenuModelViewer } from "./MenuModelViewer.js";
 import { Player } from "../entities/Player.js";
 import { EnemyFactory } from "../entities/EnemyFactory.js";
 import { WeaponFactory } from "../weapons/WeaponFactory.js";
@@ -37,6 +38,7 @@ export class Game {
       this.weaponCanvas,
       this.resourceManager,
     );
+    this.modelViewer = new MenuModelViewer(this.renderer);
 
     // Control type — auto-detected from device capabilities
     // Same media query used by CSS to show touch controls
@@ -116,6 +118,7 @@ export class Game {
 
     // Start game button — directly starts game, controls are auto-detected
     const startBtn = document.getElementById("start-btn");
+    const modelViewerOpen = document.getElementById("model-viewer-open");
     if (startBtn) {
       _bindTap(startBtn, () => this.startGame());
     } else {
@@ -149,6 +152,26 @@ export class Game {
         );
       }
     }
+
+    if (modelViewerOpen) {
+      _bindTap(modelViewerOpen, () => this.openModelViewer());
+    }
+
+    _bindTap(document.getElementById("model-viewer-close"), () =>
+      this.closeModelViewer(),
+    );
+    _bindTap(document.getElementById("model-viewer-prev"), () =>
+      this.modelViewer.previous(),
+    );
+    _bindTap(document.getElementById("model-viewer-next"), () =>
+      this.modelViewer.next(),
+    );
+    _bindTap(document.getElementById("model-viewer-tab-enemies"), () =>
+      this.setModelViewerCategory("enemies"),
+    );
+    _bindTap(document.getElementById("model-viewer-tab-weapons"), () =>
+      this.setModelViewerCategory("weapons"),
+    );
 
     // Restart buttons
     _bindTap(document.getElementById("gameOverScreen"), () =>
@@ -399,6 +422,8 @@ export class Game {
    * Start new game — show 5-second mission briefing first
    */
   startGame() {
+    this.closeModelViewer();
+
     // Read selected difficulty from UI
     const sel = document.querySelector(".diff-btn.selected");
     const diffId = (sel?.dataset?.diff ?? "medium").toUpperCase();
@@ -530,6 +555,8 @@ export class Game {
    * Restart game
    */
   restartGame() {
+    this.closeModelViewer();
+
     // Hide end screens
     document.getElementById("gameOverScreen").classList.remove("show");
     document.getElementById("victoryScreen").classList.remove("show");
@@ -646,6 +673,7 @@ export class Game {
     const startScreen = document.getElementById("startScreen");
     startScreen.classList.remove("hidden");
     startScreen.style.display = "flex";
+    this.closeModelViewer();
 
     // Reset game state
     this.stateManager.setState(GameStates.MENU);
@@ -979,6 +1007,48 @@ export class Game {
         enemy.update(this.player, this.map, deltaTime);
       }
     }
+  }
+
+  async openModelViewer() {
+    const screen = document.getElementById("modelViewerScreen");
+    if (!screen) {
+      return;
+    }
+
+    screen.classList.remove("hidden");
+    screen.classList.add("show");
+    this._syncModelViewerTabs();
+    await this.modelViewer.open();
+  }
+
+  closeModelViewer() {
+    const screen = document.getElementById("modelViewerScreen");
+    if (!screen) {
+      return;
+    }
+
+    this.modelViewer.close();
+    screen.classList.remove("show");
+    screen.classList.add("hidden");
+  }
+
+  async setModelViewerCategory(category) {
+    await this.modelViewer.setCategory(category);
+    this._syncModelViewerTabs();
+  }
+
+  _syncModelViewerTabs() {
+    const enemyTab = document.getElementById("model-viewer-tab-enemies");
+    const weaponTab = document.getElementById("model-viewer-tab-weapons");
+
+    enemyTab?.classList.toggle(
+      "active",
+      this.modelViewer.category === "enemies",
+    );
+    weaponTab?.classList.toggle(
+      "active",
+      this.modelViewer.category === "weapons",
+    );
   }
 
   /**
