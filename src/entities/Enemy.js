@@ -67,14 +67,15 @@ export class Enemy {
    * @param {Player} player - Player reference
    * @param {Array} map - Game map
    * @param {number} deltaTime - Time since last frame
+   * @param {FriendlyBot[]} bots - Living allied bots
    */
-  update(player, map, deltaTime) {
+  update(player, map, deltaTime, bots = []) {
     if (this.isDead) {
       return;
     }
 
     if (this.stateObject && typeof this.stateObject.execute === "function") {
-      this.stateObject.execute(this, player, map, deltaTime);
+      this.stateObject.execute(this, player, map, deltaTime, bots);
     }
   }
 

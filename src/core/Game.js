@@ -17,6 +17,10 @@ import { Player } from "../entities/Player.js";
 import { EnemyFactory } from "../entities/EnemyFactory.js";
 import { WeaponFactory } from "../weapons/WeaponFactory.js";
 import { MapGenerator } from "../utils/MapGenerator.js";
+import { FriendlyBot } from "../entities/FriendlyBot.js";
+import { BotFollowState } from "../ai/BotFollowState.js";
+import { BotSearchClearState } from "../ai/BotSearchClearState.js";
+import { BotIdleState } from "../ai/BotIdleState.js";
 
 export class Game {
   constructor() {
@@ -47,10 +51,21 @@ export class Game {
     // Game state
     this.player = null;
     this.enemies = [];
+    this.bots = [];
     this.map = null;
     this.bloodSplatters = [];
     this.enemiesKilled = 0;
     this.totalEnemies = 0;
+
+    // Active bot command (shared across all bots)
+    this.botCommand = GameConfig.BOT.COMMANDS.FOLLOW;
+
+    // Shared bot state instances (stateless — same pattern as enemy AI states)
+    this._botStates = {
+      [GameConfig.BOT.COMMANDS.FOLLOW]: new BotFollowState(),
+      [GameConfig.BOT.COMMANDS.SEARCH_CLEAR]: new BotSearchClearState(),
+      [GameConfig.BOT.COMMANDS.STOP]: new BotIdleState(),
+    };
 
     // Difficulty (default to MEDIUM)
     this.difficulty = GameConfig.DIFFICULTY.MEDIUM;
@@ -296,6 +311,27 @@ export class Game {
       );
     }
 
+    // Bot command touch buttons
+    const bindBotCmd = (id, cmd) => {
+      const el = document.getElementById(id);
+      if (!el) {
+        return;
+      }
+      el.onclick = () => this._issueBotCommand(cmd);
+      el.addEventListener(
+        "touchstart",
+        (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this._issueBotCommand(cmd);
+        },
+        { passive: false },
+      );
+    };
+    bindBotCmd("touch-bot-follow", GameConfig.BOT.COMMANDS.FOLLOW);
+    bindBotCmd("touch-bot-search", GameConfig.BOT.COMMANDS.SEARCH_CLEAR);
+    bindBotCmd("touch-bot-stop", GameConfig.BOT.COMMANDS.STOP);
+
     // Weapon switching and pause
     this.eventManager.on("keydown", (key) => {
       const lowerKey = key.toLowerCase();
@@ -338,6 +374,16 @@ export class Game {
       }
       if (lowerKey === "r") {
         this.player?.reload();
+      }
+      // Bot commands
+      if (lowerKey === "z") {
+        this._issueBotCommand(GameConfig.BOT.COMMANDS.FOLLOW);
+      }
+      if (lowerKey === "x") {
+        this._issueBotCommand(GameConfig.BOT.COMMANDS.SEARCH_CLEAR);
+      }
+      if (lowerKey === "c") {
+        this._issueBotCommand(GameConfig.BOT.COMMANDS.STOP);
       }
     });
 
@@ -574,7 +620,17 @@ export class Game {
     // Reset state
     this.enemiesKilled = 0;
     this.bloodSplatters = [];
+    this.bots = [];
     this.controlType = null;
+    // Hide bot UI
+    const botPanel = document.getElementById("bot-status-panel");
+    if (botPanel) {
+      botPanel.style.display = "none";
+    }
+    const botTouchCmds = document.getElementById("bot-touch-commands");
+    if (botTouchCmds) {
+      botTouchCmds.style.display = "none";
+    }
 
     // Show start screen again
     const startScreen = document.getElementById("startScreen");
@@ -684,7 +740,17 @@ export class Game {
     this.bloodSplatters = [];
     this.player = null;
     this.enemies = [];
+    this.bots = [];
     this.controlType = null;
+    // Hide bot UI
+    const botPanel = document.getElementById("bot-status-panel");
+    if (botPanel) {
+      botPanel.style.display = "none";
+    }
+    const botTouchCmds = document.getElementById("bot-touch-commands");
+    if (botTouchCmds) {
+      botTouchCmds.style.display = "none";
+    }
   }
 
   /**
@@ -732,6 +798,10 @@ export class Game {
 
     // Create enemies
     this._spawnEnemies();
+
+    // Create friendly bots
+    this.botCommand = GameConfig.BOT.COMMANDS.FOLLOW;
+    this._spawnBots();
 
     // Build 3D map geometry from tile data
     this.renderer.buildMap(this.map);
@@ -783,6 +853,34 @@ export class Game {
   }
 
   /**
+   * Spawn friendly bots near the player based on difficulty botCount.
+   * @private
+   */
+  _spawnBots() {
+    this.bots = [];
+    const count = this.difficulty.botCount ?? 0;
+    if (count <= 0) {
+      this._updateBotHUD();
+      return;
+    }
+
+    const followState = this._botStates[GameConfig.BOT.COMMANDS.FOLLOW];
+    for (let i = 0; i < count; i++) {
+      // Spread bots in a small arc around the player's back
+      const offsetAngle =
+        this.player.angle + Math.PI + (i - (count - 1) / 2) * 0.7;
+      const dist = 1.5 + i * 0.5;
+      const bx = this.player.x + Math.cos(offsetAngle) * dist;
+      const by = this.player.y + Math.sin(offsetAngle) * dist;
+
+      const bot = new FriendlyBot(bx, by);
+      bot.setCommand(GameConfig.BOT.COMMANDS.FOLLOW, followState);
+      this.bots.push(bot);
+    }
+    this._updateBotHUD();
+  }
+
+  /**
    * Main game loop
    * @private
    */
@@ -815,6 +913,9 @@ export class Game {
 
     // Update enemies
     this._updateEnemies(deltaTime);
+
+    // Update friendly bots
+    this._updateBots(deltaTime);
 
     // Update player systems
     this.player.update(deltaTime);
@@ -1008,11 +1109,54 @@ export class Game {
    * @private
    */
   _updateEnemies(deltaTime) {
+    const livingBots = this.bots.filter((b) => !b.isDead);
     for (const enemy of this.enemies) {
       if (!enemy.isDead) {
-        enemy.update(this.player, this.map, deltaTime);
+        enemy.update(this.player, this.map, deltaTime, livingBots);
       }
     }
+  }
+
+  /**
+   * Update friendly bots.
+   * @private
+   */
+  _updateBots(deltaTime) {
+    let changed = false;
+    for (const bot of this.bots) {
+      if (!bot.isDead) {
+        // Inject systems so states can fire events and play sounds
+        bot.eventManager = this.eventManager;
+        bot.audioSystem = this.audioSystem;
+        bot.update(this.player, this.enemies, this.map, deltaTime);
+      } else if (!bot._deathHandled) {
+        bot._deathHandled = true;
+        changed = true;
+      }
+    }
+    if (changed) {
+      this._updateBotHUD();
+    }
+  }
+
+  /**
+   * Issue a command to all living bots.
+   * @param {string} command - One of GameConfig.BOT.COMMANDS
+   * @private
+   */
+  _issueBotCommand(command) {
+    const validCommands = Object.values(GameConfig.BOT.COMMANDS);
+    if (!validCommands.includes(command)) {
+      return;
+    }
+    this.botCommand = command;
+    const stateObject = this._botStates[command];
+    for (const bot of this.bots) {
+      if (!bot.isDead) {
+        bot.setCommand(command, stateObject);
+      }
+    }
+    this._updateBotHUD();
   }
 
   async openModelViewer() {
@@ -1067,6 +1211,7 @@ export class Game {
       this.enemies,
       this.map,
       this.bloodSplatters,
+      this.bots,
     );
     this.renderer.renderWeapon(this.player);
   }
@@ -1120,6 +1265,58 @@ export class Game {
     const enemyCounter = document.getElementById("enemyCounter");
     if (enemyCounter) {
       enemyCounter.textContent = `${this.enemiesKilled} / ${this.totalEnemies}`;
+    }
+
+    this._updateBotHUD();
+  }
+
+  /**
+   * Refresh the bot status panel in the HUD.
+   * @private
+   */
+  _updateBotHUD() {
+    const panel = document.getElementById("bot-status-panel");
+    const touchCmds = document.getElementById("bot-touch-commands");
+
+    // Hide panel if no bots
+    if (!this.bots || this.bots.length === 0) {
+      if (panel) {
+        panel.style.display = "none";
+      }
+      if (touchCmds) {
+        touchCmds.style.display = "none";
+      }
+      return;
+    }
+
+    if (panel) {
+      panel.style.display = "";
+    }
+    if (touchCmds) {
+      touchCmds.style.display = "";
+    }
+
+    // Command badge
+    const cmdBadge = document.getElementById("bot-command-badge");
+    if (cmdBadge) {
+      const labels = {
+        [GameConfig.BOT.COMMANDS.FOLLOW]: "FOLLOW ME",
+        [GameConfig.BOT.COMMANDS.SEARCH_CLEAR]: "SEARCH & CLEAR",
+        [GameConfig.BOT.COMMANDS.STOP]: "STOP",
+      };
+      cmdBadge.textContent = labels[this.botCommand] ?? this.botCommand;
+    }
+
+    // Squad dots — one dot per bot, filled=alive, dim=dead
+    const dotsEl = document.getElementById("bot-dots");
+    if (dotsEl) {
+      dotsEl.innerHTML = "";
+      this.bots.forEach((bot) => {
+        const dot = document.createElement("span");
+        dot.className = "bot-dot" + (bot.isDead ? " bot-dead" : "");
+        dot.textContent = bot.isDead ? "○" : "●";
+        dotsEl.appendChild(dot);
+      });
     }
   }
 

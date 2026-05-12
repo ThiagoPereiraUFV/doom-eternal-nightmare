@@ -57,6 +57,11 @@ export class Renderer {
     // ─── Enemy mesh tracking ──────────────────────────────────────
     this.enemyMeshes = new Map(); // enemy.id -> THREE.Group
 
+    // ─── Friendly bot mesh tracking ───────────────────────────────
+    this.botMeshes = new Map(); // bot.id -> THREE.Group
+    this.botsGroup = new THREE.Group();
+    this.scene.add(this.botsGroup);
+
     // ─── Death animation tracking ──────────────────────────────────
     this._dyingEnemies = []; // {mesh, startTime, duration}
 
@@ -265,6 +270,14 @@ export class Renderer {
         eye: bas(0xff2200),
         horn: lam(0x111111),
       },
+    };
+
+    // Friendly bot materials (green tinted marine)
+    this._botMat = {
+      armor: lam(0x2a5c2a), // dark olive armor
+      suit: lam(0x1e4020), // darker suit
+      visor: bas(0x00ffcc, { transparent: true, opacity: 0.85 }), // cyan visor
+      detail: lam(0x4a8a4a), // lighter green accents
     };
 
     this._wMat = {
@@ -1379,6 +1392,177 @@ export class Renderer {
   }
 
   // ═══════════════════════════════════════════════════════════════
+  // Friendly Bot Mesh Management
+  // ═══════════════════════════════════════════════════════════════
+
+  _createBotMesh() {
+    const g = new THREE.Group();
+    const { armor, suit, visor, detail } = this._botMat;
+
+    const box = (w, h, d, mat, px, py, pz, rx = 0, ry = 0, rz = 0) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      m.position.set(px, py, pz);
+      m.rotation.set(rx, ry, rz);
+      g.add(m);
+      return m;
+    };
+    const sphere = (r, mat, px, py, pz, segs = 8) => {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, segs, segs), mat);
+      m.position.set(px, py, pz);
+      g.add(m);
+      return m;
+    };
+
+    // Torso (armored)
+    box(0.32, 0.42, 0.22, armor, 0, 0.56, 0);
+    // Shoulder pads
+    box(0.14, 0.12, 0.14, detail, -0.26, 0.74, 0);
+    box(0.14, 0.12, 0.14, detail, 0.26, 0.74, 0);
+    // Helmet
+    sphere(0.2, armor, 0, 1.0, 0, 10);
+    // Visor slit
+    box(0.24, 0.06, 0.04, visor, 0, 1.01, -0.18);
+    // Arms
+    const armL = box(0.11, 0.34, 0.11, suit, -0.26, 0.53, 0);
+    const armR = box(0.11, 0.34, 0.11, suit, 0.26, 0.53, 0);
+    // Hands
+    sphere(0.08, detail, -0.26, 0.35, 0, 6);
+    sphere(0.08, detail, 0.26, 0.35, 0, 6);
+
+    // ── Weapon meshes (right hand, only one visible at a time) ──
+    // Pistol — compact gray block
+    const gunPistol = new THREE.Group();
+    const pistolBody = new THREE.Mesh(
+      new THREE.BoxGeometry(0.06, 0.06, 0.18),
+      new THREE.MeshLambertMaterial({ color: 0x555566 }),
+    );
+    pistolBody.position.set(0, 0, -0.09);
+    const pistolGrip = new THREE.Mesh(
+      new THREE.BoxGeometry(0.05, 0.1, 0.05),
+      new THREE.MeshLambertMaterial({ color: 0x333344 }),
+    );
+    pistolGrip.position.set(0, -0.07, 0);
+    gunPistol.add(pistolBody, pistolGrip);
+    gunPistol.position.set(0.26, 0.34, -0.14);
+    g.add(gunPistol);
+
+    // Shotgun — wide short barrel
+    const gunShotgun = new THREE.Group();
+    const sgBody = new THREE.Mesh(
+      new THREE.BoxGeometry(0.07, 0.07, 0.26),
+      new THREE.MeshLambertMaterial({ color: 0x4a3520 }),
+    );
+    sgBody.position.set(0, 0, -0.13);
+    const sgBarrel = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.025, 0.025, 0.22, 6),
+      new THREE.MeshLambertMaterial({ color: 0x666666 }),
+    );
+    sgBarrel.rotation.x = Math.PI / 2;
+    sgBarrel.position.set(0, 0.04, -0.14);
+    gunShotgun.add(sgBody, sgBarrel);
+    gunShotgun.position.set(0.26, 0.34, -0.14);
+    gunShotgun.visible = false;
+    g.add(gunShotgun);
+
+    // Sniper — long dark barrel
+    const gunSniper = new THREE.Group();
+    const snBody = new THREE.Mesh(
+      new THREE.BoxGeometry(0.055, 0.055, 0.38),
+      new THREE.MeshLambertMaterial({ color: 0x222233 }),
+    );
+    snBody.position.set(0, 0, -0.19);
+    const snBarrel = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.015, 0.015, 0.32, 6),
+      new THREE.MeshLambertMaterial({ color: 0x444444 }),
+    );
+    snBarrel.rotation.x = Math.PI / 2;
+    snBarrel.position.set(0, 0.035, -0.22);
+    const snScope = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.022, 0.022, 0.08, 6),
+      new THREE.MeshLambertMaterial({ color: 0x111111 }),
+    );
+    snScope.rotation.x = Math.PI / 2;
+    snScope.position.set(0, 0.04, -0.1);
+    gunSniper.add(snBody, snBarrel, snScope);
+    gunSniper.position.set(0.26, 0.34, -0.14);
+    gunSniper.visible = false;
+    g.add(gunSniper);
+    // Legs
+    const legL = box(0.13, 0.38, 0.13, suit, -0.12, 0.19, 0);
+    const legR = box(0.13, 0.38, 0.13, suit, 0.12, 0.19, 0);
+    // Boots
+    box(0.14, 0.08, 0.18, armor, -0.12, 0.02, -0.02);
+    box(0.14, 0.08, 0.18, armor, 0.12, 0.02, -0.02);
+    // Belt detail
+    box(0.32, 0.05, 0.22, detail, 0, 0.37, 0);
+
+    // Walk animation
+    g.userData.animate = (t) => {
+      const swing = Math.sin(t * 3) * 0.3;
+      legL.rotation.x = swing;
+      legR.rotation.x = -swing;
+      armL.rotation.x = -swing * 0.5;
+      armR.rotation.x = swing * 0.5;
+    };
+
+    // Weapon refs for runtime switching
+    g.userData.weapons = { pistol: gunPistol, shotgun: gunShotgun, sniper: gunSniper };
+
+    // Tiny light marker above the head so bots are visible in dark areas
+    const indicator = new THREE.PointLight(0x00ff88, 0.6, 1.5);
+    indicator.position.set(0, 1.4, 0);
+    g.add(indicator);
+
+    return g;
+  }
+
+  _updateBotMeshes(bots, t) {
+    const alive = new Set();
+
+    for (const bot of bots) {
+      if (bot.isDead) {
+        if (this.botMeshes.has(bot.id)) {
+          const mesh = this.botMeshes.get(bot.id);
+          this.botMeshes.delete(bot.id);
+          this.botsGroup.remove(mesh);
+          this.startDeathAnimation(mesh);
+        }
+        continue;
+      }
+      alive.add(bot.id);
+
+      if (!this.botMeshes.has(bot.id)) {
+        const mesh = this._createBotMesh();
+        this.botsGroup.add(mesh);
+        this.botMeshes.set(bot.id, mesh);
+      }
+
+      const mesh = this.botMeshes.get(bot.id);
+      mesh.position.set(bot.x, 0, bot.y);
+      // Face toward bot.angle (converted from game-space to Three.js rotation)
+      mesh.rotation.y = -Math.PI / 2 - bot.angle;
+      if (mesh.userData.animate) {
+        mesh.userData.animate(t);
+      }
+      // Switch visible weapon based on current combat choice
+      if (mesh.userData.weapons) {
+        const wt = bot.weaponType ?? "pistol";
+        for (const [key, wMesh] of Object.entries(mesh.userData.weapons)) {
+          wMesh.visible = key === wt;
+        }
+      }
+    }
+
+    // Remove stale meshes
+    for (const [id, mesh] of this.botMeshes) {
+      if (!alive.has(id)) {
+        this.botsGroup.remove(mesh);
+        this.botMeshes.delete(id);
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
   // Public Render API  (preserves original Game.js interface)
   // ═══════════════════════════════════════════════════════════════
 
@@ -1389,7 +1573,7 @@ export class Renderer {
    * @param {number[][]} _map      — kept for API compat; geometry built via buildMap()
    * @param {Array}    _splatters  — placeholder
    */
-  renderWorld(player, enemies, _map, _splatters = []) {
+  renderWorld(player, enemies, _map, _splatters = [], bots = []) {
     const t = performance.now() / 1000;
 
     // Sync camera to player
@@ -1416,6 +1600,7 @@ export class Renderer {
     }
 
     this._updateEnemyMeshes(enemies, t);
+    this._updateBotMeshes(bots, t);
 
     // Update particle systems
     const dt = Math.min(1 / 30, t - (this._lastT || t));

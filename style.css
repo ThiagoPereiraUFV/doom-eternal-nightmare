@@ -577,6 +577,87 @@ body {
   border-radius: 4px;
 }
 
+/* ── Bot Status Panel ────────────────────────────────────────── */
+#bot-status-panel {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  font-family: "Orbitron", monospace;
+}
+
+.bot-command-badge {
+  font-size: 8px;
+  color: #00ffcc;
+  background: rgba(0, 255, 180, 0.12);
+  border: 1px solid rgba(0, 255, 180, 0.35);
+  border-radius: 3px;
+  padding: 1px 5px;
+  text-shadow: 0 0 4px rgba(0, 255, 200, 0.5);
+  letter-spacing: 0.5px;
+}
+
+#bot-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.bot-dot {
+  font-size: 10px;
+  line-height: 1;
+  color: #44ff88;
+  text-shadow: 0 0 5px rgba(0, 255, 100, 0.7);
+}
+
+.bot-dot.bot-dead {
+  color: #334433;
+  text-shadow: none;
+}
+
+/* ── Bot touch command buttons ───────────────────────────────── */
+#bot-touch-commands {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom) + 30px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 500;
+  pointer-events: auto;
+}
+
+.bot-cmd-btn {
+  background: rgba(0, 60, 20, 0.85);
+  border: 1px solid rgba(0, 200, 80, 0.6);
+  border-radius: 6px;
+  color: #44ff88;
+  font-family: "Orbitron", monospace;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 8px 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 6px rgba(0, 255, 100, 0.5);
+  cursor: pointer;
+  min-width: 60px;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.bot-cmd-btn:active {
+  background: rgba(0, 120, 40, 0.9);
+  border-color: #00ff88;
+}
+
+/* ctrl-green variant for touch controls card */
+.ctrl-green {
+  color: #44ff88;
+  text-shadow: 0 0 6px rgba(0, 255, 100, 0.6);
+}
+
 /* Loading Screen */
 #loadingScreen {
   position: fixed;

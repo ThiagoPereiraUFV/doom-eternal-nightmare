@@ -17,12 +17,28 @@ export class ChaseState extends AIBehavior {
    * @param {Player} player - Player reference
    * @param {Array} map - Game map
    * @param {number} deltaTime - Time since last frame
+   * @param {FriendlyBot[]} bots - Living allied bots (may be attacked)
    */
-  execute(enemy, player, map, _deltaTime) {
-    const distance = this._distance(enemy.x, enemy.y, player.x, player.y);
+  execute(enemy, player, map, _deltaTime, bots = []) {
+    // Pick nearest target: player or any living bot in LoS
+    let target = player;
+    let targetDist = this._distance(enemy.x, enemy.y, player.x, player.y);
 
-    // If player is too far, switch to search state
-    if (distance > GameConfig.ENEMY.LOSE_CHASE_DISTANCE) {
+    for (const bot of bots) {
+      if (bot.isDead) {
+        continue;
+      }
+      const d = this._distance(enemy.x, enemy.y, bot.x, bot.y);
+      if (d < targetDist && this._isPathClear(enemy.x, enemy.y, bot.x, bot.y, map)) {
+        target = bot;
+        targetDist = d;
+      }
+    }
+
+    const distance = targetDist;
+
+    // If primary target (player) is too far AND no bot is close, search
+    if (target === player && distance > GameConfig.ENEMY.LOSE_CHASE_DISTANCE) {
       enemy.setState(GameConfig.ENEMY.AI_STATES.SEARCH);
       return;
     }
@@ -35,32 +51,30 @@ export class ChaseState extends AIBehavior {
 
     // Attack if close enough
     if (distance < GameConfig.ENEMY.ATTACK_DISTANCE) {
-      this._tryAttack(enemy, player);
+      this._tryAttack(enemy, target);
       return;
     }
 
-    // Strafe behavior at medium range
+    // Strafe behavior at medium range (only when targeting player)
     if (
+      target === player &&
       distance < GameConfig.ENEMY.STRAFE_DISTANCE &&
       Math.random() < GameConfig.ENEMY.STRAFE_CHANCE
     ) {
       this._strafe(enemy, player, map);
     } else if (distance > GameConfig.ENEMY.MIN_MOVE_DISTANCE) {
-      // Chase player or last known location when the direct path is blocked.
-      const target = this._isPathClear(
-        enemy.x,
-        enemy.y,
-        player.x,
-        player.y,
-        map,
-      )
-        ? { x: player.x, y: player.y }
-        : enemy.lastKnownPlayerPosition || { x: player.x, y: player.y };
+      // Chase target or last known player location when direct path is blocked.
+      const navTarget =
+        target !== player
+          ? target
+          : this._isPathClear(enemy.x, enemy.y, player.x, player.y, map)
+            ? player
+            : enemy.lastKnownPlayerPosition || player;
 
       const moved = this._navigateTowards(
         enemy,
-        target.x,
-        target.y,
+        navTarget.x,
+        navTarget.y,
         enemy.speed,
         map,
       );
@@ -80,17 +94,17 @@ export class ChaseState extends AIBehavior {
   }
 
   /**
-   * Try to attack player
+   * Try to attack a target (player or bot)
    * @private
    */
-  _tryAttack(enemy, player) {
+  _tryAttack(enemy, target) {
     const currentTime = Date.now();
 
     if (
       !enemy.lastAttackTime ||
       currentTime - enemy.lastAttackTime > GameConfig.ENEMY.ATTACK_COOLDOWN
     ) {
-      player.takeDamage?.(GameConfig.ENEMY.ATTACK_DAMAGE);
+      target.takeDamage?.(GameConfig.ENEMY.ATTACK_DAMAGE);
       enemy.lastAttackTime = currentTime;
     }
   }

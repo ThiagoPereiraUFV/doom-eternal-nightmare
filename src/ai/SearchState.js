@@ -31,7 +31,7 @@ export class SearchState extends AIBehavior {
    * @param {Array} map - Game map
    * @param {number} deltaTime - Time since last frame
    */
-  execute(enemy, player, map, _deltaTime) {
+  execute(enemy, player, map, _deltaTime, _bots) {
     const distance = this._distance(enemy.x, enemy.y, player.x, player.y);
 
     // If player is close and visible, switch to chase

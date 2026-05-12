@@ -21,9 +21,10 @@ export class AIBehavior {
    * @param {Player} player - Player reference
    * @param {Array} map - Game map
    * @param {number} deltaTime - Time since last frame
+   * @param {FriendlyBot[]} bots - Living allied bots
    * @abstract
    */
-  execute(_enemy, _player, _map, _deltaTime) {
+  execute(_enemy, _player, _map, _deltaTime, _bots) {
     throw new Error("execute() must be implemented by subclass");
   }
 

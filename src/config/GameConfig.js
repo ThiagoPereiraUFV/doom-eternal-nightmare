@@ -234,6 +234,36 @@ export const GameConfig = {
     MUSIC_LOOP_DURATION: 8, // seconds
   },
 
+  // Friendly bot configuration
+  BOT: {
+    HEALTH: 100,
+    SPEED: 0.04,
+
+    // Range within which a bot will engage enemies.
+    ATTACK_RANGE: 9,
+
+    // Damage dealt per shot and cooldown between shots (ms).
+    ATTACK_DAMAGE: 25,
+    ATTACK_COOLDOWN: 700,
+
+    // Follow-mode formation tuning.
+    FOLLOW_DESIRED_DISTANCE: 2.5,
+    FOLLOW_MAX_DISTANCE: 8,
+
+    // How often a searching bot picks a new wander target (ms).
+    SEARCH_WANDER_INTERVAL: 3000,
+
+    // Max bots allowed in Custom difficulty.
+    MAX_COUNT: 5,
+
+    // Command identifiers (single source of truth).
+    COMMANDS: {
+      FOLLOW: "follow",
+      SEARCH_CLEAR: "search_clear",
+      STOP: "stop",
+    },
+  },
+
   // Difficulty presets
   // Each key overrides the corresponding base config at game start.
   DIFFICULTY: {
@@ -273,6 +303,8 @@ export const GameConfig = {
         "grenade_launcher",
         "plasma",
       ],
+      // Friendly bots
+      botCount: 3,
     },
 
     // Default preset: balanced values across combat, map density, and lighting.
@@ -306,6 +338,8 @@ export const GameConfig = {
         "grenade_launcher",
         "plasma",
       ],
+      // Friendly bots
+      botCount: 2,
     },
 
     // Pressure preset: reduced resources and tougher enemies.
@@ -331,6 +365,8 @@ export const GameConfig = {
       autoReload: false,
       aimAssist: false,
       availableGuns: ["pistol", "shotgun", "rifle", "smg"],
+      // Friendly bots
+      botCount: 1,
     },
 
     // Punishing preset: low health, dense maps, and minimal lighting support.
@@ -356,6 +392,8 @@ export const GameConfig = {
       autoReload: false,
       aimAssist: false,
       availableGuns: ["pistol"],
+      // Friendly bots — none on impossible
+      botCount: 0,
     },
 
     // Custom difficulty — defaults mirror MEDIUM; overridden at runtime by the UI
@@ -389,6 +427,8 @@ export const GameConfig = {
         "grenade_launcher",
         "plasma",
       ],
+      // Friendly bots
+      botCount: 3,
     },
   },
 
@@ -561,6 +601,16 @@ export const GameConfig = {
       group: "GAMEPLAY",
       type: "checkbox",
       label: "Aim assist",
+    },
+    {
+      key: "botCount",
+      group: "GAMEPLAY",
+      type: "range",
+      label: "Friendly bots",
+      min: 0,
+      max: 5,
+      step: 1,
+      format: (v) => String(Math.round(v)),
     },
     {
       key: "availableGuns",

@@ -71,6 +71,23 @@
       <button id="touch-jump" style="display: none"></button>
     </div>
 
+    <!-- Bot command touch buttons (visible only when bots are active) -->
+    <div id="bot-touch-commands" style="display: none">
+      <button id="touch-bot-follow" class="bot-cmd-btn" title="Follow me (Z)">
+        &#128100; FOLLOW
+      </button>
+      <button
+        id="touch-bot-search"
+        class="bot-cmd-btn"
+        title="Search &amp; clear (X)"
+      >
+        &#128270; SEARCH
+      </button>
+      <button id="touch-bot-stop" class="bot-cmd-btn" title="Stop (C)">
+        &#9632; STOP
+      </button>
+    </div>
+
     <div id="hud">
       <div class="hud-bottom-left">
         <div class="stat-card health-card">
@@ -160,6 +177,12 @@
           <div class="kills-label">DEMONS ELIMINATED</div>
           <div class="kills-value" id="enemyCounter">0 / 0</div>
         </div>
+      </div>
+
+      <!-- Bot status panel — shown only when bots are present -->
+      <div id="bot-status-panel" style="display: none">
+        <span id="bot-command-badge" class="bot-command-badge">FOLLOW ME</span>
+        <div id="bot-dots"></div>
       </div>
     </div>
 
@@ -302,6 +325,7 @@
           <span id="diff-stat-stamina">⚡ 100</span>
           <span id="diff-stat-ammo">🔹 ×1.0</span>
           <span id="diff-stat-enemies">☠ 50 enemies</span>
+          <span id="diff-stat-bots">🤝 3 friends</span>
           <span id="diff-stat-light">💡 Normal</span>
           <span id="diff-stat-autoreload">🔄 Auto-reload: On</span>
           <span id="diff-stat-aimassist">🎯 Aim assist: Off</span>
@@ -337,6 +361,10 @@
               ><span class="ctrl-desc">Prev / Next weapon</span>
             </div>
             <div class="ctrl-row">
+              <span class="ctrl-key">Z / X / C</span
+              ><span class="ctrl-desc">Squad: Follow / Search / Stop</span>
+            </div>
+            <div class="ctrl-row">
               <span class="ctrl-key">P</span
               ><span class="ctrl-desc">Pause</span>
             </div>
@@ -369,6 +397,10 @@
             <div class="ctrl-row">
               <span class="ctrl-key ctrl-icon">◀ ▶</span
               ><span class="ctrl-desc">Prev / Next weapon</span>
+            </div>
+            <div class="ctrl-row">
+              <span class="ctrl-key ctrl-icon ctrl-green">SQUAD</span
+              ><span class="ctrl-desc">Follow / Search / Stop</span>
             </div>
           </div>
         </div>
@@ -478,6 +510,14 @@
           `\ud83d\udd39 \u00d7${d.ammoMultiplier.toFixed(2)} ammo`;
         document.getElementById("diff-stat-enemies").textContent =
           `\u2620 ${d.enemyCount} enemies`;
+        const botEl = document.getElementById("diff-stat-bots");
+        if (botEl) {
+          const bc = d.botCount ?? 0;
+          botEl.textContent =
+            bc > 0
+              ? `\ud83e\udd1d ${bc} friend${bc !== 1 ? "s" : ""}`
+              : "\ud83e\udd1d No friends";
+        }
         document.getElementById("diff-stat-light").textContent =
           `\ud83d\udca1 ${LIGHT_LABEL[diffId]}`;
         document.getElementById("diff-stat-autoreload").textContent =
