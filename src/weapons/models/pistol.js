@@ -99,22 +99,24 @@ export class Pistol extends Weapon {
    * Build the pistol mesh.
    * @param {Object} builder
    */
-  buildModel({ addBox, addCyl, mat }) {
-    addBox(0.072, 0.052, 0.31, mat.metal, 0, 0.006, -0.018);
-    addBox(0.076, 0.056, 0.004, mat.dark, 0, 0.006, 0.085);
-    addBox(0.076, 0.056, 0.004, mat.dark, 0, 0.006, 0.065);
-    addBox(0.076, 0.056, 0.004, mat.dark, 0, 0.006, 0.045);
-    addCyl(0.019, 0.019, 0.095, mat.steel, 0, 0.003, -0.218, Math.PI / 2);
-    addCyl(0.026, 0.026, 0.009, mat.bright, 0, 0.003, -0.176, Math.PI / 2);
-    addBox(0.062, 0.036, 0.26, mat.dark, 0, -0.034, -0.005);
-    addBox(0.06, 0.024, 0.044, mat.dark, 0, -0.034, -0.14);
-    addBox(0.058, 0.007, 0.082, mat.dark, 0, -0.057, 0.018);
-    addBox(0.058, 0.024, 0.007, mat.dark, 0, -0.047, -0.022);
-    addBox(0.008, 0.022, 0.013, mat.bright, 0, -0.048, 0.013);
-    addBox(0.058, 0.116, 0.09, mat.rubber, 0, -0.111, 0.091, 0.2);
-    addBox(0.052, 0.008, 0.072, mat.metal, 0, -0.172, 0.086, 0.2);
-    addBox(0.006, 0.013, 0.005, mat.steel, 0, 0.038, -0.175);
-    addBox(0.024, 0.009, 0.005, mat.steel, 0, 0.036, 0.085);
+  buildModel(group, mat) {
+    this.g = group;
+    this.mat = mat;
+    this.addBox(0.072, 0.052, 0.31, mat.metal, 0, 0.006, -0.018);
+    this.addBox(0.076, 0.056, 0.004, mat.dark, 0, 0.006, 0.085);
+    this.addBox(0.076, 0.056, 0.004, mat.dark, 0, 0.006, 0.065);
+    this.addBox(0.076, 0.056, 0.004, mat.dark, 0, 0.006, 0.045);
+    this.addCyl(0.019, 0.019, 0.095, mat.steel, 0, 0.003, -0.218, Math.PI / 2);
+    this.addCyl(0.026, 0.026, 0.009, mat.bright, 0, 0.003, -0.176, Math.PI / 2);
+    this.addBox(0.062, 0.036, 0.26, mat.dark, 0, -0.034, -0.005);
+    this.addBox(0.06, 0.024, 0.044, mat.dark, 0, -0.034, -0.14);
+    this.addBox(0.058, 0.007, 0.082, mat.dark, 0, -0.057, 0.018);
+    this.addBox(0.058, 0.024, 0.007, mat.dark, 0, -0.047, -0.022);
+    this.addBox(0.008, 0.022, 0.013, mat.bright, 0, -0.048, 0.013);
+    this.addBox(0.058, 0.116, 0.09, mat.rubber, 0, -0.111, 0.091, 0.2);
+    this.addBox(0.052, 0.008, 0.072, mat.metal, 0, -0.172, 0.086, 0.2);
+    this.addBox(0.006, 0.013, 0.005, mat.steel, 0, 0.038, -0.175);
+    this.addBox(0.024, 0.009, 0.005, mat.steel, 0, 0.036, 0.085);
   }
 
   /**

@@ -114,80 +114,16 @@ export class SniperRifle extends Weapon {
    * Build the sniper mesh.
    * @param {Object} builder
    */
-  buildModel({ addBox, addCyl, addTorus, addRing, mat, THREE }) {
-    const innerMats = new Map();
-    const capMats = new Map();
-    const getInnerMat = (material) => {
-      if (!innerMats.has(material)) {
-        const inner = material.clone();
-        inner.side = THREE.BackSide;
-        innerMats.set(material, inner);
-      }
-      return innerMats.get(material);
-    };
-    const getCapMat = (material) => {
-      if (!capMats.has(material)) {
-        const cap = material.clone();
-        cap.side = THREE.DoubleSide;
-        capMats.set(material, cap);
-      }
-      return capMats.get(material);
-    };
-    const addTube = (
-      outerRadius,
-      innerRadius,
-      length,
-      material,
-      px,
-      py,
-      pz,
-    ) => {
-      addCyl(
-        outerRadius,
-        outerRadius,
-        length,
-        material,
-        px,
-        py,
-        pz,
-        Math.PI / 2,
-        true,
-      );
-      addCyl(
-        innerRadius,
-        innerRadius,
-        length,
-        getInnerMat(material),
-        px,
-        py,
-        pz,
-        Math.PI / 2,
-        true,
-      );
-      addRing(
-        outerRadius,
-        innerRadius,
-        getCapMat(material),
-        px,
-        py,
-        pz - length / 2,
-      );
-      addRing(
-        outerRadius,
-        innerRadius,
-        getCapMat(material),
-        px,
-        py,
-        pz + length / 2,
-      );
-    };
+  buildModel(group, mat) {
+    this.g = group;
+    this.mat = mat;
 
-    addCyl(0.018, 0.015, 0.72, mat.bright, 0, 0.014, -0.52, Math.PI / 2);
-    addCyl(0.024, 0.02, 0.08, mat.bright, 0, 0.014, -0.18, Math.PI / 2);
-    addCyl(0.026, 0.026, 0.05, mat.metal, 0, 0.014, -0.876, Math.PI / 2);
-    addBox(0.006, 0.036, 0.05, mat.dark, 0, 0.014, -0.876);
+    this.addCyl(0.018, 0.015, 0.72, mat.bright, 0, 0.014, -0.52, Math.PI / 2);
+    this.addCyl(0.024, 0.02, 0.08, mat.bright, 0, 0.014, -0.18, Math.PI / 2);
+    this.addCyl(0.026, 0.026, 0.05, mat.metal, 0, 0.014, -0.876, Math.PI / 2);
+    this.addBox(0.006, 0.036, 0.05, mat.dark, 0, 0.014, -0.876);
     for (let fi = 0; fi < 5; fi++) {
-      addBox(
+      this.addBox(
         0.006,
         0.022,
         0.56,
@@ -197,32 +133,52 @@ export class SniperRifle extends Weapon {
         -0.46,
       );
     }
-    addBox(0.078, 0.082, 0.24, mat.dark, 0, 0.016, 0.01);
-    addBox(0.082, 0.012, 0.24, mat.metal, 0, 0.064, 0.01);
-    addBox(0.09, 0.018, 0.036, mat.metal, 0, 0.074, -0.05);
-    addBox(0.09, 0.018, 0.036, mat.metal, 0, 0.074, 0.06);
-    addTube(0.03, 0.024, 0.31, mat.dark, 0, 0.1, 0.005);
-    addCyl(0.024, 0.024, 0.12, mat.scope, 0, 0.1, -0.19, Math.PI / 2, true);
-    addCyl(0.022, 0.022, 0.008, mat.glass, 0, 0.1, -0.13, Math.PI / 2, true);
-    addTube(0.034, 0.03, 0.08, mat.dark, 0, 0.1, -0.24);
-    addTube(0.024, 0.019, 0.08, mat.dark, 0, 0.1, 0.2);
-    addTube(0.028, 0.024, 0.036, mat.dark, 0, 0.1, 0.245);
-    addTorus(0.03, 0.005, mat.dark, 0, 0.1, -0.15);
-    addTorus(0.03, 0.005, mat.dark, 0, 0.1, 0.16);
-    addTorus(0.026, 0.005, mat.dark, 0, 0.1, 0.24);
-    addBox(0.01, 0.062, 0.01, mat.metal, 0.044, 0.048, 0.03);
-    addCyl(0.016, 0.016, 0.02, mat.metal, 0.044, 0.014, 0.03);
-    addBox(0.062, 0.008, 0.09, mat.metal, 0, -0.05, 0.06);
-    addBox(0.062, 0.026, 0.008, mat.metal, 0, -0.04, 0.022);
-    addBox(0.008, 0.026, 0.01, mat.bright, 0, -0.046, 0.054);
-    addBox(0.068, 0.072, 0.34, mat.wood, 0, -0.01, 0.25, -0.04);
-    addBox(0.06, 0.1, 0.1, mat.wood, 0, -0.066, 0.092, 0.14);
-    addBox(0.066, 0.04, 0.18, mat.wood, 0, 0.024, 0.31, -0.03);
-    addBox(0.07, 0.082, 0.018, mat.rubber, 0, -0.01, 0.424, -0.04);
-    addBox(0.058, 0.058, 0.22, mat.wood, 0, -0.008, -0.26);
-    addBox(0.01, 0.02, 0.01, mat.metal, 0, -0.038, -0.12);
-    addBox(0.01, 0.02, 0.01, mat.metal, 0, -0.04, 0.18);
-    addBox(0.02, 0.022, 0.01, mat.metal, 0, 0.05, -0.84);
+    this.addBox(0.078, 0.082, 0.24, mat.dark, 0, 0.016, 0.01);
+    this.addBox(0.082, 0.012, 0.24, mat.metal, 0, 0.064, 0.01);
+    this.addBox(0.09, 0.018, 0.036, mat.metal, 0, 0.074, -0.05);
+    this.addBox(0.09, 0.018, 0.036, mat.metal, 0, 0.074, 0.06);
+    this.addTube(0.03, 0.024, 0.31, mat.dark, 0, 0.1, 0.005);
+    this.addCyl(
+      0.024,
+      0.024,
+      0.12,
+      mat.scope,
+      0,
+      0.1,
+      -0.19,
+      Math.PI / 2,
+      true,
+    );
+    this.addCyl(
+      0.022,
+      0.022,
+      0.008,
+      mat.glass,
+      0,
+      0.1,
+      -0.13,
+      Math.PI / 2,
+      true,
+    );
+    this.addTube(0.034, 0.03, 0.08, mat.dark, 0, 0.1, -0.24);
+    this.addTube(0.024, 0.019, 0.08, mat.dark, 0, 0.1, 0.2);
+    this.addTube(0.028, 0.024, 0.036, mat.dark, 0, 0.1, 0.245);
+    this.addTorus(0.03, 0.005, mat.dark, 0, 0.1, -0.15);
+    this.addTorus(0.03, 0.005, mat.dark, 0, 0.1, 0.16);
+    this.addTorus(0.026, 0.005, mat.dark, 0, 0.1, 0.24);
+    this.addBox(0.01, 0.062, 0.01, mat.metal, 0.044, 0.048, 0.03);
+    this.addCyl(0.016, 0.016, 0.02, mat.metal, 0.044, 0.014, 0.03);
+    this.addBox(0.062, 0.008, 0.09, mat.metal, 0, -0.05, 0.06);
+    this.addBox(0.062, 0.026, 0.008, mat.metal, 0, -0.04, 0.022);
+    this.addBox(0.008, 0.026, 0.01, mat.bright, 0, -0.046, 0.054);
+    this.addBox(0.068, 0.072, 0.34, mat.wood, 0, -0.01, 0.25, -0.04);
+    this.addBox(0.06, 0.1, 0.1, mat.wood, 0, -0.066, 0.092, 0.14);
+    this.addBox(0.066, 0.04, 0.18, mat.wood, 0, 0.024, 0.31, -0.03);
+    this.addBox(0.07, 0.082, 0.018, mat.rubber, 0, -0.01, 0.424, -0.04);
+    this.addBox(0.058, 0.058, 0.22, mat.wood, 0, -0.008, -0.26);
+    this.addBox(0.01, 0.02, 0.01, mat.metal, 0, -0.038, -0.12);
+    this.addBox(0.01, 0.02, 0.01, mat.metal, 0, -0.04, 0.18);
+    this.addBox(0.02, 0.022, 0.01, mat.metal, 0, 0.05, -0.84);
   }
 
   fire(context) {

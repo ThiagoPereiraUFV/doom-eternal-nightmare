@@ -412,7 +412,7 @@ export class Game {
 
     // Enemy events
     this.eventManager.on("enemyDamaged", ({ enemy }) => {
-      this.renderer.triggerHitFlash?.(enemy.id);
+      enemy.triggerHitFlash?.();
       this.audioSystem.playSound("enemy_hurt");
     });
 

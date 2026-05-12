@@ -5,6 +5,10 @@
  */
 
 import { Enemy } from "./Enemy.js";
+import { Demon } from "./Demon.js";
+import { Zombie } from "./Zombie.js";
+import { Ghost } from "./Ghost.js";
+import { Brute } from "./Brute.js";
 import { GameConfig } from "../config/GameConfig.js";
 import { ChaseState } from "../ai/ChaseState.js";
 import { PatrolState } from "../ai/PatrolState.js";
@@ -13,6 +17,14 @@ import { SearchState } from "../ai/SearchState.js";
 export class EnemyFactory {
   static _enemyTypes = new Map();
   static _aiStates = new Map();
+
+  /** Maps type string → entity class (each class groups logic + mesh). */
+  static _entityClasses = new Map([
+    ["demon", Demon],
+    ["zombie", Zombie],
+    ["ghost", Ghost],
+    ["brute", Brute],
+  ]);
 
   /**
    * Initialize default enemy types and AI states
@@ -65,7 +77,11 @@ export class EnemyFactory {
       throw new Error(`Unknown enemy type: ${type}`);
     }
 
-    const enemy = new Enemy(type, x, y, config);
+    const EntityClass = this._entityClasses.get(type.toLowerCase()) ?? Enemy;
+    const enemy =
+      EntityClass === Enemy
+        ? new Enemy(type, x, y, config)
+        : new EntityClass(x, y, config);
 
     // Set initial AI state
     const stateObject = this._aiStates.get(initialState.toLowerCase());

@@ -5,9 +5,11 @@
  */
 
 import { GameConfig } from "../config/GameConfig.js";
+import { MeshBuilderMixin } from "../utils/MeshBuilder.js";
 
-export class Weapon {
+export class Weapon extends MeshBuilderMixin(class {}) {
   constructor(name, stats) {
+    super();
     if (new.target === Weapon) {
       throw new Error(
         "Weapon is an abstract class and cannot be instantiated directly",
@@ -51,11 +53,13 @@ export class Weapon {
 
   /**
    * Build the first-person weapon mesh.
-   * @param {Object} builder - { addBox, addCyl, mat, THREE }
+   * @param {THREE.Group} group
+   * @param {object}      mat  - Material palette from Renderer._wMat
    */
-  buildModel(builder) {
-    const { addBox, mat } = builder;
-    addBox(0.08, 0.05, 0.3, mat.metal, 0, 0, -0.08);
+  buildModel(group, mat) {
+    this.g = group;
+    this.mat = mat;
+    this.addBox(0.08, 0.05, 0.3, mat.metal, 0, 0, -0.08);
   }
 
   /**

@@ -2,6 +2,7 @@
  * PlasmaGun - Energy weapon
  * High penetration, sci-fi feel, moderate fire rate, no falloff damage
  */
+import * as THREE from "three";
 
 import { Weapon } from "../Weapon.js";
 
@@ -76,9 +77,11 @@ export class PlasmaGun extends Weapon {
    * Build the plasma gun mesh.
    * @param {Object} builder
    */
-  buildModel({ addBox, addCyl, THREE, mat }) {
-    addBox(0.09, 0.08, 0.38, mat.dark, 0, 0.004, 0.0);
-    addBox(
+  buildModel(group, mat) {
+    this.g = group;
+    this.mat = mat;
+    this.addBox(0.09, 0.08, 0.38, mat.dark, 0, 0.004, 0.0);
+    this.addBox(
       0.01,
       0.068,
       0.28,
@@ -87,7 +90,7 @@ export class PlasmaGun extends Weapon {
       0.004,
       -0.04,
     );
-    addBox(
+    this.addBox(
       0.01,
       0.068,
       0.28,
@@ -96,11 +99,11 @@ export class PlasmaGun extends Weapon {
       0.004,
       -0.04,
     );
-    addCyl(0.03, 0.026, 0.2, mat.dark, 0, 0.004, -0.29, Math.PI / 2);
-    addCyl(0.034, 0.034, 0.02, mat.dark, 0, 0.004, -0.392, Math.PI / 2);
+    this.addCyl(0.03, 0.026, 0.2, mat.dark, 0, 0.004, -0.29, Math.PI / 2);
+    this.addCyl(0.034, 0.034, 0.02, mat.dark, 0, 0.004, -0.392, Math.PI / 2);
     const plasmaRingMat = new THREE.MeshBasicMaterial({ color: 0x00aaff });
     for (let ri = 0; ri < 4; ri++) {
-      addCyl(
+      this.addCyl(
         0.036,
         0.036,
         0.006,
@@ -111,7 +114,7 @@ export class PlasmaGun extends Weapon {
         Math.PI / 2,
       );
     }
-    addBox(
+    this.addBox(
       0.07,
       0.06,
       0.1,
@@ -120,7 +123,7 @@ export class PlasmaGun extends Weapon {
       0.004,
       0.06,
     );
-    addCyl(
+    this.addCyl(
       0.028,
       0.028,
       0.08,
@@ -130,12 +133,12 @@ export class PlasmaGun extends Weapon {
       0.05,
       0,
     );
-    addBox(0.01, 0.012, 0.36, mat.metal, 0, 0.048, 0.0);
-    addBox(0.03, 0.014, 0.008, mat.metal, 0, 0.048, 0.168);
-    addBox(0.05, 0.11, 0.072, mat.rubber, 0, -0.072, 0.09, 0.16);
-    addBox(0.052, 0.01, 0.064, mat.dark, 0, -0.128, 0.088, 0.16);
-    addBox(0.058, 0.008, 0.084, mat.dark, 0, -0.046, 0.058);
-    addBox(
+    this.addBox(0.01, 0.012, 0.36, mat.metal, 0, 0.048, 0.0);
+    this.addBox(0.03, 0.014, 0.008, mat.metal, 0, 0.048, 0.168);
+    this.addBox(0.05, 0.11, 0.072, mat.rubber, 0, -0.072, 0.09, 0.16);
+    this.addBox(0.052, 0.01, 0.064, mat.dark, 0, -0.128, 0.088, 0.16);
+    this.addBox(0.058, 0.008, 0.084, mat.dark, 0, -0.046, 0.058);
+    this.addBox(
       0.01,
       0.026,
       0.01,
@@ -145,10 +148,10 @@ export class PlasmaGun extends Weapon {
       0.05,
     );
     const ledMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
-    addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.1);
-    addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.06);
-    addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.02);
-    addBox(
+    this.addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.1);
+    this.addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.06);
+    this.addBox(0.004, 0.008, 0.008, ledMat, -0.046, 0.028, 0.02);
+    this.addBox(
       0.004,
       0.008,
       0.008,

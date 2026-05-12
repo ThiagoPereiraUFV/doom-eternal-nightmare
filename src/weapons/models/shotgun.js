@@ -102,20 +102,22 @@ export class Shotgun extends Weapon {
    * Build the shotgun mesh.
    * @param {Object} builder
    */
-  buildModel({ addBox, addCyl, mat }) {
-    addCyl(0.034, 0.034, 0.64, mat.bright, 0, 0.04, -0.26, Math.PI / 2);
-    addBox(0.012, 0.006, 0.64, mat.steel, 0, 0.074, -0.26);
-    addBox(0.012, 0.012, 0.012, mat.steel, 0, 0.082, -0.58);
-    addCyl(0.022, 0.022, 0.53, mat.metal, 0, 0.006, -0.205, Math.PI / 2);
-    addCyl(0.03, 0.03, 0.13, mat.wood, 0, 0.006, -0.31, Math.PI / 2);
-    addBox(0.064, 0.03, 0.12, mat.wood, 0, 0.005, -0.31);
-    addBox(0.1, 0.096, 0.2, mat.dark, 0, 0.01, 0.03);
-    addBox(0.006, 0.038, 0.09, mat.bright, 0.052, 0.022, 0.018);
-    addBox(0.018, 0.01, 0.018, mat.metal, 0, 0.062, 0.01);
-    addBox(0.076, 0.076, 0.31, mat.wood, 0, 0.006, 0.235, -0.07);
-    addBox(0.078, 0.082, 0.014, mat.rubber, 0, 0.005, 0.394, -0.07);
-    addBox(0.06, 0.008, 0.09, mat.metal, 0, -0.046, 0.05);
-    addBox(0.01, 0.026, 0.012, mat.metal, 0, -0.04, 0.042);
+  buildModel(group, mat) {
+    this.g = group;
+    this.mat = mat;
+    this.addCyl(0.034, 0.034, 0.64, mat.bright, 0, 0.04, -0.26, Math.PI / 2);
+    this.addBox(0.012, 0.006, 0.64, mat.steel, 0, 0.074, -0.26);
+    this.addBox(0.012, 0.012, 0.012, mat.steel, 0, 0.082, -0.58);
+    this.addCyl(0.022, 0.022, 0.53, mat.metal, 0, 0.006, -0.205, Math.PI / 2);
+    this.addCyl(0.03, 0.03, 0.13, mat.wood, 0, 0.006, -0.31, Math.PI / 2);
+    this.addBox(0.064, 0.03, 0.12, mat.wood, 0, 0.005, -0.31);
+    this.addBox(0.1, 0.096, 0.2, mat.dark, 0, 0.01, 0.03);
+    this.addBox(0.006, 0.038, 0.09, mat.bright, 0.052, 0.022, 0.018);
+    this.addBox(0.018, 0.01, 0.018, mat.metal, 0, 0.062, 0.01);
+    this.addBox(0.076, 0.076, 0.31, mat.wood, 0, 0.006, 0.235, -0.07);
+    this.addBox(0.078, 0.082, 0.014, mat.rubber, 0, 0.005, 0.394, -0.07);
+    this.addBox(0.06, 0.008, 0.09, mat.metal, 0, -0.046, 0.05);
+    this.addBox(0.01, 0.026, 0.012, mat.metal, 0, -0.04, 0.042);
   }
 
   /**

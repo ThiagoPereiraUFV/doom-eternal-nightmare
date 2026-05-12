@@ -4,6 +4,7 @@
  * Following SRP - only enemy logic
  */
 
+import * as THREE from "three";
 import { GameConfig } from "../config/GameConfig.js";
 
 export class Enemy {
@@ -39,6 +40,10 @@ export class Enemy {
     // Visual state
     this.isDead = false;
     this.deathTime = 0;
+
+    // 3D mesh — owned by this entity; set by spawnMesh()
+    this.mesh = null;
+    this.hitFlashTimer = 0;
   }
 
   /**
@@ -161,6 +166,70 @@ export class Enemy {
       isDead: this.isDead,
       position: { x: this.x, y: this.y },
     };
+  }
+
+  // ─── 3D Mesh Lifecycle ─────────────────────────────────────────────────────
+
+  /**
+   * Build and add this enemy's 3D mesh to the given group.
+   * Subclasses must implement createMesh(group, mat).
+   * @param {THREE.Group} group - Parent group (e.g. enemiesGroup in scene)
+   * @param {Object} mat - Material palette
+   */
+  spawnMesh(group, mat) {
+    const g = new THREE.Group();
+    this.createMesh(g, mat);
+    this.mesh = g;
+    group.add(g);
+  }
+
+  /**
+   * Sync position, billboard rotation, animation and hit flash each frame.
+   * @param {number} cameraX
+   * @param {number} cameraZ
+   * @param {number} t - time in seconds
+   */
+  updateMesh(cameraX, cameraZ, t) {
+    if (!this.mesh) {
+      return;
+    }
+    this.mesh.position.set(this.x, 0, this.y);
+    this.mesh.lookAt(cameraX, 0, cameraZ);
+    if (this.mesh.userData.animate) {
+      this.mesh.userData.animate(t);
+    }
+    if (this.hitFlashTimer > 0) {
+      this.hitFlashTimer -= 0.016;
+      const intensity = Math.min(1, this.hitFlashTimer * 5);
+      this.mesh.traverse((child) => {
+        if (child.isMesh && child.material && child.material.emissive) {
+          child.material.emissive.setRGB(intensity * 0.8, 0, 0);
+        }
+      });
+    } else if (this.hitFlashTimer < 0) {
+      this.hitFlashTimer = 0;
+      this.mesh.traverse((child) => {
+        if (child.isMesh && child.material && child.material.emissive) {
+          child.material.emissive.setRGB(0, 0, 0);
+        }
+      });
+    }
+  }
+
+  /**
+   * Remove this enemy's mesh from the group and clear the reference.
+   * @param {THREE.Group} group
+   */
+  removeMesh(group) {
+    if (this.mesh) {
+      group.remove(this.mesh);
+      this.mesh = null;
+    }
+  }
+
+  /** Start a brief red hit-flash on the mesh. */
+  triggerHitFlash() {
+    this.hitFlashTimer = 0.25;
   }
 }
 

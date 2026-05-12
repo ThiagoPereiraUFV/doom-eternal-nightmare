@@ -2,6 +2,7 @@
  * GrenadeL - Grenade Launcher
  * Explosive area damage, low fire rate, affects multiple enemies in blast radius
  */
+import * as THREE from "three";
 
 import { Weapon } from "../Weapon.js";
 
@@ -82,24 +83,26 @@ export class GrenadeL extends Weapon {
    * Build the grenade launcher mesh.
    * @param {Object} builder
    */
-  buildModel({ addBox, addCyl, mat, THREE }) {
-    addCyl(0.04, 0.038, 0.48, mat.bright, 0, 0.02, -0.31, Math.PI / 2);
-    addBox(0.01, 0.008, 0.48, mat.steel, 0, 0.062, -0.31);
-    addCyl(0.046, 0.04, 0.02, mat.bright, 0, 0.02, -0.55, Math.PI / 2);
-    addBox(0.1, 0.1, 0.2, mat.dark, 0, 0.02, 0.042);
-    addCyl(0.01, 0.01, 0.106, mat.metal, 0, 0.02, -0.062, 0, Math.PI / 2);
-    addBox(0.04, 0.024, 0.024, mat.metal, 0, 0.066, -0.04);
-    addBox(0.02, 0.06, 0.01, mat.metal, 0, 0.082, -0.28);
-    addBox(0.006, 0.014, 0.005, mat.steel, 0, 0.098, -0.28);
-    addBox(0.068, 0.008, 0.09, mat.metal, 0, -0.044, 0.052);
-    addBox(0.068, 0.026, 0.008, mat.metal, 0, -0.034, 0.018);
-    addBox(0.01, 0.03, 0.01, mat.bright, 0, -0.04, 0.044);
-    addBox(0.078, 0.084, 0.29, mat.wood, 0, 0.014, 0.242, -0.06);
-    addBox(0.08, 0.084, 0.018, mat.rubber, 0, 0.014, 0.397, -0.06);
-    addBox(0.058, 0.12, 0.086, mat.rubber, 0, -0.076, 0.078, 0.24);
-    addBox(0.06, 0.01, 0.078, mat.metal, 0, -0.138, 0.076, 0.24);
-    addBox(0.07, 0.08, 0.16, mat.wood, 0, 0.02, -0.21);
-    addCyl(
+  buildModel(group, mat) {
+    this.g = group;
+    this.mat = mat;
+    this.addCyl(0.04, 0.038, 0.48, mat.bright, 0, 0.02, -0.31, Math.PI / 2);
+    this.addBox(0.01, 0.008, 0.48, mat.steel, 0, 0.062, -0.31);
+    this.addCyl(0.046, 0.04, 0.02, mat.bright, 0, 0.02, -0.55, Math.PI / 2);
+    this.addBox(0.1, 0.1, 0.2, mat.dark, 0, 0.02, 0.042);
+    this.addCyl(0.01, 0.01, 0.106, mat.metal, 0, 0.02, -0.062, 0, Math.PI / 2);
+    this.addBox(0.04, 0.024, 0.024, mat.metal, 0, 0.066, -0.04);
+    this.addBox(0.02, 0.06, 0.01, mat.metal, 0, 0.082, -0.28);
+    this.addBox(0.006, 0.014, 0.005, mat.steel, 0, 0.098, -0.28);
+    this.addBox(0.068, 0.008, 0.09, mat.metal, 0, -0.044, 0.052);
+    this.addBox(0.068, 0.026, 0.008, mat.metal, 0, -0.034, 0.018);
+    this.addBox(0.01, 0.03, 0.01, mat.bright, 0, -0.04, 0.044);
+    this.addBox(0.078, 0.084, 0.29, mat.wood, 0, 0.014, 0.242, -0.06);
+    this.addBox(0.08, 0.084, 0.018, mat.rubber, 0, 0.014, 0.397, -0.06);
+    this.addBox(0.058, 0.12, 0.086, mat.rubber, 0, -0.076, 0.078, 0.24);
+    this.addBox(0.06, 0.01, 0.078, mat.metal, 0, -0.138, 0.076, 0.24);
+    this.addBox(0.07, 0.08, 0.16, mat.wood, 0, 0.02, -0.21);
+    this.addCyl(
       0.038,
       0.038,
       0.06,

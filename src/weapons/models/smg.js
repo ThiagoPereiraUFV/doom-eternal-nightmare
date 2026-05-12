@@ -100,26 +100,28 @@ export class SMG extends Weapon {
    * Build the SMG mesh.
    * @param {Object} builder
    */
-  buildModel({ addBox, addCyl, mat }) {
-    addCyl(0.014, 0.014, 0.22, mat.bright, 0, 0.006, -0.22, Math.PI / 2);
-    addCyl(0.018, 0.018, 0.022, mat.metal, 0, 0.006, -0.332, Math.PI / 2);
-    addBox(0.058, 0.058, 0.23, mat.dark, 0, 0.012, 0.0);
-    addBox(0.062, 0.01, 0.23, mat.metal, 0, 0.044, 0.0);
-    addBox(0.016, 0.016, 0.02, mat.metal, 0, 0.052, 0.055);
-    addBox(0.01, 0.032, 0.012, mat.metal, 0, 0.044, -0.21);
-    addBox(0.004, 0.01, 0.004, mat.steel, 0, 0.06, -0.21);
-    addBox(0.022, 0.014, 0.01, mat.metal, 0, 0.044, 0.09);
-    addBox(0.056, 0.044, 0.2, mat.dark, 0, -0.02, 0.01);
-    addBox(0.052, 0.008, 0.07, mat.metal, 0, -0.05, 0.042);
-    addBox(0.01, 0.022, 0.01, mat.bright, 0, -0.044, 0.034);
-    addBox(0.048, 0.048, 0.14, mat.dark, 0, -0.008, -0.14);
-    addBox(0.05, 0.01, 0.14, mat.metal, 0, 0.028, -0.14);
-    addBox(0.044, 0.13, 0.058, mat.dark, 0, -0.074, -0.044, -0.08);
-    addBox(0.046, 0.008, 0.05, mat.metal, 0, -0.136, -0.044, -0.08);
-    addBox(0.04, 0.04, 0.18, mat.dark, 0, -0.005, 0.17);
-    addBox(0.042, 0.038, 0.06, mat.rubber, 0, -0.005, 0.27);
-    addBox(0.044, 0.095, 0.066, mat.rubber, 0, -0.072, 0.068, 0.18);
-    addBox(0.046, 0.008, 0.058, mat.metal, 0, -0.12, 0.064, 0.18);
+  buildModel(group, mat) {
+    this.g = group;
+    this.mat = mat;
+    this.addCyl(0.014, 0.014, 0.22, mat.bright, 0, 0.006, -0.22, Math.PI / 2);
+    this.addCyl(0.018, 0.018, 0.022, mat.metal, 0, 0.006, -0.332, Math.PI / 2);
+    this.addBox(0.058, 0.058, 0.23, mat.dark, 0, 0.012, 0.0);
+    this.addBox(0.062, 0.01, 0.23, mat.metal, 0, 0.044, 0.0);
+    this.addBox(0.016, 0.016, 0.02, mat.metal, 0, 0.052, 0.055);
+    this.addBox(0.01, 0.032, 0.012, mat.metal, 0, 0.044, -0.21);
+    this.addBox(0.004, 0.01, 0.004, mat.steel, 0, 0.06, -0.21);
+    this.addBox(0.022, 0.014, 0.01, mat.metal, 0, 0.044, 0.09);
+    this.addBox(0.056, 0.044, 0.2, mat.dark, 0, -0.02, 0.01);
+    this.addBox(0.052, 0.008, 0.07, mat.metal, 0, -0.05, 0.042);
+    this.addBox(0.01, 0.022, 0.01, mat.bright, 0, -0.044, 0.034);
+    this.addBox(0.048, 0.048, 0.14, mat.dark, 0, -0.008, -0.14);
+    this.addBox(0.05, 0.01, 0.14, mat.metal, 0, 0.028, -0.14);
+    this.addBox(0.044, 0.13, 0.058, mat.dark, 0, -0.074, -0.044, -0.08);
+    this.addBox(0.046, 0.008, 0.05, mat.metal, 0, -0.136, -0.044, -0.08);
+    this.addBox(0.04, 0.04, 0.18, mat.dark, 0, -0.005, 0.17);
+    this.addBox(0.042, 0.038, 0.06, mat.rubber, 0, -0.005, 0.27);
+    this.addBox(0.044, 0.095, 0.066, mat.rubber, 0, -0.072, 0.068, 0.18);
+    this.addBox(0.046, 0.008, 0.058, mat.metal, 0, -0.12, 0.064, 0.18);
   }
 
   fire(context) {

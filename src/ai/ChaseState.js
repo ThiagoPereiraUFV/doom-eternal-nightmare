@@ -29,7 +29,10 @@ export class ChaseState extends AIBehavior {
         continue;
       }
       const d = this._distance(enemy.x, enemy.y, bot.x, bot.y);
-      if (d < targetDist && this._isPathClear(enemy.x, enemy.y, bot.x, bot.y, map)) {
+      if (
+        d < targetDist &&
+        this._isPathClear(enemy.x, enemy.y, bot.x, bot.y, map)
+      ) {
         target = bot;
         targetDist = d;
       }
