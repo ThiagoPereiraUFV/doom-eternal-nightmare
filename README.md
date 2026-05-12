@@ -7,12 +7,14 @@ A browser-based first-person shooter (FPS) game inspired by classic titles like 
 ### Key Features
 - 🔫 7 weapons (Pistol, Shotgun, Rifle, SMG, Sniper, Grenade Launcher, Plasma Gun)
 - 🤖 Smart AI enemies with state machine (Patrol, Chase, Search)
+- 🤝 Friendly AI bot companions with command system (Follow, Search & Clear, Hold)
 - 🗺️ Procedural map generation with cellular automata
-- 🎨 True 3D rendering via Three.js (WebGL) with dynamic lighting, fog, blood particles, explosions
+- 🎨 True 3D rendering via Three.js (WebGL) with dynamic lighting, fog, blood particles, explosions, death animations
 - 🏃 Stamina and sprint mechanics
 - 🔊 Fully procedural audio system (Web Audio API — no audio files)
 - 📱 Mobile touch controls (virtual joystick + dual-zone look)
 - 🎮 5 difficulty presets + fully configurable custom difficulty
+- 🔭 Pre-game 3D model viewer (browse enemies and weapons before starting)
 - 📦 Progressive Web App (PWA) with offline support
 - 📦 Modular architecture following SOLID principles
 
@@ -50,11 +52,12 @@ A browser-based first-person shooter (FPS) game inspired by classic titles like 
 | Pattern | Classes | Purpose |
 |---------|---------|---------|
 | **Factory** | `WeaponFactory`, `EnemyFactory` | Create objects without specifying exact class |
-| **Strategy** | `ChaseState`, `PatrolState`, `SearchState` | Interchangeable AI behaviors |
+| **Strategy** | `ChaseState`, `PatrolState`, `SearchState`, `BotFollowState`, `BotIdleState`, `BotSearchClearState` | Interchangeable AI behaviors |
 | **Singleton** | `AudioSystem`, `GameStateManager`, `ResourceManager` | Single instance of critical systems |
 | **Observer** | `EventManager` | Publish/subscribe event system |
 | **State** | `GameStateManager` | Manage game state transitions |
 | **Object Pool** | Blood particles, shell casings | Reuse objects for performance |
+| **Mixin** | `MeshBuilderMixin` | Composable 3D geometry helpers for entity classes |
 
 ---
 
@@ -110,11 +113,15 @@ npx http-server -p 8000
 | `1`–`7` | Switch Weapon by slot |
 | `Q` | Previous Weapon |
 | `E` | Next Weapon |
+| `Z` | Bot command: Follow |
+| `X` | Bot command: Search & Clear |
+| `C` | Bot command: Hold Position |
 
 ### Mobile / Touch
 - **Left zone** — virtual joystick (move + strafe)
 - **Right zone** — swipe to look
 - On-screen buttons: FIRE, ADS, RELOAD, PREV/NEXT WEAPON
+- Bot command panel (shown when bots are active): FOLLOW, SEARCH, STOP
 
 ---
 

@@ -6,9 +6,10 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 ## Architecture Patterns
 
 ### State Pattern
-- AI behaviors use the State pattern (ChaseState, PatrolState, SearchState)
+- Enemy AI behaviors use the State pattern (ChaseState, PatrolState, SearchState) via `AIBehavior` base class
+- Friendly bot behaviors use the State pattern (BotFollowState, BotIdleState, BotSearchClearState) via `BotBehavior` base class
 - Each state should implement consistent interface methods
-- States are managed through `AIBehavior` base class (abstract; throws if instantiated directly)
+- States are managed through their respective base classes (both abstract; throw if instantiated directly)
 - `GameStateManager` also uses the State pattern for game-level state transitions
 
 ### Factory Pattern
@@ -103,9 +104,8 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - File names: Match class names (PascalCase.js)
 
 ### Vector Math
-- Use Vector2D utility class for all position/direction calculations
-- Avoid raw x/y object literals for spatial data
-- Leverage Vector2D methods for common operations (`add`, `subtract`, `normalize`, `dot`, `distanceTo`, `angle`, etc.)
+- `Vector2D` utility class is available for position/direction calculations (`add`, `subtract`, `normalize`, `dot`, `distanceTo`, `angle`, etc.)
+- **Note:** Most existing entity/AI code uses raw scalar math and `{x, y}` objects rather than `Vector2D`; new code may follow either convention
 
 ## Game Engine Specifics
 
@@ -114,17 +114,28 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - Shadow maps are **disabled** (`renderer.shadowMap.enabled = false`); tone mapping is `NoToneMapping`
 - Main scene uses `THREE.FogExp2` (density 0.06 by default; overridden by difficulty)
 - Lighting: `AmbientLight(0x334455, 1.2)` + `SpotLight` player flashlight (intensity 3.5, 18-unit range, `YXZ` rotation order) + wall torch `PointLight`s
-- Main camera: `PerspectiveCamera(75°, …)` with `camera.rotation.order = "YXZ"`; ADS smoothly lerps FOV to 42°
-- Enemies are 3D `THREE.Group` meshes (body/head/eye/horn parts) tracked in `enemyMeshes` Map (`enemy.id → Group`)
-- Wall/floor textures are **procedurally generated on `<canvas>`** and wrapped as `THREE.CanvasTexture`; SVG sprites in `window.SVGSprites` are loaded by `ResourceManager` for other use but are not the source of wall visuals
+- Main camera: `PerspectiveCamera(75°, aspect, 0.05, 60)` with `camera.rotation.order = "YXZ"`; ADS smoothly lerps FOV to 42° (sniper uses `weapon.render.adsFOV`, e.g. 22°)
+- Scene contains `enemiesGroup` and `botsGroup` (separate `THREE.Group`s); enemies and bots are added to their respective groups
+- Enemies are 3D `THREE.Group` meshes (body/head/eye/horn parts); friendly bots are full humanoid meshes with 3 weapon sub-groups
+- Wall/floor textures are **procedurally generated on `<canvas>`** at 256×256 and wrapped as `THREE.CanvasTexture`; SVG sprites in `window.SVGSprites` are loaded by `ResourceManager` but not used for rendering
+- `MapRenderer` buckets wall tiles by type and creates one `InstancedMesh` per wall type (4 draw calls for all walls); randomly places flickering `PointLight` torches on ~3% of wall tiles
 - Weapons render in a separate `weaponScene`/`weaponCamera(55°)` layered on top (no fog, own ambient + directional lights); muzzle flash via orange `PointLight` in `weaponScene` (blue for plasma)
-- Shell casings: cylinder geometry with bouncing physics (up to 3 bounces), fade out; spawned via `spawnShell(px, py, angle, shellType)`
-- Explosions: 20 sphere particles with orange→yellow color gradient, gravity; spawned via `spawnExplosion(wx, wy)`
+- `#weaponCanvas` DOM element is accepted by `Renderer` constructor for API compatibility but is no longer used (rendering is done entirely in `#gameCanvas`)
+- Shell casings: cylinder geometry with bouncing physics (up to 3 bounces, restitution 0.3–0.55), fade out; spawned via `spawnShell(px, py, angle, shellConfig)`; hard cap of 60 shells
+- Explosions: 20 sphere particles with orange→yellow color gradient + short `PointLight` flash; spawned via `spawnExplosion(wx, wy)`
+- Death animation: enemy mesh sinks and rotates 90° over 1.2 seconds via `DeathAnimationSystem`
 - Wall materials use `THREE.MeshBasicMaterial` (no lighting math); enemy/weapon parts use `MeshLambertMaterial`
-- `RayCaster` (DDA step-based, not Three.js `Raycaster`) handles ray-wall and ray-enemy intersection for **game logic** (shooting, line-of-sight), not for visual rendering
+- `RayCaster` (incremental ray march at 0.01 precision, not Three.js `Raycaster`) handles ray-wall and ray-enemy intersection for **game logic** (shooting, line-of-sight), not for visual rendering
 - Window resize is handled via `_onResize()` which updates both cameras' aspect ratios and renderer size
 - `applyDifficultyLighting(diff)` updates ambient intensity, fog density, and flashlight intensity at game start
 - Maintain 60 FPS target; profile Three.js draw calls and geometry as hot paths
+
+### MeshBuilder
+- `MeshBuilderMixin(BaseClass)` is a mixin function that adds geometry helper methods to any class: `box`, `sphere`, `cone`, `cyl`, `torus`, `ring`, `addTube`
+- All mixin helpers add a mesh to `this.g` (the current group) and return it
+- Enemy subclasses use `class Demon extends MeshBuilderMixin(Enemy)` pattern; `FriendlyBot` uses `MeshBuilderMixin(class {})` since it doesn't extend `Enemy`
+- `MeshBuilder` is also available as a standalone class: `new MeshBuilder(group, mat)`
+- Use this mixin for all new entity mesh construction instead of raw `THREE.Mesh` creation
 
 ### Game State
 - `GameStateManager` (singleton) tracks: `LOADING`, `MENU`, `PLAYING`, `PAUSED`, `GAME_OVER`, `VICTORY`
@@ -143,38 +154,68 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - Player is a singleton managed by Game core; tracks health, stamina, `isAiming` (ADS), `isSprinting`, `headBob`, `recoilOffset`, `screenShake`, and `bloodLoss`
 - Enemy types: `demon`, `zombie`, `ghost`, `brute` — defined in `GameConfig.ENEMY.TYPES`
 - Enemies are instantiated through `EnemyFactory.create(type, x, y, initialState)`
-- **AI state instances are shared** — `EnemyFactory` holds one `ChaseState`, one `PatrolState`, one `SearchState` shared across all enemies; states must be stateless regarding individual enemy data
-- `Enemy.setState(state)` accepts either a state name string or a state object; when hit while not chasing, enemy auto-switches to `'chase'`
+- **AI state instances are shared** — `EnemyFactory` holds one `ChaseState`, one `PatrolState`, one `SearchState` shared across all enemies; states must be stateless regarding individual enemy data; all per-enemy state (`patrolTarget`, `searchTarget`, `lastKnownPlayerPosition`, `stuckCounter`) is stored on the enemy instance itself
+- `Enemy.setState(state)` monkey-patched by `EnemyFactory` to route string names through `_aiStates` map; accepts either a state name string or a state object; when hit while not chasing, enemy auto-switches to `'chase'`
 - All entities should have consistent update/render interface
 
+### FriendlyBot System
+- `FriendlyBot` is a friendly AI companion (`src/entities/FriendlyBot.js`) that does NOT extend `Enemy`
+- Bots are spawned in an arc behind the player at game start; count and behavior driven by difficulty settings
+- Bot AI uses a **separate** base class `BotBehavior` (not `AIBehavior`) with `execute(bot, player, enemies, map, deltaTime)` signature
+- Three bot states: `BotFollowState` (follow player + engage enemies), `BotIdleState` (hold position, short-range engage), `BotSearchClearState` (wander + clear area)
+- Bot commands issued by player: `Z` = follow, `X` = search_clear, `C` = stop (keyboard); `#bot-touch-commands` buttons on mobile
+- **Bot state instances are also shared** — `Game` holds one instance of each bot state; like enemy states, they must be stateless regarding individual bot data
+- `bot.eventManager` and `bot.audioSystem` are **injected per frame** in `Game._updateBots()` (not in the constructor) — a deliberate decoupling pattern
+- `BotBehavior._tryAttack()` selects weapon dynamically based on range: shotgun (<3.5u, 40dmg), pistol (<7.5u, 25dmg), sniper (else, 60dmg); sets `bot.weaponType` which controls which weapon sub-mesh is visible
+- Bot mesh contains 3 weapon sub-groups (pistol/shotgun/sniper); only one is visible at a time based on `bot.weaponType`
+- Bots can target both enemies and shield the player; `ChaseState` also considers living bots as potential targets (nearest entity with LoS)
+- `GameConfig.BOT`: `ATTACK_RANGE: 9`, `FOLLOW_MAX_DISTANCE: 8`, `SEARCH_WANDER_INTERVAL: 3000ms`, `MAX_COUNT: 5`, `COMMANDS` string constants
+
+### MenuModelViewer
+- `MenuModelViewer` (`src/core/MenuModelViewer.js`) renders a standalone Three.js scene in `#modelViewerCanvas` for the pre-game model browser
+- Supports two categories: `enemies` (all 4 types) and `weapons` (all unique guns across difficulties)
+- Uses `WeaponFactory.create()` / `EnemyFactory.create()` to build models, then `renderer.createWeaponPreview()` / `renderer.createEnemyPreview()` to clone materials for independent emissive state
+- Auto-rotates model (0.006 rad/frame); drag to rotate manually; auto-rotation resumes when pointer is released
+- `_fitModel()` computes camera distance from bounding box using FOV math
+- `_loadToken` pattern: increments on each navigation; stale async results are discarded by token comparison
+- Opened via `#model-viewer-open` button on start screen; closed via close button
+
 ### Weapons System
-- Weapons extend base `Weapon` abstract class (throws if instantiated directly)
-- Each weapon defines: `damage`, `magazineSize`, `reserveAmmo`, `fireRate`, `spread`, `reloadTime`, `penetration`, `bulletSpeed`, `muzzleFlashIntensity`, `recoil`, `screenShake`, `pellets`; optional: `maxDistance`, `raycastStep`, `falloffRange`, `falloffMin`, `falloffScale`, `wallPenetrationCost`, `splashRadius`
+- Weapons extend base `Weapon` abstract class (throws if instantiated directly); `Weapon` also uses `MeshBuilderMixin` for 3D model construction
+- Each weapon defines: `damage`, `magazineSize`, `reserveAmmo`, `fireRate`, `spread`, `reloadTime`, `penetration`, `bulletSpeed`, `recoil`, `screenShake`, `pellets`; optional: `maxDistance`, `raycastStep`, `falloffRange`, `falloffMin`, `falloffScale`, `wallPenetrationCost`, `splashRadius`
+- `fireType`: `'auto'` (held trigger, continuous fire), `'semi'` (one shot per click), `'manual'` (manual cycling — grenade launcher, sniper)
+- `render` config per weapon: `{ basePosition, baseRotationY, adsOffset, adsRotation, scale, muzzleFlash: {intensity, color?, duration?} }`; sniper includes `adsFOV: 22°`
+- `audio` config per weapon: `{ shoot: [...sequence] }` — played by `AudioSystem` instead of the generic gunshot fallback
+- `shell` config per weapon (optional): ejection angle offset, geometry dimensions — absent on grenade launcher and plasma
 - Registered types (7 total): `pistol`, `shotgun`, `rifle`, `smg`, `sniper`, `grenade_launcher`, `plasma` — add new types via `WeaponFactory.register(type, WeaponClass)`
+- `WeaponFactory.create(type)` is **async** — uses dynamic `import('./models/${type}.js')` and caches the class after first load
 - `fire(context)` receives `{ player, enemies, map, audioSystem, eventManager }` and performs an internal raycast to resolve hits
 - Reload lifecycle: `startReload()` → `updateReload()` (polls elapsed time) → `completeReload()` (adjusts magazine/reserve)
 - `canFire()` checks: not reloading, magazine > 0, fire rate cooldown elapsed
-- Penetrating weapons use `_penetratingRaycast()`; grenade launcher uses arc trajectory + splash damage within `splashRadius` (2.5 units)
-- Damage falloff: `_calcFalloffDamage(distance)` applies distance-based reduction capped at `falloffMin × base`
+- Penetrating weapons use `_penetratingRaycast()` — returns all hits, tracks `penetrationLeft`; grenade launcher uses parabolic arc simulation + splash damage within `splashRadius` (2.5 units), emits `explosion` event
+- Pitch-aware hit detection: `_isEnemyWithinPitch(enemy, distance, pitch)` checks shot height against enemy bounding volume
+- Damage falloff: `_calcFalloffDamage(distance)` applies linear reduction beyond `falloffRange`; clamped to `falloffMin × base`
 - Keep weapon logic separate from player input handling
 
 ### Input & Controls
-- `controlType` is auto-detected from device capabilities at game start; values: `'keyboard'` or `'touch'`
-- `InputManager` handles keyboard (`keydown`/`keyup`) and mouse events; also contains a built-in dual-zone touch handler for raw movement (left zone = joystick, right zone = look delta)
-- `TouchInputManager` manages the visible virtual joystick UI (`#touchJoystick`, `#joystickStick`, `#touchLookArea`) and emits `touchlook` events via `EventManager`
+- `controlType` is auto-detected via `matchMedia("(hover: none) and (pointer: coarse)")` at game start; values: `'keyboard'` or `'touch'`
+- `InputManager` handles keyboard (`keydown`/`keyup`) and mouse events; `mousemove` is handled directly in `Game._setupEventListeners()` via `pointerLockElement` check
+- `TouchInputManager` manages the visible virtual joystick UI (`#touchJoystick`, `#joystickStick`, `#touchLookArea`) and emits `touchlook` events via `EventManager`; joystick clamped to 50px radius, normalized to −1…1
 - Touch fire (`#touch-fire`), ADS (`#touch-ads`), and reload (`#touch-reload`) buttons are wired directly in `Game._setupEventListeners()`
 - `_touchFireActive` and `_touchAdsActive` flags in `Game` track hold state for auto-fire and ADS
+- Bot commands: keyboard `Z`=follow, `X`=search_clear, `C`=stop; `#bot-touch-commands` panel (shown when bots active) has corresponding touch buttons
+- `#touch-jump` exists in the DOM but is hidden (`display: none`) and has no binding — vestigial
 
 ### Audio
 - `AudioSystem` is a singleton that generates all sounds **procedurally** via the Web Audio API
 - No audio files are loaded from disk; sounds are synthesized using oscillators and noise buffers
-- Internal helpers: `_noiseBurst({ freq, q, filterType, vol, attack, decay, dur })` for percussive/noise sounds, `_toneBurst({ type, freq, freqEnd, vol, attack, decay, dur })` for tonal sounds
-- Sound types: `'shoot'`, `'explosion'`, `'hit'`, `'death'`, `'enemy_hurt'`, `'footstep'`, `'reload'`, `'reload_end'`, `'empty'`, `'ambience'`
-- Weapon-specific gunshot profiles via `_getWeaponSoundProfile(weaponName)` — different body/snap/tail tuning for `pistol`, `shotgun`, `rifle`, `smg`, `sniper`, `grenade_launcher`, and `plasma`
-- Background music is routed through a dedicated `musicGain` node (gain 0.75 relative to masterGain); 8-second procedural loops with bass, atmospheric pad, and tension notes
+- Internal helpers: `_noiseBurst({ freq, q, filterType, vol, attack, decay, dur })` for percussive/noise sounds, `_toneBurst({ type, freq, freqEnd, vol, attack, decay, dur })` for tonal sounds; `_playAudioSequence(sequence[])` for multi-step weapon sounds
+- Sound types: `'shoot'`, `'explosion'`, `'hit'`, `'plasma_hit'`, `'death'`, `'enemy_hurt'`, `'footstep'`, `'reload'`, `'reload_end'`, `'empty'`, `'ambience'`, `'shell_drop'`
+- `'shoot'` uses `weapon.audio.shoot` sequence from the weapon config if present; falls back to a generic 5-layer gunshot synthesis
+- Background music is routed through a dedicated `musicGain` node (gain `GameConfig.AUDIO.MUSIC_VOLUME: 0.75` relative to masterGain); 8-second procedural loops with bass, atmospheric pad, and tension notes
 - Master volume is controlled via `masterGain`; default value is `0.3`
 - `AudioContext` is created on first instantiation; call `audioSystem.resume()` on user gesture to comply with browser autoplay policy
-- Constants in `GameConfig.AUDIO`: `FOOTSTEP_INTERVAL` (400ms), `FOOTSTEP_INTERVAL_SPRINT` (300ms), `AMBIENCE_INTERVAL` (3000ms)
+- Constants in `GameConfig.AUDIO`: `FOOTSTEP_INTERVAL` (400ms), `FOOTSTEP_INTERVAL_SPRINT` (300ms), `AMBIENCE_INTERVAL` (3000ms), `MUSIC_VOLUME` (0.75)
 
 ### Maps
 - `MapGenerator` creates procedural level layouts using cellular automata
@@ -197,12 +238,15 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - Monitor FPS and optimize hot paths
 
 ## File Organization
-- Core game loop and systems in `/core`
-- Gameplay entities in `/entities`
-- AI logic isolated in `/ai`
-- Reusable utilities in `/utils`
-- Configuration centralized in `/config`
+- Core game loop and systems in `/core` (`Game.js`, `Renderer.js`, `InputManager.js`, `TouchInputManager.js`, `MapRenderer.js`, `MenuModelViewer.js`, `EventManager.js`)
+- Gameplay entities in `/entities` (`Player.js`, `Enemy.js` + subclasses, `FriendlyBot.js`, `EnemyFactory.js`)
+- AI logic isolated in `/ai` (`AIBehavior.js` + ChaseState/PatrolState/SearchState for enemies; `BotBehavior.js` + BotFollowState/BotIdleState/BotSearchClearState for bots)
+- Particle/effect systems in `/systems` (`BloodSystem.js`, `ShellSystem.js`, `ExplosionSystem.js`, `DeathAnimationSystem.js`, `AudioSystem.js`)
+- Reusable utilities in `/utils` (`MapGenerator.js`, `MeshBuilder.js`, `RayCaster.js`, `Vector2D.js`)
+- Weapon models in `/weapons/models/` (one file per weapon type, lazy-loaded via dynamic import)
+- Configuration centralized in `/config/GameConfig.js`
 - SVG sprite data in `/data/sprites.js` (loaded via `<script>` tag as `window.SVGSprites`; categories: `walls`, `enemies`, `weapons`)
+- State management in `/managers/` (`GameStateManager.js`, `ResourceManager.js`)
 - PWA assets: `manifest.json`, `sw.js`, `icons/`
 - Keep files focused and under 300 lines when possible
 
