@@ -7,15 +7,14 @@
 import * as THREE from "three";
 import { GameConfig } from "../config/GameConfig.js";
 import { MeshBuilderMixin } from "../utils/MeshBuilder.js";
+import { Entity } from "./Entity.js";
 
-export class FriendlyBot extends MeshBuilderMixin(class {}) {
+export class FriendlyBot extends MeshBuilderMixin(Entity) {
   static _nextId = 0;
 
   constructor(x, y) {
-    super();
+    super(x, y);
     this.id = `bot_${++FriendlyBot._nextId}`;
-    this.x = x;
-    this.y = y;
 
     this.health = GameConfig.BOT.HEALTH;
     this.maxHealth = GameConfig.BOT.HEALTH;
@@ -46,9 +45,6 @@ export class FriendlyBot extends MeshBuilderMixin(class {}) {
     // Injected by Game._updateBots — give states access without changing execute signature
     this.eventManager = null;
     this.audioSystem = null;
-
-    // Facing angle (radians) — used by renderer
-    this.angle = 0;
 
     // 3D mesh — owned by this entity; set by spawnMesh()
     this.mesh = null;
@@ -101,20 +97,6 @@ export class FriendlyBot extends MeshBuilderMixin(class {}) {
       this.isDead = true;
       this.deathTime = Date.now();
     }
-  }
-
-  distanceTo(x, y) {
-    const dx = x - this.x;
-    const dy = y - this.y;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-
-  angleTo(x, y) {
-    return Math.atan2(y - this.y, x - this.x);
-  }
-
-  isAlive() {
-    return !this.isDead;
   }
 
   /**

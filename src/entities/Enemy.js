@@ -6,15 +6,15 @@
 
 import * as THREE from "three";
 import { GameConfig } from "../config/GameConfig.js";
+import { Entity } from "./Entity.js";
 
-export class Enemy {
+export class Enemy extends Entity {
   static _nextId = 0;
 
   constructor(type, x, y, config) {
+    super(x, y);
     this.id = ++Enemy._nextId;
     this.type = type;
-    this.x = x;
-    this.y = y;
     this.spawnX = x;
     this.spawnY = y;
 
@@ -121,36 +121,6 @@ export class Enemy {
         eventManager.emit("enemyDamaged", { enemy: this, amount });
       }
     }
-  }
-
-  /**
-   * Get distance to target
-   * @param {number} x - Target X
-   * @param {number} y - Target Y
-   * @returns {number} Distance
-   */
-  distanceTo(x, y) {
-    const dx = x - this.x;
-    const dy = y - this.y;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-
-  /**
-   * Get angle to target
-   * @param {number} x - Target X
-   * @param {number} y - Target Y
-   * @returns {number} Angle in radians
-   */
-  angleTo(x, y) {
-    return Math.atan2(y - this.y, x - this.x);
-  }
-
-  /**
-   * Check if enemy is alive
-   * @returns {boolean} True if alive
-   */
-  isAlive() {
-    return !this.isDead;
   }
 
   /**

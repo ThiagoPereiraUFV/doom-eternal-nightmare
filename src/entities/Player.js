@@ -5,12 +5,11 @@
  */
 
 import { GameConfig } from "../config/GameConfig.js";
+import { Entity } from "./Entity.js";
 
-export class Player {
+export class Player extends Entity {
   constructor(x, y, eventManager, audioSystem) {
-    this.x = x;
-    this.y = y;
-    this.angle = 0;
+    super(x, y);
     this.pitch = 0;
     this.eventManager = eventManager;
     this.audioSystem = audioSystem;
@@ -388,14 +387,6 @@ export class Player {
       position: { x: this.x, y: this.y },
       angle: this.angle,
     };
-  }
-
-  /**
-   * Check if player is alive
-   * @returns {boolean} True if alive
-   */
-  isAlive() {
-    return this.health > 0;
   }
 }
 
