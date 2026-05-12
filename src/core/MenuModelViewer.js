@@ -190,20 +190,13 @@ export class MenuModelViewer {
   _fitModel(model) {
     const framing =
       this.category === "weapons"
-        ? {
-            focusRatio: 0.34,
-            floorOffset: 0.08,
-            verticalLift: 0.08,
-            padding: 1.28,
-            minDistance: 4.4,
-          }
-        : {
-            focusRatio: 0.44,
-            floorOffset: 0.05,
-            verticalLift: 0.14,
-            padding: 1.2,
-            minDistance: 4.9,
-          };
+        ? { verticalLift: 0.08, padding: 1.28, minDistance: 4.4 }
+        : { verticalLift: 0.14, padding: 1.2, minDistance: 4.9 };
+
+    // Reset previewRoot before computing the box — world-space Box3.setFromObject
+    // includes previewRoot's transform, so a stale position from a previous model
+    // would corrupt the centering math.
+    this.previewRoot.position.set(0, 0, 0);
 
     const initialBox = new THREE.Box3().setFromObject(model);
     const initialCenter = initialBox.getCenter(new THREE.Vector3());
@@ -214,15 +207,9 @@ export class MenuModelViewer {
 
     const normalizedBox = new THREE.Box3().setFromObject(model);
     const size = normalizedBox.getSize(new THREE.Vector3());
-    const focusY = THREE.MathUtils.lerp(
-      normalizedBox.min.y,
-      normalizedBox.max.y,
-      framing.focusRatio,
-    );
-    const floorY = normalizedBox.min.y;
-    const rootY = -(floorY + size.y * framing.floorOffset);
+    const focusY = 0; // model is now centered at origin — always aim at center
 
-    this.previewRoot.position.set(0, rootY, 0);
+    this.previewRoot.position.set(0, 0, 0);
     this._rotationY = this.category === "weapons" ? -0.5 : 0;
 
     const verticalFov = THREE.MathUtils.degToRad(this.camera.fov);
@@ -234,14 +221,9 @@ export class MenuModelViewer {
       Math.max(fitHeight, fitWidth) * framing.padding + size.z * 0.9,
       framing.minDistance,
     );
-    const targetY = focusY + rootY;
 
-    this.camera.position.set(
-      0,
-      targetY + size.y * framing.verticalLift,
-      distance,
-    );
-    this.camera.lookAt(0, targetY, 0);
+    this.camera.position.set(0, size.y * framing.verticalLift, distance);
+    this.camera.lookAt(0, 0, 0);
   }
 
   _updateCopy(type, total) {
