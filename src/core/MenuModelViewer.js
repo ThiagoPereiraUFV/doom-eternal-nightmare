@@ -207,7 +207,6 @@ export class MenuModelViewer {
 
     const normalizedBox = new THREE.Box3().setFromObject(model);
     const size = normalizedBox.getSize(new THREE.Vector3());
-    const focusY = 0; // model is now centered at origin — always aim at center
 
     this.previewRoot.position.set(0, 0, 0);
     this._rotationY = this.category === "weapons" ? -0.5 : 0;
