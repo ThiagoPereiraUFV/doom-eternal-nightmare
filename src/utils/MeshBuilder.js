@@ -83,8 +83,28 @@ export const MeshBuilderMixin = (Base) =>
       innerMat.side = THREE.BackSide;
       const capMat = material.clone();
       capMat.side = THREE.DoubleSide;
-      this.addCyl(outerRadius, outerRadius, length, material, px, py, pz, Math.PI / 2, true);
-      this.addCyl(innerRadius, innerRadius, length, innerMat, px, py, pz, Math.PI / 2, true);
+      this.addCyl(
+        outerRadius,
+        outerRadius,
+        length,
+        material,
+        px,
+        py,
+        pz,
+        Math.PI / 2,
+        true,
+      );
+      this.addCyl(
+        innerRadius,
+        innerRadius,
+        length,
+        innerMat,
+        px,
+        py,
+        pz,
+        Math.PI / 2,
+        true,
+      );
       this.addRing(outerRadius, innerRadius, capMat, px, py, pz - length / 2);
       this.addRing(outerRadius, innerRadius, capMat, px, py, pz + length / 2);
     }
