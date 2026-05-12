@@ -17,6 +17,7 @@ const STATIC_ASSETS = [
   "./src/core/EventManager.js",
   "./src/core/Game.js",
   "./src/core/InputManager.js",
+  "./src/core/MenuModelViewer.js",
   "./src/core/Renderer.js",
   "./src/core/TouchInputManager.js",
   "./src/data/sprites.js",

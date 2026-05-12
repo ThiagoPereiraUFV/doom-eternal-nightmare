@@ -118,6 +118,32 @@ export class AIBehavior {
     }
     return false;
   }
-}
 
-export default AIBehavior;
+  /**
+   * Try to navigate toward a target even when the direct path is blocked.
+   * @param {Object} entity - Entity to move
+   * @param {number} targetX - Target X
+   * @param {number} targetY - Target Y
+   * @param {number} speed - Movement speed
+   * @param {Array} map - Game map
+   * @protected
+   */
+  _navigateTowards(entity, targetX, targetY, speed, map) {
+    if (this._moveTowards(entity, targetX, targetY, speed, map)) {
+      return true;
+    }
+
+    const angle = Math.atan2(targetY - entity.y, targetX - entity.x);
+    const offsets = [Math.PI / 6, -Math.PI / 6, Math.PI / 3, -Math.PI / 3];
+
+    for (const offset of offsets) {
+      const testX = entity.x + Math.cos(angle + offset) * speed;
+      const testY = entity.y + Math.sin(angle + offset) * speed;
+      if (this._moveTowards(entity, testX, testY, speed, map)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+}

@@ -46,11 +46,21 @@ export class PatrolState extends AIBehavior {
         enemy.patrolTarget.y,
       );
 
-      if (distToTarget < GameConfig.ENEMY.SEARCH_ARRIVAL_THRESHOLD) {
+      if (
+        !this._isPathClear(
+          enemy.x,
+          enemy.y,
+          enemy.patrolTarget.x,
+          enemy.patrolTarget.y,
+          map,
+        )
+      ) {
+        this._setRandomPatrolTarget(enemy);
+      } else if (distToTarget < GameConfig.ENEMY.SEARCH_ARRIVAL_THRESHOLD) {
         // Reached patrol point, set new one
         this._setRandomPatrolTarget(enemy);
       } else if (distToTarget > GameConfig.ENEMY.PATROL_MIN_DISTANCE) {
-        this._moveTowards(
+        this._navigateTowards(
           enemy,
           enemy.patrolTarget.x,
           enemy.patrolTarget.y,

@@ -33,6 +33,8 @@ export class Enemy {
     this.stuckCounter = 0;
     this.patrolTarget = null;
     this.searchTarget = null;
+    this.lastKnownPlayerPosition = null;
+    this.lastSawPlayerTime = 0;
 
     // Visual state
     this.isDead = false;
@@ -80,10 +82,17 @@ export class Enemy {
    * Take damage
    * @param {number} amount - Damage amount
    * @param {EventManager} eventManager - Event manager for notifications
+   * @param {Object} [source] - Optional source position {x, y}
    */
-  takeDamage(amount, eventManager) {
+  takeDamage(amount, eventManager, source) {
     if (this.isDead) {
       return;
+    }
+
+    if (source && source.x !== null && source.y !== null) {
+      this.lastKnownPlayerPosition = { x: source.x, y: source.y };
+      this.lastSawPlayerTime = Date.now();
+      this.searchTarget = { x: source.x, y: source.y };
     }
 
     this.health -= amount;

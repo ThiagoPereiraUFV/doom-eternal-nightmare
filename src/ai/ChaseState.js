@@ -27,6 +27,12 @@ export class ChaseState extends AIBehavior {
       return;
     }
 
+    // Update last-known player position when player is visible.
+    if (this._isPathClear(enemy.x, enemy.y, player.x, player.y, map)) {
+      enemy.lastKnownPlayerPosition = { x: player.x, y: player.y };
+      enemy.lastSawPlayerTime = Date.now();
+    }
+
     // Attack if close enough
     if (distance < GameConfig.ENEMY.ATTACK_DISTANCE) {
       this._tryAttack(enemy, player);
@@ -40,11 +46,21 @@ export class ChaseState extends AIBehavior {
     ) {
       this._strafe(enemy, player, map);
     } else if (distance > GameConfig.ENEMY.MIN_MOVE_DISTANCE) {
-      // Chase player
-      const moved = this._moveTowards(
-        enemy,
+      // Chase player or last known location when the direct path is blocked.
+      const target = this._isPathClear(
+        enemy.x,
+        enemy.y,
         player.x,
         player.y,
+        map,
+      )
+        ? { x: player.x, y: player.y }
+        : enemy.lastKnownPlayerPosition || { x: player.x, y: player.y };
+
+      const moved = this._navigateTowards(
+        enemy,
+        target.x,
+        target.y,
         enemy.speed,
         map,
       );

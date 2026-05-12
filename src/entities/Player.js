@@ -265,7 +265,10 @@ export class Player {
    */
   _processHit(hit) {
     if (hit.type === "enemy" && hit.enemy) {
-      hit.enemy.takeDamage(hit.damage, this.eventManager);
+      hit.enemy.takeDamage(hit.damage, this.eventManager, {
+        x: this.x,
+        y: this.y,
+      });
       this.audioSystem.playSound("hit");
 
       // Emit hit event for visual effects

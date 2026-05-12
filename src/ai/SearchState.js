@@ -16,8 +16,10 @@ export class SearchState extends AIBehavior {
    * @param {Enemy} enemy - Enemy entering state
    */
   enter(enemy) {
-    // Set search target to current position (last known player location)
-    if (!enemy.searchTarget) {
+    // Set search target to last known player location if available.
+    if (enemy.lastKnownPlayerPosition) {
+      enemy.searchTarget = { ...enemy.lastKnownPlayerPosition };
+    } else if (!enemy.searchTarget) {
       enemy.searchTarget = { x: enemy.x, y: enemy.y };
     }
   }
@@ -54,13 +56,21 @@ export class SearchState extends AIBehavior {
         enemy.searchTarget = null;
         enemy.setState(GameConfig.ENEMY.AI_STATES.PATROL);
       } else {
-        this._moveTowards(
+        const moved = this._navigateTowards(
           enemy,
           enemy.searchTarget.x,
           enemy.searchTarget.y,
           enemy.speed * GameConfig.ENEMY.SEARCH_SPEED_MULT, // Move moderately fast while searching
           map,
         );
+
+        if (!moved) {
+          // If blocked, pick a nearby search waypoint and keep looking.
+          enemy.searchTarget = {
+            x: enemy.x + (Math.random() * 2 - 1) * 2,
+            y: enemy.y + (Math.random() * 2 - 1) * 2,
+          };
+        }
       }
     } else {
       // No search target, return to patrol
