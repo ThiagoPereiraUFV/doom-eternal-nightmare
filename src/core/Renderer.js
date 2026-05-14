@@ -451,7 +451,7 @@ export class Renderer {
     // angle=0 → facing +X → rotation.y must be -PI/2
     // angle=PI/2 → facing +Z → rotation.y must be -PI
     // Formula: rotation.y = -PI/2 - player.angle
-    this.camera.position.set(player.x, 0.5, player.y);
+    this.camera.position.set(player.x, 1.0, player.y);
     this.camera.rotation.y = -Math.PI / 2 - player.angle;
     this.camera.rotation.x = player.pitch;
 
@@ -461,10 +461,10 @@ export class Renderer {
       const dx = Math.cos(player.angle) * pitchCos;
       const dy = Math.sin(player.pitch);
       const dz = Math.sin(player.angle) * pitchCos;
-      this.playerLight.position.set(player.x, 0.5, player.y);
+      this.playerLight.position.set(player.x, 1.0, player.y);
       this.playerLight.target.position.set(
         player.x + dx * 8,
-        0.5 + dy * 8,
+        1.0 + dy * 8,
         player.y + dz * 8,
       );
       this.playerLight.target.updateMatrixWorld();
