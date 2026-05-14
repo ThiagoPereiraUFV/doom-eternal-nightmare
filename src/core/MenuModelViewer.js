@@ -1,26 +1,21 @@
 import * as THREE from "three";
-import { GameConfig } from "../config/GameConfig.js";
+import { EnemyFactory } from "../entities/EnemyFactory.js";
 import { WeaponFactory } from "../weapons/WeaponFactory.js";
 
-const ENEMY_TYPES = Object.values(GameConfig.ENEMY.TYPES).map(
-  ({ type }) => type,
-);
-const WEAPON_TYPES = [
-  ...new Set(
-    Object.values(GameConfig.DIFFICULTY).flatMap(
-      (difficulty) => difficulty.availableGuns ?? [],
-    ),
-  ),
-];
-
+// MODEL_SETS entries are computed lazily via getters so they reflect the
+// EntityRegistry state after factories have been initialised.
 const MODEL_SETS = {
   enemies: {
     label: "Enemy specimen",
-    entries: ENEMY_TYPES,
+    get entries() {
+      return EnemyFactory.getTypes();
+    },
   },
   weapons: {
     label: "Weapon platform",
-    entries: WEAPON_TYPES,
+    get entries() {
+      return WeaponFactory.getTypes();
+    },
   },
   characters: {
     label: "Allied marine",

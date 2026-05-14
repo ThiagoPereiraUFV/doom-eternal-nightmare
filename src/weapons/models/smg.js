@@ -4,6 +4,10 @@
  */
 
 import { Weapon } from "../Weapon.js";
+import {
+  EntityRegistry,
+  ENTITY_CATEGORIES,
+} from "../../registry/EntityRegistry.js";
 
 const SMG_CONFIG = {
   maxDistance: 45,
@@ -160,5 +164,8 @@ export class SMG extends Weapon {
     };
   }
 }
+
+SMG.config = { type: "smg", ...SMG_CONFIG };
+EntityRegistry.register(ENTITY_CATEGORIES.WEAPON, SMG.config, SMG);
 
 export default SMG;

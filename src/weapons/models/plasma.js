@@ -5,6 +5,10 @@
 import * as THREE from "three";
 
 import { Weapon } from "../Weapon.js";
+import {
+  EntityRegistry,
+  ENTITY_CATEGORIES,
+} from "../../registry/EntityRegistry.js";
 
 const PLASMA_CONFIG = {
   maxDistance: 60,
@@ -198,5 +202,8 @@ export class PlasmaGun extends Weapon {
     };
   }
 }
+
+PlasmaGun.config = { type: "plasma", ...PLASMA_CONFIG };
+EntityRegistry.register(ENTITY_CATEGORIES.WEAPON, PlasmaGun.config, PlasmaGun);
 
 export default PlasmaGun;

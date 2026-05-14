@@ -1,90 +1,95 @@
 /**
  * Weapon Factory - Factory Pattern
- * Creates weapon instances
- * Following OCP - new weapons can be registered
+ * Creates weapon instances.
+ * Following OCP — new weapons are registered via EntityRegistry;
+ * no changes to this file are needed when adding a new weapon model.
+ *
+ * To add a new weapon:
+ *   1. Create src/weapons/models/<type>.js  (follow existing weapon pattern)
+ *   2. Import it in src/weapons/models/index.js — that's the only change needed.
  */
 
+import {
+  EntityRegistry,
+  ENTITY_CATEGORIES,
+} from "../registry/EntityRegistry.js";
+
 export class WeaponFactory {
-  static _weaponTypes = new Map();
   static _initialized = false;
 
   /**
-   * Initialize the weapon factory.
-   * The factory is agnostic to concrete weapon modules and only caches loaded classes.
+   * Async init — loads all weapon model descriptors (triggering self-registration
+   * with EntityRegistry via each model file's side-effect import).
+   * Call once with `await WeaponFactory.init()` before creating weapons.
    */
   static async init() {
     if (this._initialized) {
       return;
     }
     this._initialized = true;
+
+    // Load all weapon model descriptors — each file calls EntityRegistry.register()
+    await import("./models/index.js");
   }
 
   /**
-   * Register a new weapon type locally.
-   * @param {string} type - Weapon type identifier
-   * @param {Class|string} WeaponClassOrPath - Weapon constructor or module path
-   */
-  static register(type, WeaponClassOrPath) {
-    this._weaponTypes.set(type.toLowerCase(), WeaponClassOrPath);
-  }
-
-  /**
-   * Create a weapon instance.
-   * @param {string} type - Weapon type ('pistol', 'shotgun', 'rifle')
-   * @returns {Promise<Weapon>} Weapon instance
+   * Create a weapon instance by type name.
+   * Falls back to a dynamic import if the type isn't registered yet
+   * (supports lazy-loaded weapons not included in the index).
+   * @param {string} type – weapon type key (e.g. 'pistol', 'shotgun')
+   * @returns {Promise<Weapon>}
    */
   static async create(type) {
     const typeKey = type.toLowerCase();
-    let entry = this._weaponTypes.get(typeKey);
 
-    if (!entry) {
-      entry = await this._loadWeaponModule(typeKey);
-      if (!entry) {
-        throw new Error(`Unknown weapon type: ${type}`);
-      }
-      this._weaponTypes.set(typeKey, entry);
+    let WeaponClass = EntityRegistry.getClass(
+      ENTITY_CATEGORIES.WEAPON,
+      typeKey,
+    );
+
+    if (!WeaponClass) {
+      // Lazy-load: try the conventional module path and allow its side-effect to register
+      WeaponClass = await this._loadWeaponModule(typeKey);
     }
 
-    if (typeof entry === "string") {
-      entry = await this._importModuleClass(entry);
-      this._weaponTypes.set(typeKey, entry);
+    if (!WeaponClass) {
+      throw new Error(
+        `Unknown weapon type: "${type}". Did you add it to src/weapons/models/index.js?`,
+      );
     }
 
-    return new entry();
+    return new WeaponClass();
   }
 
   static async _loadWeaponModule(typeKey) {
-    const path = `./models/${typeKey}.js`;
-    return this._importModuleClass(path);
-  }
-
-  static async _importModuleClass(path) {
     try {
-      const module = await import(path);
-      return (
+      const module = await import(`./models/${typeKey}.js`);
+      const WeaponClass =
         module.default ||
-        Object.values(module).find((exported) => typeof exported === "function")
-      );
+        Object.values(module).find((x) => typeof x === "function");
+
+      // The module's side-effect should have registered it; return whatever we got
+      return WeaponClass ?? null;
     } catch {
       return null;
     }
   }
 
   /**
-   * Get all registered weapon types
-   * @returns {Array<string>} Array of weapon type names
+   * Return all registered weapon type names.
+   * @returns {string[]}
    */
   static getTypes() {
-    return Array.from(this._weaponTypes.keys());
+    return EntityRegistry.getTypes(ENTITY_CATEGORIES.WEAPON);
   }
 
   /**
-   * Check if weapon type is registered
-   * @param {string} type - Weapon type to check
-   * @returns {boolean} True if type is registered
+   * Check whether a weapon type is registered.
+   * @param {string} type
+   * @returns {boolean}
    */
   static hasType(type) {
-    return this._weaponTypes.has(type.toLowerCase());
+    return EntityRegistry.hasType(ENTITY_CATEGORIES.WEAPON, type);
   }
 }
 

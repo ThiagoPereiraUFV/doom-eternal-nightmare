@@ -8,6 +8,10 @@
 import * as THREE from "three";
 import { GameConfig } from "../config/GameConfig.js";
 import { EnemyFactory } from "../entities/EnemyFactory.js";
+import {
+  EntityRegistry,
+  ENTITY_CATEGORIES,
+} from "../registry/EntityRegistry.js";
 import { FriendlyBot } from "../entities/FriendlyBot.js";
 import { MapRenderer } from "./MapRenderer.js";
 import { BloodSystem } from "../systems/BloodSystem.js";
@@ -324,9 +328,27 @@ export class Renderer {
   // Enemy 3D Models
   // ═══════════════════════════════════════════════════════════════
 
+  /**
+   * Return material set for the given enemy type.
+   * Falls back to the demon materials for unknown types.
+   * New enemy types get their materials from their EntityRegistry config
+   * (config.getMaterials()) so Renderer doesn't need to be updated.
+   */
+  _getEnemyMats(type) {
+    if (!this._enemyMats[type]) {
+      const config = EntityRegistry.getConfig(ENTITY_CATEGORIES.ENEMY, type);
+      if (config?.getMaterials) {
+        this._enemyMats[type] = config.getMaterials();
+      } else {
+        return this._enemyMats.demon;
+      }
+    }
+    return this._enemyMats[type];
+  }
+
   _createEnemyMesh(enemy) {
     const g = new THREE.Group();
-    const mats = this._enemyMats[enemy.type] ?? this._enemyMats.demon;
+    const mats = this._getEnemyMats(enemy.type);
     enemy.createMesh(g, mats);
     g.userData.hitFlashTimer = 0;
     return g;
@@ -393,7 +415,7 @@ export class Renderer {
         continue;
       }
       if (!enemy.mesh) {
-        const mats = this._enemyMats[enemy.type] ?? this._enemyMats.demon;
+        const mats = this._getEnemyMats(enemy.type);
         enemy.spawnMesh(this.enemiesGroup, mats);
       }
       enemy.updateMesh(this.camera.position.x, this.camera.position.z, t);
@@ -401,7 +423,7 @@ export class Renderer {
   }
 
   createEnemyPreview(type) {
-    const mats = this._enemyMats[type] ?? this._enemyMats.demon;
+    const mats = this._getEnemyMats(type);
     const tmp = EnemyFactory.create(type, 0, 0);
     const root = new THREE.Group();
     tmp.spawnMesh(root, mats);

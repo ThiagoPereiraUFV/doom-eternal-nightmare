@@ -4,6 +4,10 @@
  */
 
 import { Weapon } from "../Weapon.js";
+import {
+  EntityRegistry,
+  ENTITY_CATEGORIES,
+} from "../../registry/EntityRegistry.js";
 
 const PISTOL_CONFIG = {
   maxDistance: 50,
@@ -165,5 +169,8 @@ export class Pistol extends Weapon {
     };
   }
 }
+
+Pistol.config = { type: "pistol", ...PISTOL_CONFIG };
+EntityRegistry.register(ENTITY_CATEGORIES.WEAPON, Pistol.config, Pistol);
 
 export default Pistol;

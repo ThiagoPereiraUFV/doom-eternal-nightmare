@@ -5,6 +5,10 @@
 import * as THREE from "three";
 
 import { Weapon } from "../Weapon.js";
+import {
+  EntityRegistry,
+  ENTITY_CATEGORIES,
+} from "../../registry/EntityRegistry.js";
 
 const GRENADE_CONFIG = {
   maxDistance: 20,
@@ -220,5 +224,8 @@ export class GrenadeL extends Weapon {
     };
   }
 }
+
+GrenadeL.config = { type: "grenade_launcher", ...GRENADE_CONFIG };
+EntityRegistry.register(ENTITY_CATEGORIES.WEAPON, GrenadeL.config, GrenadeL);
 
 export default GrenadeL;

@@ -7,8 +7,17 @@ import { Enemy } from "./Enemy.js";
 import { MeshBuilderMixin } from "../utils/MeshBuilder.js";
 
 export class Brute extends MeshBuilderMixin(Enemy) {
+  static config = {
+    type: "brute",
+    health: 120,
+    speed: 0.01,
+    color: { r: 140, g: 60 },
+    targetHeight: 2.2,
+    targetCenterHeight: 1.1,
+  };
+
   constructor(x, y, config) {
-    super("brute", x, y, config);
+    super("brute", x, y, config ?? Brute.config);
   }
 
   /**

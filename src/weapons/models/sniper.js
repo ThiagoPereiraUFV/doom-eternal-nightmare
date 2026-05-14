@@ -4,6 +4,10 @@
  */
 
 import { Weapon } from "../Weapon.js";
+import {
+  EntityRegistry,
+  ENTITY_CATEGORIES,
+} from "../../registry/EntityRegistry.js";
 
 const SNIPER_CONFIG = {
   maxDistance: 80,
@@ -217,5 +221,12 @@ export class SniperRifle extends Weapon {
     };
   }
 }
+
+SniperRifle.config = { type: "sniper", ...SNIPER_CONFIG };
+EntityRegistry.register(
+  ENTITY_CATEGORIES.WEAPON,
+  SniperRifle.config,
+  SniperRifle,
+);
 
 export default SniperRifle;

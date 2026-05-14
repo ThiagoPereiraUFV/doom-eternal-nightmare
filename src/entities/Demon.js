@@ -7,8 +7,17 @@ import { Enemy } from "./Enemy.js";
 import { MeshBuilderMixin } from "../utils/MeshBuilder.js";
 
 export class Demon extends MeshBuilderMixin(Enemy) {
+  static config = {
+    type: "demon",
+    health: 50,
+    speed: 0.025,
+    color: { r: 180, g: 40 },
+    targetHeight: 1.45,
+    targetCenterHeight: 0.72,
+  };
+
   constructor(x, y, config) {
-    super("demon", x, y, config);
+    super("demon", x, y, config ?? Demon.config);
   }
 
   /**

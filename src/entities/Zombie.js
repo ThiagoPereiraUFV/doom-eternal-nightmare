@@ -7,8 +7,17 @@ import { Enemy } from "./Enemy.js";
 import { MeshBuilderMixin } from "../utils/MeshBuilder.js";
 
 export class Zombie extends MeshBuilderMixin(Enemy) {
+  static config = {
+    type: "zombie",
+    health: 80,
+    speed: 0.015,
+    color: { r: 120, g: 150 },
+    targetHeight: 1.1,
+    targetCenterHeight: 0.55,
+  };
+
   constructor(x, y, config) {
-    super("zombie", x, y, config);
+    super("zombie", x, y, config ?? Zombie.config);
   }
 
   /**

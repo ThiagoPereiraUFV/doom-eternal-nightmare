@@ -783,7 +783,8 @@ export class Game {
     this.player.stamina = diff.maxStamina;
     this.player.maxStamina = diff.maxStamina;
 
-    // Initialize weapon factory before creating weapon instances
+    // Initialize factories before creating any instances
+    await EnemyFactory.init();
     await WeaponFactory.init();
 
     // Add weapons — only those allowed by difficulty
@@ -823,7 +824,7 @@ export class Game {
     this.enemies = [];
     const diff = this.difficulty;
     const enemyCount = diff.enemyCount;
-    const types = Object.keys(GameConfig.ENEMY.TYPES);
+    const types = EnemyFactory.getTypes();
 
     for (let i = 0; i < enemyCount; i++) {
       const pos = MapGenerator.findRandomEmptyPosition(
