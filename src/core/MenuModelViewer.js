@@ -222,7 +222,12 @@ export class MenuModelViewer {
     const size = normalizedBox.getSize(new THREE.Vector3());
 
     this.previewRoot.position.set(0, 0, 0);
-    this._rotationY = this.category === "weapons" ? -0.5 : this.category === "characters" ? 0.3 : 0;
+    this._rotationY =
+      this.category === "weapons"
+        ? -0.5
+        : this.category === "characters"
+          ? 0.3
+          : 0;
 
     const verticalFov = THREE.MathUtils.degToRad(this.camera.fov);
     const horizontalFov =
