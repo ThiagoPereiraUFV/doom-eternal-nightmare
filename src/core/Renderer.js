@@ -8,6 +8,7 @@
 import * as THREE from "three";
 import { GameConfig } from "../config/GameConfig.js";
 import { EnemyFactory } from "../entities/EnemyFactory.js";
+import { FriendlyBot } from "../entities/FriendlyBot.js";
 import { MapRenderer } from "./MapRenderer.js";
 import { BloodSystem } from "../systems/BloodSystem.js";
 import { ShellSystem } from "../systems/ShellSystem.js";
@@ -411,6 +412,20 @@ export class Renderer {
     const previewGroup = new THREE.Group();
     this._populateWeaponGroup(previewGroup, weapon);
     return this._clonePreviewMaterials(previewGroup);
+  }
+
+  createBotPreview(weaponType = "pistol") {
+    const bot = new FriendlyBot(0, 0);
+    bot.weaponType = weaponType;
+    const root = new THREE.Group();
+    bot.createMesh(root, this._botMat);
+    // Show only the requested weapon sub-mesh
+    if (root.userData.weapons) {
+      for (const [key, wMesh] of Object.entries(root.userData.weapons)) {
+        wMesh.visible = key === weaponType;
+      }
+    }
+    return this._clonePreviewMaterials(root);
   }
 
   // ═══════════════════════════════════════════════════════════════

@@ -187,6 +187,9 @@ export class Game {
     _bindTap(document.getElementById("model-viewer-tab-weapons"), () =>
       this.setModelViewerCategory("weapons"),
     );
+    _bindTap(document.getElementById("model-viewer-tab-characters"), () =>
+      this.setModelViewerCategory("characters"),
+    );
 
     // Restart buttons
     _bindTap(document.getElementById("gameOverScreen"), () =>
@@ -1190,6 +1193,7 @@ export class Game {
   _syncModelViewerTabs() {
     const enemyTab = document.getElementById("model-viewer-tab-enemies");
     const weaponTab = document.getElementById("model-viewer-tab-weapons");
+    const charTab = document.getElementById("model-viewer-tab-characters");
 
     enemyTab?.classList.toggle(
       "active",
@@ -1198,6 +1202,10 @@ export class Game {
     weaponTab?.classList.toggle(
       "active",
       this.modelViewer.category === "weapons",
+    );
+    charTab?.classList.toggle(
+      "active",
+      this.modelViewer.category === "characters",
     );
   }
 

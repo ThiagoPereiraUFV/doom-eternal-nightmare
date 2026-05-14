@@ -22,6 +22,10 @@ const MODEL_SETS = {
     label: "Weapon platform",
     entries: WEAPON_TYPES,
   },
+  characters: {
+    label: "Allied marine",
+    entries: ["marine_pistol", "marine_shotgun", "marine_sniper"],
+  },
 };
 
 const formatLabel = (value) => value.replaceAll("_", " ").toUpperCase();
@@ -182,6 +186,13 @@ export class MenuModelViewer {
       return model;
     }
 
+    if (this.category === "characters") {
+      const weaponType = type.replace("marine_", "");
+      const model = this.rendererSource.createBotPreview(weaponType);
+      model.scale.setScalar(1.05);
+      return model;
+    }
+
     const model = this.rendererSource.createEnemyPreview(type);
     model.scale.setScalar(type === "brute" ? 0.92 : 1.12);
     return model;
@@ -191,7 +202,9 @@ export class MenuModelViewer {
     const framing =
       this.category === "weapons"
         ? { verticalLift: 0.08, padding: 1.28, minDistance: 4.4 }
-        : { verticalLift: 0.14, padding: 1.2, minDistance: 4.9 };
+        : this.category === "characters"
+          ? { verticalLift: 0.1, padding: 1.22, minDistance: 4.6 }
+          : { verticalLift: 0.14, padding: 1.2, minDistance: 4.9 };
 
     // Reset previewRoot before computing the box — world-space Box3.setFromObject
     // includes previewRoot's transform, so a stale position from a previous model
@@ -209,7 +222,7 @@ export class MenuModelViewer {
     const size = normalizedBox.getSize(new THREE.Vector3());
 
     this.previewRoot.position.set(0, 0, 0);
-    this._rotationY = this.category === "weapons" ? -0.5 : 0;
+    this._rotationY = this.category === "weapons" ? -0.5 : this.category === "characters" ? 0.3 : 0;
 
     const verticalFov = THREE.MathUtils.degToRad(this.camera.fov);
     const horizontalFov =
@@ -227,7 +240,11 @@ export class MenuModelViewer {
 
   _updateCopy(type, total) {
     if (this.nameEl) {
-      this.nameEl.textContent = formatLabel(type);
+      const label =
+        this.category === "characters"
+          ? type.replace("marine_", "MARINE — ").toUpperCase()
+          : formatLabel(type);
+      this.nameEl.textContent = label;
     }
     if (this.metaEl) {
       this.metaEl.textContent = MODEL_SETS[this.category].label;
