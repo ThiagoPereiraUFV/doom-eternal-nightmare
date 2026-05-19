@@ -804,6 +804,9 @@ export class Game {
    * @private
    */
   async _initializeWorld() {
+    // Clear leftover 3D meshes from a previous game session before rebuilding
+    this.renderer.clearEntities();
+
     const diff = this.difficulty;
 
     // Generate map with difficulty-adjusted maze complexity

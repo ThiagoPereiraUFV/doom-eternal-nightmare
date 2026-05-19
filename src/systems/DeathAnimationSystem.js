@@ -30,6 +30,16 @@ export class DeathAnimationSystem {
   }
 
   /**
+   * Immediately cancel all in-progress death animations and remove their meshes.
+   */
+  clear() {
+    for (const d of this._dyingEnemies) {
+      this._scene.remove(d.mesh);
+    }
+    this._dyingEnemies = [];
+  }
+
+  /**
    * Update all in-progress death animations.
    * @param {number} t — current time in seconds
    */

@@ -454,6 +454,22 @@ export class Renderer {
   // Friendly Bot Mesh Management
   // ═══════════════════════════════════════════════════════════════
 
+  /**
+   * Remove all enemy and bot meshes from the scene and cancel pending death
+   * animations. Call this before reinitialising the world on a new game.
+   */
+  clearEntities() {
+    // Remove all children from the shared groups
+    while (this.enemiesGroup.children.length > 0) {
+      this.enemiesGroup.remove(this.enemiesGroup.children[0]);
+    }
+    while (this.botsGroup.children.length > 0) {
+      this.botsGroup.remove(this.botsGroup.children[0]);
+    }
+    // Cancel any mid-animation death meshes that were moved to the root scene
+    this.deathSystem.clear();
+  }
+
   _updateBotMeshes(bots, t) {
     for (const bot of bots) {
       if (bot.isDead) {
