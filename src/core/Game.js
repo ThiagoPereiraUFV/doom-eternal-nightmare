@@ -967,6 +967,9 @@ export class Game {
     // Update friendly bots
     this._updateBots(deltaTime);
 
+    // Separate overlapping entities (enemies, bots, player)
+    this._resolveEntityCollisions();
+
     // Update player systems
     this.player.update(deltaTime);
 
@@ -1152,6 +1155,72 @@ export class Game {
       return;
     }
     el.classList.toggle("ads", !!this._isAiming);
+  }
+
+  /**
+   * Resolve entity-entity collisions by pushing overlapping entities apart.
+   * Runs once per frame after all AI movement, before rendering.
+   * @private
+   */
+  _resolveEntityCollisions() {
+    const ENTITY_R = GameConfig.COMBAT.ENTITY_COLLISION_RADIUS;
+    const PLAYER_R = GameConfig.PLAYER.COLLISION_RADIUS;
+
+    const livingEnemies = this.enemies.filter((e) => !e.isDead);
+    const livingBots = this.bots.filter((b) => !b.isDead);
+
+    // Build a flat list of { entity, radius } for all participants.
+    const entities = [
+      { entity: this.player, radius: PLAYER_R },
+      ...livingEnemies.map((e) => ({ entity: e, radius: ENTITY_R })),
+      ...livingBots.map((b) => ({ entity: b, radius: ENTITY_R })),
+    ];
+
+    for (let i = 0; i < entities.length; i++) {
+      for (let j = i + 1; j < entities.length; j++) {
+        const a = entities[i];
+        const b = entities[j];
+        const dx = b.entity.x - a.entity.x;
+        const dy = b.entity.y - a.entity.y;
+        const distSq = dx * dx + dy * dy;
+        const minDist = a.radius + b.radius;
+
+        if (distSq < minDist * minDist && distSq > 0.000001) {
+          const dist = Math.sqrt(distSq);
+          const overlap = minDist - dist;
+          const nx = dx / dist;
+          const ny = dy / dist;
+          const half = overlap * 0.5;
+
+          this._pushEntitySafe(a.entity, -nx * half, -ny * half);
+          this._pushEntitySafe(b.entity, nx * half, ny * half);
+        }
+      }
+    }
+  }
+
+  /**
+   * Move an entity by (dx, dy) only if the destination tile is walkable.
+   * @param {Object} entity - Entity with x/y fields
+   * @param {number} dx
+   * @param {number} dy
+   * @private
+   */
+  _pushEntitySafe(entity, dx, dy) {
+    const nx = entity.x + dx;
+    const ny = entity.y + dy;
+    const tx = Math.floor(nx);
+    const ty = Math.floor(ny);
+    if (
+      ty >= 0 &&
+      ty < this.map.length &&
+      tx >= 0 &&
+      tx < this.map[0].length &&
+      this.map[ty][tx] === 0
+    ) {
+      entity.x = nx;
+      entity.y = ny;
+    }
   }
 
   /**

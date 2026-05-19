@@ -152,6 +152,9 @@ export const GameConfig = {
     ENEMY_HIT_RADIUS: 0.3,
     ENEMY_HIT_RADIUS_SQ: 0.09, // pre-computed 0.3^2
 
+    // Radius used for entity-entity separation (enemies, bots, player).
+    ENTITY_COLLISION_RADIUS: 0.3,
+
     // Camera feedback and post-death delay.
     SCREEN_SHAKE_INTENSITY: 12,
     GAME_OVER_DELAY: 500,
