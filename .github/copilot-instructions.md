@@ -8,10 +8,12 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 ### State Pattern
 - Enemy AI behaviors use the State pattern (ChaseState, PatrolState, SearchState) via `AIBehavior` base class
 - Friendly bot behaviors use the State pattern (BotFollowState, BotIdleState, BotSearchClearState) via `BotBehavior` base class
+- Both `AIBehavior` and `BotBehavior` extend `BaseBehavior` (`src/ai/BaseBehavior.js`), which consolidates shared movement, navigation, and line-of-sight helpers
 - Each state should implement consistent interface methods
-- States are managed through their respective base classes (both abstract; throw if instantiated directly)
+- States are managed through their respective base classes (all three are abstract; throw if instantiated directly)
 - `GameStateManager` also uses the State pattern for game-level state transitions
 - Shared state instances (enemy AI states, bot states) must remain stateless; validate that no per-entity data is stored on state objects — all mutable state must live on the entity instance itself
+- If a shared state instance is found storing per-entity mutable data (any field other than `name`), treat it as a bug: move that data to the entity instance immediately and validate that all callers read it from the entity, not the state object
 
 ### Factory Pattern
 - Entities and weapons use Factory pattern (EnemyFactory, WeaponFactory)
@@ -114,30 +116,30 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 
 ### Vector Math
 - `Vector2D` utility class is available for position/direction calculations (`add`, `subtract`, `normalize`, `dot`, `distanceTo`, `angle`, etc.)
-- **Note:** Most existing entity/AI code uses raw scalar math and `{x, y}` objects rather than `Vector2D`; new code should use the `Vector2D` utility class for consistency
+- **Note:** Most existing entity/AI code uses raw scalar math and `{x, y}` objects rather than `Vector2D`; this is legacy — **new code must use the `Vector2D` utility class**; do not add new raw scalar math for vector operations
+
+### Math Utilities
+- `MathUtils.js` (`src/utils/MathUtils.js`) provides shared math primitives used across AI, movement, and map systems: `distance`, `clamp`, `lerp`, `isInBounds`, `isWalkable`, `spliceByIndices`
+- `BaseBehavior` and map helpers import from `MathUtils.js`; prefer these over inline math for the same operations
 
 ## Game Engine Specifics
 
 ### Rendering (Three.js)
-- `Renderer` uses `THREE.WebGLRenderer` (antialias, `high-performance`, pixel ratio capped at 2)
-- Shadow maps are **disabled** (`renderer.shadowMap.enabled = false`); tone mapping is `NoToneMapping`
-- Main scene uses `THREE.FogExp2` (density 0.06 by default; overridden by difficulty)
-- Lighting: `AmbientLight(0x334455, 1.2)` + `SpotLight` player flashlight (intensity 3.5, 18-unit range, `YXZ` rotation order) + wall torch `PointLight`s
-- Main camera: `PerspectiveCamera(75°, aspect, 0.05, 60)` with `camera.rotation.order = "YXZ"`; ADS smoothly lerps FOV to 42° (sniper uses `weapon.render.adsFOV`, e.g. 22°)
-- Scene contains `enemiesGroup` and `botsGroup` (separate `THREE.Group`s); enemies and bots are added to their respective groups
-- Enemies are 3D `THREE.Group` meshes (body/head/eye/horn parts); friendly bots are full humanoid meshes with 3 weapon sub-groups
-- Wall/floor textures are **procedurally generated on `<canvas>`** at 256×256 and wrapped as `THREE.CanvasTexture`; SVG sprites in `window.SVGSprites` are loaded by `ResourceManager` but not used for rendering
-- `MapRenderer` buckets wall tiles by type and creates one `InstancedMesh` per wall type (4 draw calls for all walls); randomly places flickering `PointLight` torches on ~3% of wall tiles
-- Weapons render in a separate `weaponScene`/`weaponCamera(55°)` layered on top (no fog, own ambient + directional lights); muzzle flash via orange `PointLight` in `weaponScene` (blue for plasma)
-- `#weaponCanvas` DOM element is accepted by `Renderer` constructor for API compatibility but is no longer used (rendering is done entirely in `#gameCanvas`); do not restore or repurpose it
-- Shell casings: cylinder geometry with bouncing physics (up to 3 bounces, restitution 0.3–0.55), fade out; spawned via `spawnShell(px, py, angle, shellConfig)`; hard cap of 60 shells
-- Explosions: 20 sphere particles with orange→yellow color gradient + short `PointLight` flash; spawned via `spawnExplosion(wx, wy)`
-- Death animation: enemy mesh sinks and rotates 90° over 1.2 seconds via `DeathAnimationSystem`
-- Wall materials use `THREE.MeshBasicMaterial` (no lighting math); enemy model parts use `MeshStandardMaterial` (defined in each model file under `getMaterials()`); bot parts also use `MeshStandardMaterial`
-- `RayCaster` (incremental ray march at 0.01 precision, not Three.js `Raycaster`) handles ray-wall and ray-enemy intersection for **game logic** (shooting, line-of-sight), not for visual rendering
-- Window resize is handled via `_onResize()` which updates both cameras' aspect ratios and renderer size
-- `applyDifficultyLighting(diff)` updates ambient intensity, fog density, and flashlight intensity at game start
-- Maintain 60 FPS target; profile Three.js draw calls and geometry as hot paths
+**Renderer setup:** `THREE.WebGLRenderer` (antialias, `high-performance`, pixel ratio capped at 2); shadow maps **disabled**; tone mapping `NoToneMapping`; resize via `_onResize()`; maintain 60 FPS — profile draw calls as hot path.
+
+**Scene & camera:** Main scene uses `THREE.FogExp2` (density 0.06, overridden by difficulty). Main camera: `PerspectiveCamera(75°, aspect, 0.05, 60)`, `rotation.order = "YXZ"`; ADS lerps FOV to 42° (sniper: `weapon.render.adsFOV`, e.g. 22°). Scene holds `enemiesGroup` and `botsGroup` (`THREE.Group`s). `applyDifficultyLighting(diff)` updates ambient intensity, fog density, and flashlight intensity at game start.
+
+**Lighting:** `AmbientLight(0x334455, 1.2)` + `SpotLight` player flashlight (intensity 3.5, 18-unit range, `YXZ` rotation order) + wall torch `PointLight`s. `MapRenderer` randomly places flickering `PointLight` torches on ~3% of wall tiles.
+
+**Geometry & materials:** Wall/floor textures procedurally generated on `<canvas>` (256×256) as `THREE.CanvasTexture`. `MapRenderer` buckets wall tiles by type → one `InstancedMesh` per type (4 draw calls total). Wall materials: `MeshBasicMaterial`; enemy and bot parts: `MeshStandardMaterial` (defined in model files under `getMaterials()`). SVG sprites in `window.SVGSprites` are loaded by `ResourceManager` but not used for rendering.
+
+**Entities:** Enemies are 3D `THREE.Group` meshes (body/head/eye/horn parts). Friendly bots are humanoid meshes with 3 weapon sub-groups.
+
+**Weapon rendering:** Separate `weaponScene`/`weaponCamera(55°)` layered on top (no fog, own ambient + directional lights); muzzle flash via orange `PointLight` (blue for plasma). `#weaponCanvas` DOM element is accepted by `Renderer` constructor for API compatibility but is no longer used (rendering done entirely in `#gameCanvas`); do not restore or repurpose it.
+
+**Effects:** Shell casings: cylinder geometry, bouncing physics (up to 3 bounces, restitution 0.3–0.55), fade out; `spawnShell(px, py, angle, shellConfig)`; hard cap 60. Explosions: 20 sphere particles, orange→yellow gradient + `PointLight` flash; `spawnExplosion(wx, wy)`. Death animation: mesh sinks and rotates 90° over 1.2s via `DeathAnimationSystem`.
+
+**Game logic raycasting:** `RayCaster` (incremental ray march at 0.01 precision, not Three.js `Raycaster`) handles ray-wall and ray-enemy intersection for shooting and line-of-sight — not for visual rendering.
 
 ### MeshBuilder
 - `MeshBuilderMixin(BaseClass)` is a mixin function that adds geometry helper methods to any class: `box`, `sphere`, `cone`, `cyl`, `torus`, `ring`, `addTube`
@@ -167,23 +169,23 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - Player is a singleton managed by Game core; tracks health, stamina, `isAiming` (ADS), `isSprinting`, `headBob`, `recoilOffset`, `screenShake`, and `bloodLoss`
 - Enemy types: `demon`, `zombie`, `ghost`, `brute` — defined in `src/entities/models/` and auto-registered with `EntityRegistry` at import time; use `EnemyFactory.getTypes()` at runtime to enumerate them
 - `GameConfig.ENEMY.AI_STATES` holds string constants (`CHASE`, `PATROL`, `SEARCH`) — single source of truth for all `setState()` calls
-- Enemies are instantiated through `EnemyFactory.create(type, x, y, initialState)`
+- Enemies are instantiated through `EnemyFactory.create(type, x, y, initialState)`; `EnemyFactory` lives in `src/entities/enemies/EnemyFactory.js`
 - **AI state instances are shared** — `EnemyFactory` holds one `ChaseState`, one `PatrolState`, one `SearchState` shared across all enemies; states must be stateless regarding individual enemy data; all per-enemy state (`patrolTarget`, `searchTarget`, `lastKnownPlayerPosition`, `stuckCounter`) is stored on the enemy instance itself
 - `Enemy.setState(state)` monkey-patched by `EnemyFactory` to route string names through `_aiStates` map; accepts either a state name string or a state object; when hit while not chasing, enemy auto-switches to `'chase'`
 - All entities should have consistent update/render interface
 
 ### FriendlyBot System
-- `FriendlyBot` is a friendly AI companion (`src/entities/FriendlyBot.js`) that extends `MeshBuilderMixin(Entity)` — it does NOT extend `Enemy`
+- `FriendlyBot` is a friendly AI companion (`src/entities/bots/FriendlyBot.js`) that extends `MeshBuilderMixin(Entity)` — it does NOT extend `Enemy`
 - Bots are spawned in an arc behind the player at game start; count and behavior driven by difficulty settings
 - Bot AI uses a **separate** base class `BotBehavior` (not `AIBehavior`) with `execute(bot, player, enemies, map, deltaTime)` signature
 - Three bot states: `BotFollowState` (follow player + engage enemies), `BotIdleState` (hold position, short-range engage), `BotSearchClearState` (wander + clear area)
 - Bot commands issued by player: `Z` = follow, `X` = search_clear, `C` = stop (keyboard); `#bot-touch-commands` buttons on mobile
 - **Bot state instances are also shared** — `Game` holds one instance of each bot state; like enemy states, they must be stateless regarding individual bot data
 - `bot.eventManager` and `bot.audioSystem` are **injected per frame** in `Game._updateBots()` (not in the constructor) — a deliberate decoupling pattern
-- `BotBehavior._tryAttack()` selects weapon dynamically based on range: shotgun (<3.5u, 40dmg), pistol (<7.5u, 25dmg), sniper (else, 60dmg); sets `bot.weaponType` which controls which weapon sub-mesh is visible
+- `BotBehavior._tryAttack()` selects weapon dynamically using `GameConfig.BOT.BOT_WEAPONS` profiles (ordered by `maxRange`): first matching profile wins; sets `bot.weaponType` which controls which weapon sub-mesh is visible; default profiles: shotgun (<3.5u, 40dmg, 900ms cd), pistol (<7.5u, 25dmg, 600ms cd), sniper (∞, 60dmg, 1400ms cd)
 - Bot mesh contains 3 weapon sub-groups (pistol/shotgun/sniper); only one is visible at a time based on `bot.weaponType`
 - Bots can target both enemies and shield the player; `ChaseState` also considers living bots as potential targets (nearest entity with LoS)
-- `GameConfig.BOT`: `HEALTH: 100`, `SPEED: 0.04`, `ATTACK_RANGE: 9`, `ATTACK_DAMAGE: 25`, `ATTACK_COOLDOWN: 700`, `FOLLOW_DESIRED_DISTANCE: 2.5`, `FOLLOW_MAX_DISTANCE: 8`, `SEARCH_WANDER_INTERVAL: 3000ms`, `MAX_COUNT: 5`, `COMMANDS` string constants
+- `GameConfig.BOT`: `HEALTH: 100`, `SPEED: 0.04`, `ATTACK_RANGE: 9`, `ATTACK_DAMAGE: 25`, `ATTACK_COOLDOWN: 700`, `FOLLOW_DESIRED_DISTANCE: 2.5`, `FOLLOW_MAX_DISTANCE: 8`, `SEARCH_WANDER_INTERVAL: 3000ms`, `SEARCH_WANDER_MIN_DIST: 3`, `SEARCH_WANDER_RANGE: 8`, `SEARCH_WANDER_ATTEMPTS: 20`, `ENGAGE_BUFFER: 1.2`, `MAX_COUNT: 5`, `COMMANDS` string constants, `BOT_WEAPONS` array of range-ordered weapon profiles
 
 ### MenuModelViewer
 - `MenuModelViewer` (`src/core/MenuModelViewer.js`) renders a standalone Three.js scene in `#modelViewerCanvas` for the pre-game model browser
@@ -230,7 +232,7 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - Background music is routed through a dedicated `musicGain` node (gain `GameConfig.AUDIO.MUSIC_VOLUME: 0.75` relative to masterGain); 8-second procedural loops with bass, atmospheric pad, and tension notes
 - Master volume is controlled via `masterGain`; default value is `0.3`
 - `AudioContext` is created on first instantiation; call `audioSystem.resume()` on user gesture to comply with browser autoplay policy
-- Constants in `GameConfig.AUDIO`: `FOOTSTEP_INTERVAL` (400ms), `FOOTSTEP_INTERVAL_SPRINT` (300ms), `AMBIENCE_INTERVAL` (3000ms), `MUSIC_VOLUME` (0.75)
+- Constants in `GameConfig.AUDIO`: `FOOTSTEP_INTERVAL` (400ms), `FOOTSTEP_INTERVAL_SPRINT` (300ms), `AMBIENCE_INTERVAL` (3000ms), `MUSIC_VOLUME` (0.75), `MUSIC_LOOP_DURATION` (8s)
 
 ### Maps
 - `MapGenerator` creates procedural level layouts using cellular automata
@@ -253,17 +255,22 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - Monitor FPS and optimize hot paths
 
 ## File Organization
-- Core game loop and systems in `/core` (`Game.js`, `Renderer.js`, `InputManager.js`, `TouchInputManager.js`, `MapRenderer.js`, `MenuModelViewer.js`, `EventManager.js`)
-- Gameplay entities in `/entities` (`Entity.js` base class, `Player.js`, `Enemy.js` + subclasses, `FriendlyBot.js`, `EnemyFactory.js`)
-- Entity model descriptors in `/entities/models/` (one file per enemy type; each calls `EntityRegistry.register()`; manifest in `index.js`)
-- AI logic isolated in `/ai` (`AIBehavior.js` + ChaseState/PatrolState/SearchState for enemies; `BotBehavior.js` + BotFollowState/BotIdleState/BotSearchClearState for bots)
+- Core game loop in `/core` (`Game.js` only)
+- Rendering systems in `/rendering` (`Renderer.js`, `MapRenderer.js`, `MenuModelViewer.js`)
+- Input handlers in `/input` (`InputManager.js`, `TouchInputManager.js`)
+- Map generation and raycasting in `/map` (`MapGenerator.js`, `RayCaster.js`)
+- Entity base and player in `/entities` (`Entity.js` base class, `Player.js`)
+- Enemy classes and factory in `/entities/enemies/` (`Enemy.js`, `EnemyFactory.js`, `Brute.js`, `Demon.js`, `Ghost.js`, `Zombie.js`)
+- Enemy model descriptors in `/entities/enemies/models/` (one file per enemy type; each calls `EntityRegistry.register()`; manifest in `index.js`)
+- Friendly bot in `/entities/bots/` (`FriendlyBot.js`)
+- AI logic isolated in `/ai` (`BaseBehavior.js` shared abstract base; `AIBehavior.js` + ChaseState/PatrolState/SearchState for enemies; `BotBehavior.js` + BotFollowState/BotIdleState/BotSearchClearState for bots)
 - Particle/effect systems in `/systems` (`BloodSystem.js`, `ShellSystem.js`, `ExplosionSystem.js`, `DeathAnimationSystem.js`, `AudioSystem.js`)
-- Reusable utilities in `/utils` (`MapGenerator.js`, `MeshBuilder.js`, `RayCaster.js`, `Vector2D.js`)
+- Reusable utilities in `/utils` (`MathUtils.js`, `MeshBuilder.js`, `Vector2D.js`)
 - Weapon models in `/weapons/models/` (one file per weapon type; each calls `EntityRegistry.register()`; manifest in `index.js`)
 - Central type registry in `/registry/EntityRegistry.js` (`EntityRegistry` class + `ENTITY_CATEGORIES` constants)
-- Configuration centralized in `/config/GameConfig.js` (includes `WEAPON_3D` section for 3D weapon rendering constants)
+- Configuration centralized in `/config/GameConfig.js`
 - SVG sprite data in `/data/sprites.js` (loaded via `<script>` tag as `window.SVGSprites`; categories: `walls`, `enemies`, `weapons`)
-- State management in `/managers/` (`GameStateManager.js`, `ResourceManager.js`)
+- State management and event system in `/managers/` (`EventManager.js`, `GameStateManager.js`, `ResourceManager.js`)
 - PWA assets: `manifest.json`, `sw.js`, `icons/`
 - Keep files focused and under 300 lines when possible
 

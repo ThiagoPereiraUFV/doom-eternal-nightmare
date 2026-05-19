@@ -143,9 +143,9 @@ PLAYER: {
 
 ### Example: Add New Enemy Type
 ```javascript
-// 1. Create src/entities/models/phantom.js
+// 1. Create src/entities/enemies/models/phantom.js
 import { Enemy } from '../Enemy.js';
-import { EntityRegistry, ENTITY_CATEGORIES } from '../../registry/EntityRegistry.js';
+import { EntityRegistry, ENTITY_CATEGORIES } from '../../../registry/EntityRegistry.js';
 
 export class Phantom extends Enemy {
   static config = {
@@ -159,7 +159,7 @@ export class Phantom extends Enemy {
 
 EntityRegistry.register(ENTITY_CATEGORIES.ENEMY, Phantom.config, Phantom);
 
-// 2. Add to src/entities/models/index.js
+// 2. Add to src/entities/enemies/models/index.js
 import './phantom.js';
 
 // That's it — EnemyFactory.create('phantom', x, y) now works.
