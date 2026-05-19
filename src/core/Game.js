@@ -17,7 +17,7 @@ import { Player } from "../entities/Player.js";
 import { EnemyFactory } from "../entities/EnemyFactory.js";
 import { WeaponFactory } from "../weapons/WeaponFactory.js";
 import { MapGenerator } from "../utils/MapGenerator.js";
-import { isWalkable } from "../utils/MathUtils.js";
+import { isWalkable, clamp } from "../utils/MathUtils.js";
 import { FriendlyBot } from "../entities/FriendlyBot.js";
 import { BotFollowState } from "../ai/BotFollowState.js";
 import { BotSearchClearState } from "../ai/BotSearchClearState.js";
@@ -881,10 +881,7 @@ export class Game {
       );
 
       if (pos) {
-        const dist = Math.sqrt(
-          Math.pow(pos.x - this.player.x, 2) +
-            Math.pow(pos.y - this.player.y, 2),
-        );
+        const dist = this.player.distanceTo(pos.x, pos.y);
 
         if (dist > GameConfig.ENEMY.MIN_PLAYER_DISTANCE) {
           const type =
@@ -1366,12 +1363,12 @@ export class Game {
     // Update bars
     const healthBar = document.getElementById("health-bar");
     if (healthBar) {
-      healthBar.style.width = `${Math.max(0, Math.min(100, status.health))}%`;
+      healthBar.style.width = `${clamp(status.health, 0, 100)}%`;
     }
 
     const staminaBar = document.getElementById("stamina-bar");
     if (staminaBar) {
-      staminaBar.style.width = `${Math.max(0, Math.min(100, status.stamina))}%`;
+      staminaBar.style.width = `${clamp(status.stamina, 0, 100)}%`;
     }
 
     if (status.weapon) {

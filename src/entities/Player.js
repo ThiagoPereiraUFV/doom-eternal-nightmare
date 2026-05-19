@@ -6,6 +6,7 @@
 
 import { GameConfig } from "../config/GameConfig.js";
 import { Entity } from "./Entity.js";
+import { isWalkable, clamp } from "../utils/MathUtils.js";
 
 export class Player extends Entity {
   constructor(x, y, eventManager, audioSystem) {
@@ -61,14 +62,7 @@ export class Player extends Entity {
       const sampleY = y + offsetY;
       const mapX = Math.floor(sampleX);
       const mapY = Math.floor(sampleY);
-
-      return (
-        mapY >= 0 &&
-        mapY < map.length &&
-        mapX >= 0 &&
-        mapX < map[0].length &&
-        map[mapY][mapX] === 0
-      );
+      return isWalkable(map, mapX, mapY);
     });
   }
 
@@ -195,7 +189,7 @@ export class Player extends Entity {
     }
 
     // Clamp stamina
-    this.stamina = Math.max(0, Math.min(this.maxStamina, this.stamina));
+    this.stamina = clamp(this.stamina, 0, this.maxStamina);
   }
 
   /**
@@ -337,7 +331,7 @@ export class Player extends Entity {
       }
     }
 
-    const frameFactor = Math.max(0, Math.min(10, deltaTime * 60));
+    const frameFactor = clamp(deltaTime * 60, 0, 10);
     const recoilDecay = Math.pow(
       this.currentWeapon?.recoilDecay ?? GameConfig.WEAPON_3D.RECOIL_DECAY,
       frameFactor,

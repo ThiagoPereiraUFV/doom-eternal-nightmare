@@ -5,7 +5,7 @@
  */
 
 import { GameConfig } from "../config/GameConfig.js";
-import { isWalkable } from "./MathUtils.js";
+import { isWalkable, isInBounds } from "./MathUtils.js";
 
 export class MapGenerator {
   /**
@@ -311,12 +311,7 @@ export class MapGenerator {
   static isValidPosition(map, x, y) {
     const mapX = Math.floor(x);
     const mapY = Math.floor(y);
-
-    if (mapY < 0 || mapY >= map.length || mapX < 0 || mapX >= map[0].length) {
-      return false;
-    }
-
-    return map[mapY][mapX] === 0;
+    return isWalkable(map, mapX, mapY);
   }
 
   /**

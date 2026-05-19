@@ -9,6 +9,7 @@ import {
   EntityRegistry,
   ENTITY_CATEGORIES,
 } from "../../registry/EntityRegistry.js";
+import { isInBounds } from "../../utils/MathUtils.js";
 
 const GRENADE_CONFIG = {
   maxDistance: 20,
@@ -206,7 +207,7 @@ export class GrenadeL extends Weapon {
       const mapX = Math.floor(testX);
       const mapY = Math.floor(testY);
 
-      if (mapX < 0 || mapX >= map[0].length || mapY < 0 || mapY >= map.length) {
+      if (!isInBounds(map, mapX, mapY)) {
         return { x: testX, y: testY, distance };
       }
       if (map[mapY][mapX] > 0) {

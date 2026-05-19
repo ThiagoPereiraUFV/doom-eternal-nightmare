@@ -5,6 +5,7 @@
  */
 
 import { GameConfig } from "../config/GameConfig.js";
+import { clamp } from "../utils/MathUtils.js";
 
 export class AudioSystem {
   static _instance = null;
@@ -893,7 +894,7 @@ export class AudioSystem {
    * @param {number} volume - Volume level (0-1)
    */
   setMusicVolume(volume) {
-    this.musicGain.gain.value = Math.max(0, Math.min(1, volume));
+    this.musicGain.gain.value = clamp(volume, 0, 1);
   }
 
   /**
@@ -909,7 +910,7 @@ export class AudioSystem {
    * @param {number} volume - Volume level (0-1)
    */
   setVolume(volume) {
-    this.masterGain.gain.value = Math.max(0, Math.min(1, volume));
+    this.masterGain.gain.value = clamp(volume, 0, 1);
   }
 
   /**

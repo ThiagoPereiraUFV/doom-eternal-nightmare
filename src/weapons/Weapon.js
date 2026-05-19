@@ -6,6 +6,7 @@
 
 import { GameConfig } from "../config/GameConfig.js";
 import { MeshBuilderMixin } from "../utils/MeshBuilder.js";
+import { isInBounds } from "../utils/MathUtils.js";
 
 export class Weapon extends MeshBuilderMixin(class {}) {
   constructor(name, stats) {
@@ -117,7 +118,7 @@ export class Weapon extends MeshBuilderMixin(class {}) {
       const mapX = Math.floor(testX);
       const mapY = Math.floor(testY);
 
-      if (mapX < 0 || mapX >= map[0].length || mapY < 0 || mapY >= map.length) {
+      if (!isInBounds(map, mapX, mapY)) {
         return { type: "wall", distance };
       }
       if (map[mapY][mapX] > 0) {
@@ -183,7 +184,7 @@ export class Weapon extends MeshBuilderMixin(class {}) {
       const mapX = Math.floor(testX);
       const mapY = Math.floor(testY);
 
-      if (mapX < 0 || mapX >= map[0].length || mapY < 0 || mapY >= map.length) {
+      if (!isInBounds(map, mapX, mapY)) {
         hits.push({ type: "wall", distance });
         break;
       }
