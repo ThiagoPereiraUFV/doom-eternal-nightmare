@@ -30,57 +30,125 @@ export class Demon extends MeshBuilderMixin(Enemy) {
     this.mat = mat;
     const { body: bM, head: hM, eye: eM, horn: hornM } = mat;
 
-    // Abdomen
-    this.box(0.42, 0.3, 0.32, bM, 0, 0.32, 0);
-    // Main torso - wider at chest
-    this.box(0.48, 0.42, 0.36, bM, 0, 0.6, 0);
-    // Chest muscle definition
-    this.box(0.2, 0.18, 0.14, bM, -0.16, 0.66, -0.18);
-    this.box(0.2, 0.18, 0.14, bM, 0.16, 0.66, -0.18);
-    // Shoulders - wide and spiked
-    this.sphere(0.16, bM, -0.36, 0.84, 0, 8);
-    this.sphere(0.16, bM, 0.36, 0.84, 0, 8);
-    // Shoulder spikes
-    this.cone(0.05, 0.18, hornM, -0.4, 0.98, 0, 0, 0, -0.4);
-    this.cone(0.05, 0.18, hornM, 0.4, 0.98, 0, 0, 0, 0.4);
-    // Head - angular and demonic
-    this.sphere(0.22, hM, 0, 1.06, 0, 10);
-    this.box(0.26, 0.1, 0.22, hM, 0, 0.92, 0.1); // heavy jaw
-    // Snout
-    this.box(0.16, 0.1, 0.14, hM, 0, 0.94, 0.2);
-    // Eyes - glowing with orbital ridge
-    this.box(0.2, 0.04, 0.06, hornM, 0, 1.12, 0.18); // brow ridge
-    this.sphere(0.055, eM, -0.09, 1.08, 0.21, 8);
-    this.sphere(0.055, eM, 0.09, 1.08, 0.21, 8);
-    // Horns - branched
-    this.cone(0.05, 0.22, hornM, -0.14, 1.22, 0, 0, 0, -0.4);
-    this.cone(0.04, 0.12, hornM, -0.22, 1.36, 0, 0, 0, -0.6);
-    this.cone(0.05, 0.22, hornM, 0.14, 1.22, 0, 0, 0, 0.4);
-    this.cone(0.04, 0.12, hornM, 0.22, 1.36, 0, 0, 0, 0.6);
-    // Spine ridge
-    for (let i = 0; i < 4; i++) {
-      this.cone(0.04, 0.12, hornM, 0, 0.4 + i * 0.16, -0.18, -0.4);
+    // ── Legs: digitigrade (bent-knee) stance ──────────────────────────────
+    const lL = this.box(0.2, 0.46, 0.2, bM, -0.19, 0.3, 0.03);
+    const lR = this.box(0.2, 0.46, 0.2, bM, 0.19, 0.3, 0.03);
+    // Knee bulge
+    this.sphere(0.12, bM, -0.19, 0.24, 0.0, 12);
+    this.sphere(0.12, bM, 0.19, 0.24, 0.0, 12);
+    // Lower legs angled backward
+    const llL = this.box(0.15, 0.32, 0.15, bM, -0.19, 0.07, 0.1, 0.55);
+    const llR = this.box(0.15, 0.32, 0.15, bM, 0.19, 0.07, 0.1, 0.55);
+    // Cloven hooves
+    this.box(0.1, 0.06, 0.2, hornM, -0.23, -0.05, 0.05);
+    this.box(0.1, 0.06, 0.2, hornM, -0.14, -0.05, 0.05);
+    this.box(0.1, 0.06, 0.2, hornM, 0.14, -0.05, 0.05);
+    this.box(0.1, 0.06, 0.2, hornM, 0.23, -0.05, 0.05);
+    // Ankle spurs
+    this.cone(0.03, 0.1, hornM, -0.24, 0.0, 0.02, 0, 0, 0.5);
+    this.cone(0.03, 0.1, hornM, 0.24, 0.0, 0.02, 0, 0, -0.5);
+
+    // ── Pelvis / abdomen ──────────────────────────────────────────────────
+    this.sphere(0.24, bM, 0, 0.36, 0, 14);
+    this.box(0.42, 0.28, 0.32, bM, 0, 0.34, 0);
+
+    // ── Torso ─────────────────────────────────────────────────────────────
+    // Lower torso
+    this.box(0.44, 0.2, 0.34, bM, 0, 0.5, 0);
+    // Mid torso with rib cage suggestion
+    this.box(0.5, 0.32, 0.36, bM, 0, 0.64, 0);
+    // Rib ridges (left / right)
+    for (let i = 0; i < 3; i++) {
+      this.box(0.28, 0.04, 0.06, hornM, -0.22, 0.54 + i * 0.08, -0.16);
+      this.box(0.28, 0.04, 0.06, hornM, 0.22, 0.54 + i * 0.08, -0.16);
     }
-    // Arms with forearm + hand
-    const aUpperL = this.box(0.18, 0.44, 0.18, bM, -0.36, 0.64, 0);
-    const aForeL = this.box(0.16, 0.38, 0.16, bM, -0.36, 0.28, 0);
-    const clawL1 = this.box(0.04, 0.14, 0.04, hornM, -0.3, 0.06, -0.06, -0.3);
-    const clawL2 = this.box(0.04, 0.14, 0.04, hornM, -0.36, 0.05, -0.08, -0.3);
-    const clawL3 = this.box(0.04, 0.14, 0.04, hornM, -0.42, 0.06, -0.06, -0.3);
-    const aUpperR = this.box(0.18, 0.44, 0.18, bM, 0.36, 0.64, 0);
-    const aForeR = this.box(0.16, 0.38, 0.16, bM, 0.36, 0.28, 0);
-    const clawR1 = this.box(0.04, 0.14, 0.04, hornM, 0.3, 0.06, -0.06, -0.3);
-    const clawR2 = this.box(0.04, 0.14, 0.04, hornM, 0.36, 0.05, -0.08, -0.3);
-    const clawR3 = this.box(0.04, 0.14, 0.04, hornM, 0.42, 0.06, -0.06, -0.3);
-    // Legs with digitigrade stance
-    const lL = this.box(0.2, 0.44, 0.2, bM, -0.18, 0.28, 0.04);
-    const lR = this.box(0.2, 0.44, 0.2, bM, 0.18, 0.28, 0.04);
-    // Lower legs angled back
-    const llL = this.box(0.16, 0.3, 0.16, bM, -0.18, 0.06, 0.1, 0.5);
-    const llR = this.box(0.16, 0.3, 0.16, bM, 0.18, 0.06, 0.1, 0.5);
-    // Feet/claws
-    this.box(0.18, 0.05, 0.28, bM, -0.18, -0.04, 0.04);
-    this.box(0.18, 0.05, 0.28, bM, 0.18, -0.04, 0.04);
+    // Upper chest — wider, powerful
+    this.box(0.52, 0.26, 0.38, bM, 0, 0.82, 0);
+    // Pectoral muscles
+    this.sphere(0.14, bM, -0.18, 0.84, -0.14, 12);
+    this.sphere(0.14, bM, 0.18, 0.84, -0.14, 12);
+
+    // ── Shoulders ────────────────────────────────────────────────────────
+    this.sphere(0.17, bM, -0.38, 0.9, 0, 14);
+    this.sphere(0.17, bM, 0.38, 0.9, 0, 14);
+    // Shoulder armor spikes
+    this.cone(0.06, 0.2, hornM, -0.44, 1.04, -0.04, 0, 0, -0.45);
+    this.cone(0.06, 0.2, hornM, 0.44, 1.04, -0.04, 0, 0, 0.45);
+    this.cone(0.04, 0.14, hornM, -0.5, 1.14, -0.02, 0, 0, -0.65);
+    this.cone(0.04, 0.14, hornM, 0.5, 1.14, -0.02, 0, 0, 0.65);
+
+    // ── Neck ─────────────────────────────────────────────────────────────
+    this.cyl(0.12, 0.16, 0.18, bM, 0, 1.03, 0);
+    // Neck muscle cords
+    this.box(0.06, 0.16, 0.06, bM, -0.1, 1.04, 0.02);
+    this.box(0.06, 0.16, 0.06, bM, 0.1, 1.04, 0.02);
+
+    // ── Head ─────────────────────────────────────────────────────────────
+    this.sphere(0.24, hM, 0, 1.22, 0, 18);
+    // Cranial ridge — more angular skull shape
+    this.box(0.18, 0.08, 0.26, hM, 0, 1.34, -0.04);
+    // Heavy brow ridge
+    this.box(0.3, 0.07, 0.1, hornM, 0, 1.32, 0.19);
+    // Cheek bones
+    this.sphere(0.07, hM, -0.2, 1.18, 0.12, 10);
+    this.sphere(0.07, hM, 0.2, 1.18, 0.12, 10);
+    // Snout / muzzle
+    this.box(0.2, 0.12, 0.2, hM, 0, 1.1, 0.22);
+    this.box(0.16, 0.08, 0.14, hM, 0, 1.06, 0.32);
+    // Teeth — upper & lower rows
+    for (let i = 0; i < 4; i++) {
+      const tx = -0.09 + i * 0.06;
+      this.cone(0.02, 0.06, hornM, tx, 1.04, 0.38, -0.3);     // upper fangs
+      this.cone(0.02, 0.05, hornM, tx + 0.01, 1.02, 0.36, 0.3); // lower fangs
+    }
+    // Glowing eyes
+    this.sphere(0.065, eM, -0.1, 1.22, 0.22, 14);
+    this.sphere(0.065, eM, 0.1, 1.22, 0.22, 14);
+    // Eye socket recesses
+    this.sphere(0.08, hM, -0.11, 1.22, 0.17, 10);
+    this.sphere(0.08, hM, 0.11, 1.22, 0.17, 10);
+
+    // ── Horns (multi-segment, curved) ─────────────────────────────────────
+    this.cone(0.06, 0.26, hornM, -0.16, 1.42, 0, 0, 0, -0.42);
+    this.cone(0.04, 0.15, hornM, -0.26, 1.56, 0, 0, 0, -0.65);
+    this.cone(0.02, 0.08, hornM, -0.34, 1.65, 0, 0, 0, -0.82);
+    this.cone(0.06, 0.26, hornM, 0.16, 1.42, 0, 0, 0, 0.42);
+    this.cone(0.04, 0.15, hornM, 0.26, 1.56, 0, 0, 0, 0.65);
+    this.cone(0.02, 0.08, hornM, 0.34, 1.65, 0, 0, 0, 0.82);
+
+    // ── Spine ridge (dorsal spikes) ───────────────────────────────────────
+    for (let i = 0; i < 5; i++) {
+      this.cone(0.04, 0.14, hornM, 0, 0.38 + i * 0.14, -0.2, -0.44);
+    }
+
+    // ── Arms ──────────────────────────────────────────────────────────────
+    // Upper arm — thick deltoid into bicep
+    const aUpperL = this.box(0.19, 0.46, 0.19, bM, -0.38, 0.7, 0);
+    this.sphere(0.13, bM, -0.38, 0.74, 0, 12); // elbow joint
+    const aForeL = this.box(0.17, 0.4, 0.17, bM, -0.38, 0.36, 0);
+    // Wrist
+    this.sphere(0.1, bM, -0.38, 0.14, 0, 10);
+    // Hand / claw base
+    this.box(0.15, 0.08, 0.13, bM, -0.38, 0.06, 0);
+    // Three talons
+    const clawL1 = this.cone(0.025, 0.16, hornM, -0.3, 0.0, -0.05, -0.28);
+    const clawL2 = this.cone(0.025, 0.17, hornM, -0.38, -0.02, -0.06, -0.32);
+    const clawL3 = this.cone(0.025, 0.16, hornM, -0.46, 0.0, -0.05, -0.28);
+
+    const aUpperR = this.box(0.19, 0.46, 0.19, bM, 0.38, 0.7, 0);
+    this.sphere(0.13, bM, 0.38, 0.74, 0, 12);
+    const aForeR = this.box(0.17, 0.4, 0.17, bM, 0.38, 0.36, 0);
+    this.sphere(0.1, bM, 0.38, 0.14, 0, 10);
+    this.box(0.15, 0.08, 0.13, bM, 0.38, 0.06, 0);
+    const clawR1 = this.cone(0.025, 0.16, hornM, 0.3, 0.0, -0.05, -0.28);
+    const clawR2 = this.cone(0.025, 0.17, hornM, 0.38, -0.02, -0.06, -0.32);
+    const clawR3 = this.cone(0.025, 0.16, hornM, 0.46, 0.0, -0.05, -0.28);
+
+    // ── Tail (bonus detail) ───────────────────────────────────────────────
+    this.sphere(0.09, bM, 0.04, 0.3, -0.2, 10);
+    this.sphere(0.07, bM, 0.08, 0.22, -0.3, 8);
+    this.sphere(0.05, bM, 0.13, 0.14, -0.36, 8);
+    this.cone(0.04, 0.14, hornM, 0.17, 0.08, -0.42, -0.5, 0, 0.3);
 
     this.g.userData.animate = (t) => {
       lL.rotation.x = Math.sin(t * 4.5) * 0.44;
@@ -92,12 +160,12 @@ export class Demon extends MeshBuilderMixin(Enemy) {
       aForeL.rotation.x = Math.sin(t * 4.5 + 0.5) * 0.2;
       aForeR.rotation.x = Math.sin(t * 4.5 + Math.PI + 0.5) * 0.2;
       const clawSwing = Math.sin(t * 9) * 0.08;
-      clawL1.rotation.x = -0.3 + clawSwing;
-      clawL2.rotation.x = -0.3 + clawSwing * 0.8;
-      clawL3.rotation.x = -0.3 + clawSwing * 1.2;
-      clawR1.rotation.x = -0.3 - clawSwing;
-      clawR2.rotation.x = -0.3 - clawSwing * 0.8;
-      clawR3.rotation.x = -0.3 - clawSwing * 1.2;
+      clawL1.rotation.x = -0.28 + clawSwing;
+      clawL2.rotation.x = -0.32 + clawSwing * 0.8;
+      clawL3.rotation.x = -0.28 + clawSwing * 1.2;
+      clawR1.rotation.x = -0.28 - clawSwing;
+      clawR2.rotation.x = -0.32 - clawSwing * 0.8;
+      clawR3.rotation.x = -0.28 - clawSwing * 1.2;
     };
   }
 }

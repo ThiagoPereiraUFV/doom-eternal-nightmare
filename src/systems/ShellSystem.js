@@ -9,8 +9,12 @@ export class ShellSystem {
     this._scene = scene;
     this._shells = [];
 
-    this._shellMat = new THREE.MeshLambertMaterial({ color: 0xd4a020 });
-    this._shellSpentMat = new THREE.MeshLambertMaterial({ color: 0x8a6010 });
+    this._shellMat = new THREE.MeshStandardMaterial({
+      color: 0xd4a020, roughness: 0.28, metalness: 0.88,
+    });
+    this._shellSpentMat = new THREE.MeshStandardMaterial({
+      color: 0x8a6010, roughness: 0.38, metalness: 0.80,
+    });
   }
 
   spawnShell(px, py, angle, shellConfig = {}) {

@@ -13,15 +13,22 @@ import {
 const config = {
   ...Brute.config,
   getMaterials() {
-    const lam = (hex, extra = {}) =>
-      new THREE.MeshLambertMaterial({ color: hex, ...extra });
-    const bas = (hex, extra = {}) =>
-      new THREE.MeshBasicMaterial({ color: hex, ...extra });
+    const std = (hex, extra = {}) =>
+      new THREE.MeshStandardMaterial({ color: hex, roughness: 0.9, metalness: 0.0, ...extra });
     return {
-      body: lam(0x664422),
-      head: lam(0x775533),
-      eye: bas(0xff2200),
-      horn: lam(0x111111),
+      // Thick hide — dark reddish-brown like dried blood over rock
+      body: std(0x5a2e10, { roughness: 0.93, metalness: 0.02 }),
+      // Head — slightly more olive-brown, scarred
+      head: std(0x6b3a1a, { roughness: 0.9, metalness: 0.0 }),
+      // Deep-set burning red eyes
+      eye: std(0xff3300, {
+        roughness: 0.15,
+        metalness: 0.0,
+        emissive: new THREE.Color(0xff1100),
+        emissiveIntensity: 2.2,
+      }),
+      // Bone-black horns and spinal ridge — hard chitinous surface
+      horn: std(0x0d0d0d, { roughness: 0.5, metalness: 0.15 }),
     };
   },
 };

@@ -13,19 +13,40 @@ import {
 const config = {
   ...Ghost.config,
   getMaterials() {
-    const lam = (hex, extra = {}) =>
-      new THREE.MeshLambertMaterial({ color: hex, ...extra });
-    const bas = (hex, extra = {}) =>
-      new THREE.MeshBasicMaterial({ color: hex, ...extra });
+    const std = (hex, extra = {}) =>
+      new THREE.MeshStandardMaterial({ color: hex, roughness: 0.15, metalness: 0.0, ...extra });
     return {
-      body: lam(0x5599cc, {
+      // Ethereal translucent form — inner cold-blue glow
+      body: std(0x4488bb, {
         transparent: true,
-        opacity: 0.6,
-        emissive: new THREE.Color(0x112233),
+        opacity: 0.55,
+        roughness: 0.1,
+        emissive: new THREE.Color(0x1133aa),
+        emissiveIntensity: 0.6,
       }),
-      head: lam(0x77bbee, { transparent: true, opacity: 0.65 }),
-      eye: bas(0x00ffff, { transparent: true, opacity: 0.9 }),
-      horn: lam(0x334455),
+      // Slightly more opaque ecto-core
+      head: std(0x66aadd, {
+        transparent: true,
+        opacity: 0.7,
+        roughness: 0.08,
+        emissive: new THREE.Color(0x2244cc),
+        emissiveIntensity: 0.5,
+      }),
+      // Piercing cyan eyes — strong emissive
+      eye: std(0x00eeff, {
+        roughness: 0.05,
+        transparent: true,
+        opacity: 0.95,
+        emissive: new THREE.Color(0x00ccff),
+        emissiveIntensity: 2.5,
+      }),
+      // Wisps/tail segments — darkened ecto
+      horn: std(0x223344, {
+        transparent: true,
+        opacity: 0.5,
+        emissive: new THREE.Color(0x112233),
+        emissiveIntensity: 0.3,
+      }),
     };
   },
 };

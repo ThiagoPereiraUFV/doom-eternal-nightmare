@@ -218,70 +218,51 @@ export class Renderer {
   // ═══════════════════════════════════════════════════════════════
 
   _buildMaterials() {
-    const lam = (hex, extra = {}) =>
-      new THREE.MeshLambertMaterial({ color: hex, ...extra });
+    const std = (hex, extra = {}) =>
+      new THREE.MeshStandardMaterial({ color: hex, ...extra });
     const bas = (hex, extra = {}) =>
       new THREE.MeshBasicMaterial({ color: hex, ...extra });
 
-    this._enemyMats = {
-      demon: {
-        body: lam(0xaa1100),
-        head: lam(0xcc2200),
-        eye: bas(0xff4400),
-        horn: lam(0x330000),
-      },
-      zombie: {
-        body: lam(0x445533),
-        head: lam(0x556644),
-        eye: bas(0xff0000),
-        horn: lam(0x222222),
-      },
-      ghost: {
-        body: new THREE.MeshLambertMaterial({
-          color: 0x5599cc,
-          transparent: true,
-          opacity: 0.6,
-          emissive: new THREE.Color(0x112233),
-        }),
-        head: lam(0x77bbee, { transparent: true, opacity: 0.65 }),
-        eye: bas(0x00ffff, { transparent: true, opacity: 0.9 }),
-        horn: lam(0x334455),
-      },
-      brute: {
-        body: lam(0x664422),
-        head: lam(0x775533),
-        eye: bas(0xff2200),
-        horn: lam(0x111111),
-      },
-    };
+    // Enemy materials are populated on-demand via EntityRegistry.getMaterials()
+    // Do not pre-fill — _getEnemyMats() will call getMaterials() from the model descriptor
+    this._enemyMats = {};
 
-    // Friendly bot materials (green tinted marine)
+    // Friendly bot materials — tactical marine with PBR shading
     this._botMat = {
-      armor: lam(0x2a5c2a),
-      suit: lam(0x1e4020),
-      visor: bas(0x00ffcc, { transparent: true, opacity: 0.85 }),
-      detail: lam(0x4a8a4a),
+      // Matte olive-drab armour plates
+      armor: std(0x2a5c2a, { roughness: 0.85, metalness: 0.18 }),
+      // Slightly darker combat suit fabric
+      suit:  std(0x1e4020, { roughness: 0.92, metalness: 0.0 }),
+      // Glowing holographic visor
+      visor: std(0x00ffcc, {
+        roughness: 0.05,
+        metalness: 0.1,
+        transparent: true,
+        opacity: 0.82,
+        emissive: new THREE.Color(0x00ddaa),
+        emissiveIntensity: 1.2,
+      }),
+      // Accent / detail panels — slightly glossier
+      detail: std(0x3d7a3d, { roughness: 0.65, metalness: 0.25 }),
     };
 
     this._wMat = {
-      dark: lam(0x1c1c1c),
-      scope: new THREE.MeshLambertMaterial({
-        color: 0x1c1c1c,
-        side: THREE.DoubleSide,
+      dark:   std(0x1c1c1c, { roughness: 0.6,  metalness: 0.55 }),
+      scope:  new THREE.MeshStandardMaterial({
+        color: 0x1c1c1c, roughness: 0.5, metalness: 0.6, side: THREE.DoubleSide,
       }),
-      metal: lam(0x38393b),
-      bright: lam(0x8c9098),
-      steel: lam(0xb0b8be),
-      wood: lam(0x5c3317),
-      tan: lam(0x8b7355),
-      glass: new THREE.MeshLambertMaterial({
-        color: 0x334466,
-        transparent: true,
-        opacity: 0.7,
-        side: THREE.DoubleSide,
+      metal:  std(0x38393b, { roughness: 0.45, metalness: 0.75 }),
+      bright: std(0x8c9098, { roughness: 0.3,  metalness: 0.8  }),
+      steel:  std(0xb0b8be, { roughness: 0.25, metalness: 0.85 }),
+      wood:   std(0x5c3317, { roughness: 0.92, metalness: 0.0  }),
+      tan:    std(0x8b7355, { roughness: 0.88, metalness: 0.05 }),
+      glass:  new THREE.MeshStandardMaterial({
+        color: 0x334466, roughness: 0.05, metalness: 0.1,
+        transparent: true, opacity: 0.65, side: THREE.DoubleSide,
       }),
-      rubber: lam(0x0f0f0f),
-      red: bas(0xcc1100),
+      rubber: std(0x0f0f0f, { roughness: 0.98, metalness: 0.0  }),
+      red:    bas(0xcc1100),
+      spent:  std(0xb08840, { roughness: 0.3,  metalness: 0.85 }),
     };
   }
 
