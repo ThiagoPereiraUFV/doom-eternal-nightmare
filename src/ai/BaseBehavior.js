@@ -5,7 +5,7 @@
  * were previously duplicated between the two hierarchies.
  */
 
-import { RayCaster } from "../utils/RayCaster.js";
+import { RayCaster } from "../map/RayCaster.js";
 import { distance, isWalkable } from "../utils/MathUtils.js";
 
 /** Angle offsets tried when the direct path is blocked during navigation. */

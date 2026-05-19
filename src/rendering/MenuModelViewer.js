@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { EnemyFactory } from "../entities/EnemyFactory.js";
+import { EnemyFactory } from "../entities/enemies/EnemyFactory.js";
 import { WeaponFactory } from "../weapons/WeaponFactory.js";
 
 // MODEL_SETS entries are computed lazily via getters so they reflect the

@@ -8,12 +8,12 @@
 import * as THREE from "three";
 import { GameConfig } from "../config/GameConfig.js";
 import { clamp, lerp } from "../utils/MathUtils.js";
-import { EnemyFactory } from "../entities/EnemyFactory.js";
+import { EnemyFactory } from "../entities/enemies/EnemyFactory.js";
 import {
   EntityRegistry,
   ENTITY_CATEGORIES,
 } from "../registry/EntityRegistry.js";
-import { FriendlyBot } from "../entities/FriendlyBot.js";
+import { FriendlyBot } from "../entities/bots/FriendlyBot.js";
 import { MapRenderer } from "./MapRenderer.js";
 import { BloodSystem } from "../systems/BloodSystem.js";
 import { ShellSystem } from "../systems/ShellSystem.js";

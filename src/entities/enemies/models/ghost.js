@@ -8,7 +8,7 @@ import { Ghost } from "../Ghost.js";
 import {
   EntityRegistry,
   ENTITY_CATEGORIES,
-} from "../../registry/EntityRegistry.js";
+} from "../../../registry/EntityRegistry.js";
 
 const config = {
   ...Ghost.config,

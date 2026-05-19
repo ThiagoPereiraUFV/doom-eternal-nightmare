@@ -11,7 +11,7 @@ import { Demon } from "../Demon.js";
 import {
   EntityRegistry,
   ENTITY_CATEGORIES,
-} from "../../registry/EntityRegistry.js";
+} from "../../../registry/EntityRegistry.js";
 
 const config = {
   ...Demon.config,

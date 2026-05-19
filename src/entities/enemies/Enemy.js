@@ -4,8 +4,8 @@
  * Following SRP - only enemy logic
  */
 
-import { GameConfig } from "../config/GameConfig.js";
-import { Entity } from "./Entity.js";
+import { GameConfig } from "../../config/GameConfig.js";
+import { Entity } from "../Entity.js";
 
 export class Enemy extends Entity {
   static _nextId = 0;

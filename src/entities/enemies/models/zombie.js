@@ -8,7 +8,7 @@ import { Zombie } from "../Zombie.js";
 import {
   EntityRegistry,
   ENTITY_CATEGORIES,
-} from "../../registry/EntityRegistry.js";
+} from "../../../registry/EntityRegistry.js";
 
 const config = {
   ...Zombie.config,

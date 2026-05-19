@@ -8,7 +8,7 @@ import { Brute } from "../Brute.js";
 import {
   EntityRegistry,
   ENTITY_CATEGORIES,
-} from "../../registry/EntityRegistry.js";
+} from "../../../registry/EntityRegistry.js";
 
 const config = {
   ...Brute.config,

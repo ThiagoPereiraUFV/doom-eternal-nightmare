@@ -5,7 +5,7 @@
  */
 
 import { GameConfig } from "../config/GameConfig.js";
-import { isInBounds, distance } from "./MathUtils.js";
+import { isInBounds, distance } from "../utils/MathUtils.js";
 
 export class RayCaster {
   /**

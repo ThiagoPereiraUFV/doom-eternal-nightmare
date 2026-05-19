@@ -7,17 +7,17 @@
  *
  * Categories
  * ----------
- * 'enemy'    – hostile entities   (src/entities/models/)
+ * 'enemy'    – hostile entities   (src/entities/enemies/models/)
  * 'weapon'   – player weapons     (src/weapons/models/)
- * 'bot'      – friendly bots      (src/entities/models/)
- * 'player'   – player variants    (src/entities/models/)
+ * 'bot'      – friendly bots      (src/entities/bots/)
+ * 'player'   – player variants    (src/entities/)
  * 'particle' – effect emitters    (src/systems/models/)
- * 'map'      – map tile sets      (src/utils/models/)
+ * 'map'      – map tile sets      (src/map/models/)
  *
  * Adding a new enemy "Troll"
  * --------------------------
- * 1. Create src/entities/models/troll.js  (calls EntityRegistry.register)
- * 2. Add  import './troll.js'  to src/entities/models/index.js
+ * 1. Create src/entities/enemies/models/troll.js  (calls EntityRegistry.register)
+ * 2. Add  import './troll.js'  to src/entities/enemies/models/index.js
  * That's it — EnemyFactory, Renderer and MenuModelViewer pick it up
  * automatically.
  */

@@ -4,7 +4,7 @@
  * Call createMesh(group, mat) to populate a THREE.Group with the demon model.
  */
 import { Enemy } from "./Enemy.js";
-import { MeshBuilderMixin } from "../utils/MeshBuilder.js";
+import { MeshBuilderMixin } from "../../utils/MeshBuilder.js";
 
 export class Demon extends MeshBuilderMixin(Enemy) {
   static config = {

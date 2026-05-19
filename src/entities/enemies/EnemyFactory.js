@@ -5,19 +5,19 @@
  * no changes to this file are needed when adding a new enemy model.
  *
  * To add a new enemy:
- *   1. Create src/entities/models/<type>.js
- *   2. Import it in src/entities/models/index.js
+ *   1. Create src/entities/enemies/models/<type>.js
+ *   2. Import it in src/entities/enemies/models/index.js
  */
 
 import { Enemy } from "./Enemy.js";
 import {
   EntityRegistry,
   ENTITY_CATEGORIES,
-} from "../registry/EntityRegistry.js";
-import { GameConfig } from "../config/GameConfig.js";
-import { ChaseState } from "../ai/ChaseState.js";
-import { PatrolState } from "../ai/PatrolState.js";
-import { SearchState } from "../ai/SearchState.js";
+} from "../../registry/EntityRegistry.js";
+import { GameConfig } from "../../config/GameConfig.js";
+import { ChaseState } from "../../ai/ChaseState.js";
+import { PatrolState } from "../../ai/PatrolState.js";
+import { SearchState } from "../../ai/SearchState.js";
 
 export class EnemyFactory {
   static _aiStates = new Map();

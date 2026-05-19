@@ -5,9 +5,9 @@
  */
 
 import * as THREE from "three";
-import { GameConfig } from "../config/GameConfig.js";
-import { MeshBuilderMixin } from "../utils/MeshBuilder.js";
-import { Entity } from "./Entity.js";
+import { GameConfig } from "../../config/GameConfig.js";
+import { MeshBuilderMixin } from "../../utils/MeshBuilder.js";
+import { Entity } from "../Entity.js";
 
 export class FriendlyBot extends MeshBuilderMixin(Entity) {
   static _nextId = 0;
