@@ -9,6 +9,7 @@
 
 import { BaseBehavior } from "./BaseBehavior.js";
 import { GameConfig } from "../config/GameConfig.js";
+import { isWalkable } from "../utils/MathUtils.js";
 
 export class BotBehavior extends BaseBehavior {
   constructor(name) {
@@ -102,8 +103,24 @@ export class BotBehavior extends BaseBehavior {
    */
   _engageTarget(bot, target, map) {
     const dist = this._distance(bot.x, bot.y, target.x, target.y);
-    if (dist > GameConfig.BOT.ENGAGE_BUFFER) {
+    const { ENGAGE_BUFFER, COMBAT_DISTANCE } = GameConfig.BOT;
+
+    if (dist < COMBAT_DISTANCE) {
+      // Too close — back away to maintain safe standoff distance
+      const awayAngle = Math.atan2(bot.y - target.y, bot.x - target.x);
+      const nx = bot.x + Math.cos(awayAngle) * bot.speed;
+      const ny = bot.y + Math.sin(awayAngle) * bot.speed;
+      if (isWalkable(map, Math.floor(nx), Math.floor(ny))) {
+        bot.x = nx;
+        bot.y = ny;
+      }
+      bot.angle = Math.atan2(target.y - bot.y, target.x - bot.x);
+    } else if (dist > COMBAT_DISTANCE + ENGAGE_BUFFER) {
+      // Too far — close in to preferred combat range
       this._navigateTowards(bot, target.x, target.y, bot.speed, map);
+    } else {
+      // In the sweet spot — face target and hold position
+      bot.angle = bot.angleTo(target.x, target.y);
     }
     this._tryAttack(bot, target);
   }

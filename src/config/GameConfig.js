@@ -237,6 +237,10 @@ export const GameConfig = {
     // Minimum distance to a combat target before the bot navigates toward it.
     ENGAGE_BUFFER: 1.2,
 
+    // Preferred standoff distance from an enemy during combat.
+    // Bots will back away when closer than this to avoid melee damage.
+    COMBAT_DISTANCE: 4.0,
+
     // Max bots allowed in Custom difficulty.
     MAX_COUNT: 5,
 
