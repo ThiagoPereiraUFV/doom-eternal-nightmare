@@ -14,7 +14,12 @@ const config = {
   ...Zombie.config,
   getMaterials() {
     const std = (hex, extra = {}) =>
-      new THREE.MeshStandardMaterial({ color: hex, roughness: 0.95, metalness: 0.0, ...extra });
+      new THREE.MeshStandardMaterial({
+        color: hex,
+        roughness: 0.95,
+        metalness: 0.0,
+        ...extra,
+      });
     return {
       // Decomposing flesh — mottled grey-green, extremely rough surface
       body: std(0x3d4a2e, { roughness: 0.97, metalness: 0.0 }),

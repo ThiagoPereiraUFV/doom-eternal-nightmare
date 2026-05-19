@@ -14,7 +14,12 @@ const config = {
   ...Brute.config,
   getMaterials() {
     const std = (hex, extra = {}) =>
-      new THREE.MeshStandardMaterial({ color: hex, roughness: 0.9, metalness: 0.0, ...extra });
+      new THREE.MeshStandardMaterial({
+        color: hex,
+        roughness: 0.9,
+        metalness: 0.0,
+        ...extra,
+      });
     return {
       // Thick hide — dark reddish-brown like dried blood over rock
       body: std(0x5a2e10, { roughness: 0.93, metalness: 0.02 }),

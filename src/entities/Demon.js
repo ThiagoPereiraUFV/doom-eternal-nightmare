@@ -98,7 +98,7 @@ export class Demon extends MeshBuilderMixin(Enemy) {
     // Teeth — upper & lower rows
     for (let i = 0; i < 4; i++) {
       const tx = -0.09 + i * 0.06;
-      this.cone(0.02, 0.06, hornM, tx, 1.04, 0.38, -0.3);     // upper fangs
+      this.cone(0.02, 0.06, hornM, tx, 1.04, 0.38, -0.3); // upper fangs
       this.cone(0.02, 0.05, hornM, tx + 0.01, 1.02, 0.36, 0.3); // lower fangs
     }
     // Glowing eyes

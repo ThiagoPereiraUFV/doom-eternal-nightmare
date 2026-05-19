@@ -55,8 +55,8 @@ export class Ghost extends MeshBuilderMixin(Enemy) {
     const seg4 = this.sphere(0.07, bM, 0, 0.05, 0, 8);
 
     // ── Arm wisps — fluid, extended ───────────────────────────────────────
-    const wL  = this.sphere(0.11, bM, -0.36, 0.56, 0.06, 12);
-    const wR  = this.sphere(0.11, bM, 0.36, 0.56, 0.06, 12);
+    const wL = this.sphere(0.11, bM, -0.36, 0.56, 0.06, 12);
+    const wR = this.sphere(0.11, bM, 0.36, 0.56, 0.06, 12);
     const wL2 = this.sphere(0.08, bM, -0.48, 0.5, 0.1, 10);
     const wR2 = this.sphere(0.08, bM, 0.48, 0.5, 0.1, 10);
     const wL3 = this.sphere(0.05, bM, -0.58, 0.46, 0.12, 8);
@@ -72,23 +72,55 @@ export class Ghost extends MeshBuilderMixin(Enemy) {
 
     this.g.userData.animate = (t) => {
       const bob = Math.sin(t * 1.8);
-      body.position.y  = 0.66 + bob * 0.1;
-      seg1.position.y  = 0.44 + Math.sin(t * 1.8 + 0.25) * 0.09;
-      seg2.position.y  = 0.27 + Math.sin(t * 1.8 + 0.5) * 0.07;
-      seg3.position.y  = 0.14 + Math.sin(t * 1.8 + 0.75) * 0.05;
-      seg4.position.y  = 0.05 + Math.sin(t * 1.8 + 1.0) * 0.04;
+      body.position.y = 0.66 + bob * 0.1;
+      seg1.position.y = 0.44 + Math.sin(t * 1.8 + 0.25) * 0.09;
+      seg2.position.y = 0.27 + Math.sin(t * 1.8 + 0.5) * 0.07;
+      seg3.position.y = 0.14 + Math.sin(t * 1.8 + 0.75) * 0.05;
+      seg4.position.y = 0.05 + Math.sin(t * 1.8 + 1.0) * 0.04;
       // Arm sway
       const sw = Math.sin(t * 2.2);
-      wL.position.set(-0.36 + sw * 0.08,  0.56 + Math.cos(t * 2.2) * 0.06, 0.06);
-      wR.position.set( 0.36 + Math.sin(t * 2.2 + 1.1) * 0.08, 0.56 + Math.cos(t * 2.2 + 1.1) * 0.06, 0.06);
-      wL2.position.set(-0.48 + Math.sin(t * 2.5) * 0.1,  0.5 + Math.cos(t * 2.5) * 0.08, 0.1);
-      wR2.position.set( 0.48 + Math.sin(t * 2.5 + 1.2) * 0.1, 0.5 + Math.cos(t * 2.5 + 1.2) * 0.08, 0.1);
-      wL3.position.set(-0.58 + Math.sin(t * 2.9) * 0.12, 0.46 + Math.cos(t * 2.9) * 0.09, 0.12);
-      wR3.position.set( 0.58 + Math.sin(t * 2.9 + 1.3) * 0.12, 0.46 + Math.cos(t * 2.9 + 1.3) * 0.09, 0.12);
+      wL.position.set(-0.36 + sw * 0.08, 0.56 + Math.cos(t * 2.2) * 0.06, 0.06);
+      wR.position.set(
+        0.36 + Math.sin(t * 2.2 + 1.1) * 0.08,
+        0.56 + Math.cos(t * 2.2 + 1.1) * 0.06,
+        0.06,
+      );
+      wL2.position.set(
+        -0.48 + Math.sin(t * 2.5) * 0.1,
+        0.5 + Math.cos(t * 2.5) * 0.08,
+        0.1,
+      );
+      wR2.position.set(
+        0.48 + Math.sin(t * 2.5 + 1.2) * 0.1,
+        0.5 + Math.cos(t * 2.5 + 1.2) * 0.08,
+        0.1,
+      );
+      wL3.position.set(
+        -0.58 + Math.sin(t * 2.9) * 0.12,
+        0.46 + Math.cos(t * 2.9) * 0.09,
+        0.12,
+      );
+      wR3.position.set(
+        0.58 + Math.sin(t * 2.9 + 1.3) * 0.12,
+        0.46 + Math.cos(t * 2.9 + 1.3) * 0.09,
+        0.12,
+      );
       // Trailing wisps drift
-      trail1.position.set(-0.1 + Math.sin(t * 3.1) * 0.06, 0.02 + bob * 0.04, 0.02);
-      trail2.position.set( 0.1 + Math.sin(t * 3.4 + 1) * 0.06, -0.02 + bob * 0.03, 0.0);
-      trail3.position.set( 0.0 + Math.sin(t * 2.7 + 2) * 0.05, -0.06 + bob * 0.03, 0.04);
+      trail1.position.set(
+        -0.1 + Math.sin(t * 3.1) * 0.06,
+        0.02 + bob * 0.04,
+        0.02,
+      );
+      trail2.position.set(
+        0.1 + Math.sin(t * 3.4 + 1) * 0.06,
+        -0.02 + bob * 0.03,
+        0.0,
+      );
+      trail3.position.set(
+        0.0 + Math.sin(t * 2.7 + 2) * 0.05,
+        -0.06 + bob * 0.03,
+        0.04,
+      );
       // Pulsing opacity
       if (bM.transparent) {
         bM.opacity = 0.48 + Math.sin(t * 2.2) * 0.16;

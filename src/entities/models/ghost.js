@@ -14,7 +14,12 @@ const config = {
   ...Ghost.config,
   getMaterials() {
     const std = (hex, extra = {}) =>
-      new THREE.MeshStandardMaterial({ color: hex, roughness: 0.15, metalness: 0.0, ...extra });
+      new THREE.MeshStandardMaterial({
+        color: hex,
+        roughness: 0.15,
+        metalness: 0.0,
+        ...extra,
+      });
     return {
       // Ethereal translucent form — inner cold-blue glow
       body: std(0x4488bb, {

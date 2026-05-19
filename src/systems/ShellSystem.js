@@ -10,10 +10,14 @@ export class ShellSystem {
     this._shells = [];
 
     this._shellMat = new THREE.MeshStandardMaterial({
-      color: 0xd4a020, roughness: 0.28, metalness: 0.88,
+      color: 0xd4a020,
+      roughness: 0.28,
+      metalness: 0.88,
     });
     this._shellSpentMat = new THREE.MeshStandardMaterial({
-      color: 0x8a6010, roughness: 0.38, metalness: 0.80,
+      color: 0x8a6010,
+      roughness: 0.38,
+      metalness: 0.8,
     });
   }
 

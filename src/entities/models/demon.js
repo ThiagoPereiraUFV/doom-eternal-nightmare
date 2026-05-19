@@ -17,7 +17,12 @@ const config = {
   ...Demon.config,
   getMaterials() {
     const std = (hex, extra = {}) =>
-      new THREE.MeshStandardMaterial({ color: hex, roughness: 0.88, metalness: 0.04, ...extra });
+      new THREE.MeshStandardMaterial({
+        color: hex,
+        roughness: 0.88,
+        metalness: 0.04,
+        ...extra,
+      });
     return {
       // Volcanic, cracked skin — deep crimson with subsurface warmth
       body: std(0x8b1200, { roughness: 0.92, metalness: 0.0 }),

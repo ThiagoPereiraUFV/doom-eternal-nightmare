@@ -103,8 +103,30 @@ export class Zombie extends MeshBuilderMixin(Enemy) {
     this.sphere(0.04, hornM, 0.04, 1.3, -0.08, 7);
 
     // ── Arms: one outstretched (shamble), one partly raised ───────────────
-    const aUpperL = this.box(0.13, 0.5, 0.13, bM, -0.26, 0.65, 0.1, -0.88, 0, 0);
-    const aForeL = this.box(0.11, 0.42, 0.11, bM, -0.28, 0.96, 0.36, -0.93, 0, 0.05);
+    const aUpperL = this.box(
+      0.13,
+      0.5,
+      0.13,
+      bM,
+      -0.26,
+      0.65,
+      0.1,
+      -0.88,
+      0,
+      0,
+    );
+    const aForeL = this.box(
+      0.11,
+      0.42,
+      0.11,
+      bM,
+      -0.28,
+      0.96,
+      0.36,
+      -0.93,
+      0,
+      0.05,
+    );
     // Wrist bone
     this.sphere(0.08, bM, -0.28, 1.18, 0.5, 10);
     // Hand — skeletal fingers
@@ -112,7 +134,18 @@ export class Zombie extends MeshBuilderMixin(Enemy) {
       this.cone(0.018, 0.09, hornM, -0.24 + i * 0.04, 1.22, 0.56, -0.3);
     }
 
-    const aUpperR = this.box(0.13, 0.5, 0.13, bM, 0.26, 0.62, 0.04, 0.15, 0, 0.04);
+    const aUpperR = this.box(
+      0.13,
+      0.5,
+      0.13,
+      bM,
+      0.26,
+      0.62,
+      0.04,
+      0.15,
+      0,
+      0.04,
+    );
     const aForeR = this.box(0.11, 0.42, 0.11, bM, 0.27, 0.22, 0.04, 0.08, 0, 0);
     this.sphere(0.08, bM, 0.27, 0.0, 0.04, 10);
     // Dangling hand fingers

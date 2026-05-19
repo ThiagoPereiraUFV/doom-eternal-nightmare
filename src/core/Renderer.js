@@ -232,7 +232,7 @@ export class Renderer {
       // Matte olive-drab armour plates
       armor: std(0x2a5c2a, { roughness: 0.85, metalness: 0.18 }),
       // Slightly darker combat suit fabric
-      suit:  std(0x1e4020, { roughness: 0.92, metalness: 0.0 }),
+      suit: std(0x1e4020, { roughness: 0.92, metalness: 0.0 }),
       // Glowing holographic visor
       visor: std(0x00ffcc, {
         roughness: 0.05,
@@ -247,22 +247,29 @@ export class Renderer {
     };
 
     this._wMat = {
-      dark:   std(0x1c1c1c, { roughness: 0.6,  metalness: 0.55 }),
-      scope:  new THREE.MeshStandardMaterial({
-        color: 0x1c1c1c, roughness: 0.5, metalness: 0.6, side: THREE.DoubleSide,
+      dark: std(0x1c1c1c, { roughness: 0.6, metalness: 0.55 }),
+      scope: new THREE.MeshStandardMaterial({
+        color: 0x1c1c1c,
+        roughness: 0.5,
+        metalness: 0.6,
+        side: THREE.DoubleSide,
       }),
-      metal:  std(0x38393b, { roughness: 0.45, metalness: 0.75 }),
-      bright: std(0x8c9098, { roughness: 0.3,  metalness: 0.8  }),
-      steel:  std(0xb0b8be, { roughness: 0.25, metalness: 0.85 }),
-      wood:   std(0x5c3317, { roughness: 0.92, metalness: 0.0  }),
-      tan:    std(0x8b7355, { roughness: 0.88, metalness: 0.05 }),
-      glass:  new THREE.MeshStandardMaterial({
-        color: 0x334466, roughness: 0.05, metalness: 0.1,
-        transparent: true, opacity: 0.65, side: THREE.DoubleSide,
+      metal: std(0x38393b, { roughness: 0.45, metalness: 0.75 }),
+      bright: std(0x8c9098, { roughness: 0.3, metalness: 0.8 }),
+      steel: std(0xb0b8be, { roughness: 0.25, metalness: 0.85 }),
+      wood: std(0x5c3317, { roughness: 0.92, metalness: 0.0 }),
+      tan: std(0x8b7355, { roughness: 0.88, metalness: 0.05 }),
+      glass: new THREE.MeshStandardMaterial({
+        color: 0x334466,
+        roughness: 0.05,
+        metalness: 0.1,
+        transparent: true,
+        opacity: 0.65,
+        side: THREE.DoubleSide,
       }),
-      rubber: std(0x0f0f0f, { roughness: 0.98, metalness: 0.0  }),
-      red:    bas(0xcc1100),
-      spent:  std(0xb08840, { roughness: 0.3,  metalness: 0.85 }),
+      rubber: std(0x0f0f0f, { roughness: 0.98, metalness: 0.0 }),
+      red: bas(0xcc1100),
+      spent: std(0xb08840, { roughness: 0.3, metalness: 0.85 }),
     };
   }
 

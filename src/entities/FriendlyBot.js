@@ -111,17 +111,17 @@ export class FriendlyBot extends MeshBuilderMixin(Entity) {
     const { armor, suit, visor, detail } = mat;
 
     // ── Legs ──────────────────────────────────────────────────────────────
-    const legL = this.box(0.13, 0.4, 0.13, suit,  -0.12, 0.2, 0);
-    const legR = this.box(0.13, 0.4, 0.13, suit,   0.12, 0.2, 0);
+    const legL = this.box(0.13, 0.4, 0.13, suit, -0.12, 0.2, 0);
+    const legR = this.box(0.13, 0.4, 0.13, suit, 0.12, 0.2, 0);
     // Knee pads
     this.box(0.14, 0.09, 0.1, armor, -0.12, 0.22, -0.07);
-    this.box(0.14, 0.09, 0.1, armor,  0.12, 0.22, -0.07);
+    this.box(0.14, 0.09, 0.1, armor, 0.12, 0.22, -0.07);
     // Boots
     this.box(0.15, 0.1, 0.2, armor, -0.12, 0.02, -0.02);
-    this.box(0.15, 0.1, 0.2, armor,  0.12, 0.02, -0.02);
+    this.box(0.15, 0.1, 0.2, armor, 0.12, 0.02, -0.02);
     // Boot sole ridge
     this.box(0.16, 0.03, 0.22, detail, -0.12, -0.02, -0.02);
-    this.box(0.16, 0.03, 0.22, detail,  0.12, -0.02, -0.02);
+    this.box(0.16, 0.03, 0.22, detail, 0.12, -0.02, -0.02);
 
     // ── Torso ─────────────────────────────────────────────────────────────
     // Abdomen (suit)
@@ -129,23 +129,23 @@ export class FriendlyBot extends MeshBuilderMixin(Entity) {
     // Belt / ammo pouches
     this.box(0.3, 0.07, 0.22, detail, 0, 0.37, 0);
     this.box(0.07, 0.07, 0.06, detail, -0.12, 0.37, -0.1);
-    this.box(0.07, 0.07, 0.06, detail,  0.0, 0.37, -0.11);
+    this.box(0.07, 0.07, 0.06, detail, 0.0, 0.37, -0.11);
     // Main armour plate (chest)
     this.box(0.34, 0.38, 0.22, armor, 0, 0.6, 0);
     // Chest detail — central plate with ridge
     this.box(0.14, 0.28, 0.04, detail, 0, 0.62, -0.12);
     // Side armour panels
     this.box(0.06, 0.3, 0.16, detail, -0.2, 0.6, 0);
-    this.box(0.06, 0.3, 0.16, detail,  0.2, 0.6, 0);
+    this.box(0.06, 0.3, 0.16, detail, 0.2, 0.6, 0);
     // Upper chest / collar
     this.box(0.3, 0.12, 0.2, armor, 0, 0.79, 0);
 
     // ── Shoulder pads ────────────────────────────────────────────────────
     this.box(0.15, 0.14, 0.16, detail, -0.27, 0.77, 0);
-    this.box(0.15, 0.14, 0.16, detail,  0.27, 0.77, 0);
+    this.box(0.15, 0.14, 0.16, detail, 0.27, 0.77, 0);
     // Shoulder bolt details
     this.sphere(0.025, detail, -0.31, 0.8, -0.06, 6);
-    this.sphere(0.025, detail,  0.31, 0.8, -0.06, 6);
+    this.sphere(0.025, detail, 0.31, 0.8, -0.06, 6);
 
     // ── Neck ─────────────────────────────────────────────────────────────
     this.cyl(0.07, 0.09, 0.12, suit, 0, 0.9, 0);
@@ -160,37 +160,49 @@ export class FriendlyBot extends MeshBuilderMixin(Entity) {
     this.box(0.26, 0.07, 0.04, visor, 0, 1.06, -0.21);
     // Side vents
     this.box(0.04, 0.08, 0.1, detail, -0.2, 1.06, -0.1);
-    this.box(0.04, 0.08, 0.1, detail,  0.2, 1.06, -0.1);
+    this.box(0.04, 0.08, 0.1, detail, 0.2, 1.06, -0.1);
 
     // ── Arms ──────────────────────────────────────────────────────────────
-    const armL = this.box(0.11, 0.36, 0.11, suit,  -0.27, 0.57, 0);
-    const armR = this.box(0.11, 0.36, 0.11, suit,   0.27, 0.57, 0);
+    const armL = this.box(0.11, 0.36, 0.11, suit, -0.27, 0.57, 0);
+    const armR = this.box(0.11, 0.36, 0.11, suit, 0.27, 0.57, 0);
     // Elbow pads
     this.sphere(0.07, armor, -0.27, 0.42, 0, 10);
-    this.sphere(0.07, armor,  0.27, 0.42, 0, 10);
+    this.sphere(0.07, armor, 0.27, 0.42, 0, 10);
     // Forearms
     this.box(0.1, 0.26, 0.1, suit, -0.27, 0.3, 0);
-    this.box(0.1, 0.26, 0.1, suit,  0.27, 0.3, 0);
+    this.box(0.1, 0.26, 0.1, suit, 0.27, 0.3, 0);
     // Gloves
     this.sphere(0.08, detail, -0.27, 0.17, 0, 10);
-    this.sphere(0.08, detail,  0.27, 0.17, 0, 10);
+    this.sphere(0.08, detail, 0.27, 0.17, 0, 10);
 
     // ── Weapon meshes (right hand, only one visible at a time) ─────────────
     // Pistol — compact tactical handgun
     const gunPistol = new THREE.Group();
     const pistolBody = new THREE.Mesh(
       new THREE.BoxGeometry(0.06, 0.065, 0.19),
-      new THREE.MeshStandardMaterial({ color: 0x444455, roughness: 0.55, metalness: 0.7 }),
+      new THREE.MeshStandardMaterial({
+        color: 0x444455,
+        roughness: 0.55,
+        metalness: 0.7,
+      }),
     );
     pistolBody.position.set(0, 0, -0.09);
     const pistolGrip = new THREE.Mesh(
       new THREE.BoxGeometry(0.052, 0.11, 0.055),
-      new THREE.MeshStandardMaterial({ color: 0x222230, roughness: 0.9, metalness: 0.1 }),
+      new THREE.MeshStandardMaterial({
+        color: 0x222230,
+        roughness: 0.9,
+        metalness: 0.1,
+      }),
     );
     pistolGrip.position.set(0, -0.08, 0.02);
     const pistolBarrel = new THREE.Mesh(
       new THREE.CylinderGeometry(0.014, 0.014, 0.08, 8),
-      new THREE.MeshStandardMaterial({ color: 0x888899, roughness: 0.25, metalness: 0.9 }),
+      new THREE.MeshStandardMaterial({
+        color: 0x888899,
+        roughness: 0.25,
+        metalness: 0.9,
+      }),
     );
     pistolBarrel.rotation.x = Math.PI / 2;
     pistolBarrel.position.set(0, 0.012, -0.2);
@@ -202,18 +214,30 @@ export class FriendlyBot extends MeshBuilderMixin(Entity) {
     const gunShotgun = new THREE.Group();
     const sgBody = new THREE.Mesh(
       new THREE.BoxGeometry(0.07, 0.07, 0.28),
-      new THREE.MeshStandardMaterial({ color: 0x3a2810, roughness: 0.9, metalness: 0.05 }),
+      new THREE.MeshStandardMaterial({
+        color: 0x3a2810,
+        roughness: 0.9,
+        metalness: 0.05,
+      }),
     );
     sgBody.position.set(0, 0, -0.14);
     const sgBarrel = new THREE.Mesh(
       new THREE.CylinderGeometry(0.027, 0.027, 0.24, 8),
-      new THREE.MeshStandardMaterial({ color: 0x555566, roughness: 0.35, metalness: 0.75 }),
+      new THREE.MeshStandardMaterial({
+        color: 0x555566,
+        roughness: 0.35,
+        metalness: 0.75,
+      }),
     );
     sgBarrel.rotation.x = Math.PI / 2;
     sgBarrel.position.set(0, 0.04, -0.15);
     const sgPump = new THREE.Mesh(
       new THREE.BoxGeometry(0.065, 0.05, 0.09),
-      new THREE.MeshStandardMaterial({ color: 0x5a3a18, roughness: 0.88, metalness: 0.0 }),
+      new THREE.MeshStandardMaterial({
+        color: 0x5a3a18,
+        roughness: 0.88,
+        metalness: 0.0,
+      }),
     );
     sgPump.position.set(0, -0.02, -0.08);
     gunShotgun.add(sgBody, sgBarrel, sgPump);
@@ -225,25 +249,44 @@ export class FriendlyBot extends MeshBuilderMixin(Entity) {
     const gunSniper = new THREE.Group();
     const snBody = new THREE.Mesh(
       new THREE.BoxGeometry(0.055, 0.058, 0.4),
-      new THREE.MeshStandardMaterial({ color: 0x1a1a2a, roughness: 0.7, metalness: 0.4 }),
+      new THREE.MeshStandardMaterial({
+        color: 0x1a1a2a,
+        roughness: 0.7,
+        metalness: 0.4,
+      }),
     );
     snBody.position.set(0, 0, -0.2);
     const snBarrel = new THREE.Mesh(
       new THREE.CylinderGeometry(0.016, 0.016, 0.34, 8),
-      new THREE.MeshStandardMaterial({ color: 0x444455, roughness: 0.28, metalness: 0.85 }),
+      new THREE.MeshStandardMaterial({
+        color: 0x444455,
+        roughness: 0.28,
+        metalness: 0.85,
+      }),
     );
     snBarrel.rotation.x = Math.PI / 2;
     snBarrel.position.set(0, 0.034, -0.24);
     const snScope = new THREE.Mesh(
       new THREE.CylinderGeometry(0.024, 0.024, 0.1, 8),
-      new THREE.MeshStandardMaterial({ color: 0x080810, roughness: 0.4, metalness: 0.6 }),
+      new THREE.MeshStandardMaterial({
+        color: 0x080810,
+        roughness: 0.4,
+        metalness: 0.6,
+      }),
     );
     snScope.rotation.x = Math.PI / 2;
     snScope.position.set(0, 0.042, -0.1);
     const snScopeLens = new THREE.Mesh(
       new THREE.CircleGeometry(0.018, 8),
-      new THREE.MeshStandardMaterial({ color: 0x334488, roughness: 0.05, metalness: 0.2,
-        transparent: true, opacity: 0.7, emissive: new THREE.Color(0x112244), emissiveIntensity: 0.5 }),
+      new THREE.MeshStandardMaterial({
+        color: 0x334488,
+        roughness: 0.05,
+        metalness: 0.2,
+        transparent: true,
+        opacity: 0.7,
+        emissive: new THREE.Color(0x112244),
+        emissiveIntensity: 0.5,
+      }),
     );
     snScopeLens.position.set(0, 0.042, -0.052);
     gunSniper.add(snBody, snBarrel, snScope, snScopeLens);
@@ -254,10 +297,10 @@ export class FriendlyBot extends MeshBuilderMixin(Entity) {
     // ── Walk animation ────────────────────────────────────────────────────
     group.userData.animate = (t) => {
       const swing = Math.sin(t * 3) * 0.3;
-      legL.rotation.x =  swing;
+      legL.rotation.x = swing;
       legR.rotation.x = -swing;
       armL.rotation.x = -swing * 0.5;
-      armR.rotation.x =  swing * 0.5;
+      armR.rotation.x = swing * 0.5;
     };
 
     // Weapon refs for runtime switching
