@@ -469,6 +469,18 @@ export class Game {
       );
     });
 
+    // Pointer lock change — auto-pause when the browser releases pointer lock
+    // (e.g. user pressed Escape) while the game is still running.
+    document.addEventListener("pointerlockchange", () => {
+      if (
+        this.controlType === "keyboard" &&
+        document.pointerLockElement !== this.canvas &&
+        this.stateManager.is(GameStates.PLAYING)
+      ) {
+        this.pauseGame();
+      }
+    });
+
     // Portrait-mode detection: pause game when device rotates to portrait,
     // resume when it rotates back to landscape (touch devices only).
     const portraitQuery = window.matchMedia(
@@ -578,13 +590,19 @@ export class Game {
     this.audioSystem.resume();
 
     // Request pointer lock for keyboard controls — must be inside a user gesture.
-    // Attach a one-time handler so the first click/keydown after game start triggers it.
+    // Try immediately first (works if called directly from a gesture, e.g. skip button).
+    // Fall back to a one-time handler for the next click/keydown if the context was lost.
     if (this.controlType === "keyboard") {
       const requestLock = () => {
         this.canvas.requestPointerLock();
       };
-      this.canvas.addEventListener("click", requestLock, { once: true });
-      document.addEventListener("keydown", requestLock, { once: true });
+      const immediateResult = this.canvas.requestPointerLock();
+      if (immediateResult instanceof Promise) {
+        immediateResult.catch(() => {
+          this.canvas.addEventListener("click", requestLock, { once: true });
+          document.addEventListener("keydown", requestLock, { once: true });
+        });
+      }
     }
 
     // Enable touch controls for touch mode
