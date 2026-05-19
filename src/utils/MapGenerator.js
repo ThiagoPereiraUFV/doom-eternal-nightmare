@@ -5,7 +5,7 @@
  */
 
 import { GameConfig } from "../config/GameConfig.js";
-import { isWalkable, isInBounds } from "./MathUtils.js";
+import { isWalkable } from "./MathUtils.js";
 
 export class MapGenerator {
   /**

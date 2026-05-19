@@ -5,6 +5,7 @@
  */
 
 import { GameConfig } from "../config/GameConfig.js";
+import { isInBounds, distance } from "./MathUtils.js";
 
 export class RayCaster {
   /**
@@ -75,7 +76,7 @@ export class RayCaster {
       const mapY = Math.floor(hitY);
 
       // Check bounds
-      if (mapY < 0 || mapY >= map.length || mapX < 0 || mapX >= map[0].length) {
+      if (!isInBounds(map, mapX, mapY)) {
         hit = true;
         wallType = 1; // Default wall
         break;
@@ -121,11 +122,11 @@ export class RayCaster {
   static hasLineOfSight(x1, y1, x2, y2, map) {
     const dx = x2 - x1;
     const dy = y2 - y1;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+    const dist = distance(x1, y1, x2, y2);
     const angle = Math.atan2(dy, dx);
 
-    const steps = Math.ceil(distance * 10);
-    const stepSize = distance / steps;
+    const steps = Math.ceil(dist * 10);
+    const stepSize = dist / steps;
 
     for (let i = 0; i <= steps; i++) {
       const checkX = x1 + Math.cos(angle) * stepSize * i;
@@ -134,7 +135,7 @@ export class RayCaster {
       const mapX = Math.floor(checkX);
       const mapY = Math.floor(checkY);
 
-      if (mapY < 0 || mapY >= map.length || mapX < 0 || mapX >= map[0].length) {
+      if (!isInBounds(map, mapX, mapY)) {
         return false;
       }
 
