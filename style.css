@@ -1688,6 +1688,60 @@ body {
   }
 }
 
+/* Portrait orientation warning */
+#portrait-warning {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: #0a0a0a;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: #ff0033;
+  font-family: "Courier New", monospace;
+  text-align: center;
+}
+
+#portrait-warning-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px;
+}
+
+#portrait-warning-content svg {
+  color: #ff0033;
+  animation: portrait-rotate-hint 2s ease-in-out infinite;
+}
+
+@keyframes portrait-rotate-hint {
+  0%, 100% { transform: rotate(0deg); }
+  40% { transform: rotate(90deg); }
+  60% { transform: rotate(90deg); }
+}
+
+#portrait-warning-content p {
+  margin: 0;
+  font-size: 22px;
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.portrait-warning-sub {
+  font-size: 13px !important;
+  color: #aaa !important;
+  letter-spacing: 0.05em !important;
+}
+
+@media screen and (orientation: portrait) and (hover: none) and (pointer: coarse) {
+  #portrait-warning {
+    display: flex;
+  }
+}
+
 /* Responsive Design - Mobile Portrait */
 @media screen and (width <= 768px) {
   #hud {

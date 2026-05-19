@@ -468,6 +468,28 @@ export class Game {
         weapon.shell,
       );
     });
+
+    // Portrait-mode detection: pause game when device rotates to portrait,
+    // resume when it rotates back to landscape (touch devices only).
+    const portraitQuery = window.matchMedia(
+      "(orientation: portrait) and (hover: none) and (pointer: coarse)",
+    );
+    const handleOrientationChange = (e) => {
+      if (e.matches) {
+        // Entered portrait — pause if currently playing
+        if (this.stateManager.is(GameStates.PLAYING)) {
+          this._pausedByOrientation = true;
+          this.pauseGame();
+        }
+      } else {
+        // Returned to landscape — resume only if we were the ones who paused
+        if (this._pausedByOrientation && this.stateManager.is(GameStates.PAUSED)) {
+          this._pausedByOrientation = false;
+          this.resumeGame();
+        }
+      }
+    };
+    portraitQuery.addEventListener("change", handleOrientationChange);
   }
 
   /**
