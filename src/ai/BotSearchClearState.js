@@ -23,7 +23,7 @@ export class BotSearchClearState extends BotBehavior {
     if (target) {
       const distToTarget = this._distance(bot.x, bot.y, target.x, target.y);
       if (distToTarget > 1.2) {
-        this._navigate(bot, target.x, target.y, bot.speed, map);
+        this._navigateTowards(bot, target.x, target.y, bot.speed, map);
       }
       this._tryAttack(bot, target);
       bot.searchWanderTarget = null; // reset wander so we don't immediately resume old path
@@ -48,7 +48,7 @@ export class BotSearchClearState extends BotBehavior {
     }
 
     if (bot.searchWanderTarget) {
-      const moved = this._navigate(
+      const moved = this._navigateTowards(
         bot,
         bot.searchWanderTarget.x,
         bot.searchWanderTarget.y,

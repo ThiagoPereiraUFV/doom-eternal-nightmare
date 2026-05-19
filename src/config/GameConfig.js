@@ -150,7 +150,9 @@ export const GameConfig = {
 
     // Hitbox radius used by weapon raycasts.
     ENEMY_HIT_RADIUS: 0.3,
-    ENEMY_HIT_RADIUS_SQ: 0.09, // pre-computed 0.3^2
+    get ENEMY_HIT_RADIUS_SQ() {
+      return this.ENEMY_HIT_RADIUS ** 2;
+    },
 
     // Radius used for entity-entity separation (enemies, bots, player).
     ENTITY_COLLISION_RADIUS: 0.3,
@@ -233,6 +235,14 @@ export const GameConfig = {
       SEARCH_CLEAR: "search_clear",
       STOP: "stop",
     },
+
+    // Weapon profiles used by bots — ordered from closest to farthest range.
+    // _tryAttack selects the first entry whose maxRange exceeds the distance to target.
+    BOT_WEAPONS: [
+      { maxRange: 3.5, type: "shotgun", damage: 40, cooldown: 900 },
+      { maxRange: 7.5, type: "pistol", damage: 25, cooldown: 600 },
+      { maxRange: Infinity, type: "sniper", damage: 60, cooldown: 1400 },
+    ],
   },
 
   // Difficulty presets

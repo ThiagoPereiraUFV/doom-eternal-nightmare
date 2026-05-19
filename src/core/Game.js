@@ -17,6 +17,7 @@ import { Player } from "../entities/Player.js";
 import { EnemyFactory } from "../entities/EnemyFactory.js";
 import { WeaponFactory } from "../weapons/WeaponFactory.js";
 import { MapGenerator } from "../utils/MapGenerator.js";
+import { isWalkable } from "../utils/MathUtils.js";
 import { FriendlyBot } from "../entities/FriendlyBot.js";
 import { BotFollowState } from "../ai/BotFollowState.js";
 import { BotSearchClearState } from "../ai/BotSearchClearState.js";
@@ -1211,13 +1212,7 @@ export class Game {
     const ny = entity.y + dy;
     const tx = Math.floor(nx);
     const ty = Math.floor(ny);
-    if (
-      ty >= 0 &&
-      ty < this.map.length &&
-      tx >= 0 &&
-      tx < this.map[0].length &&
-      this.map[ty][tx] === 0
-    ) {
+    if (isWalkable(this.map, tx, ty)) {
       entity.x = nx;
       entity.y = ny;
     }

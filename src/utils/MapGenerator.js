@@ -5,6 +5,7 @@
  */
 
 import { GameConfig } from "../config/GameConfig.js";
+import { isWalkable } from "./MathUtils.js";
 
 export class MapGenerator {
   /**
@@ -240,9 +241,7 @@ export class MapGenerator {
       ].filter(([dx, dy]) => {
         const nx = x + dx,
           ny = y + dy;
-        return (
-          ny >= 0 && ny < height && nx >= 0 && nx < width && map[ny][nx] === 0
-        );
+        return isWalkable(map, nx, ny);
       }).length;
       if (openNeighbors < 3) {
         continue;

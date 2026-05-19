@@ -22,7 +22,7 @@ export class BotFollowState extends BotBehavior {
       // Move toward the target (maintain a slight buffer so bot doesn't walk into it)
       const distToTarget = this._distance(bot.x, bot.y, target.x, target.y);
       if (distToTarget > 1.2) {
-        this._navigate(bot, target.x, target.y, bot.speed, map);
+        this._navigateTowards(bot, target.x, target.y, bot.speed, map);
       }
       // Fire
       this._tryAttack(bot, target);
@@ -42,7 +42,7 @@ export class BotFollowState extends BotBehavior {
     }
 
     if (distToPlayer > FOLLOW_DESIRED_DISTANCE) {
-      this._navigate(bot, player.x, player.y, bot.speed, map);
+      this._navigateTowards(bot, player.x, player.y, bot.speed, map);
     } else {
       // Already close — face the player
       bot.angle = bot.angleTo(player.x, player.y);
