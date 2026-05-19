@@ -52,6 +52,7 @@ A browser-based first-person shooter (FPS) game inspired by classic titles like 
 | Pattern | Classes | Purpose |
 |---------|---------|---------|
 | **Factory** | `WeaponFactory`, `EnemyFactory` | Create objects without specifying exact class |
+| **Registry** | `EntityRegistry` | Single source of truth for all registered entity and weapon types |
 | **Strategy** | `ChaseState`, `PatrolState`, `SearchState`, `BotFollowState`, `BotIdleState`, `BotSearchClearState` | Interchangeable AI behaviors |
 | **Singleton** | `AudioSystem`, `GameStateManager`, `ResourceManager` | Single instance of critical systems |
 | **Observer** | `EventManager` | Publish/subscribe event system |
@@ -142,20 +143,26 @@ PLAYER: {
 
 ### Example: Add New Enemy Type
 ```javascript
-// src/config/GameConfig.js
-ENEMY: {
-  TYPES: {
-    PHANTOM: {
-      type: 'phantom',
-      health: 40,
-      speed: 0.035,
-      color: { r: 150, g: 0 },
-    }
-  }
+// 1. Create src/entities/models/phantom.js
+import { Enemy } from '../Enemy.js';
+import { EntityRegistry, ENTITY_CATEGORIES } from '../../registry/EntityRegistry.js';
+
+export class Phantom extends Enemy {
+  static config = {
+    type: 'phantom',
+    health: 40,
+    speed: 0.035,
+    color: { r: 150, g: 0 },
+  };
+  constructor(x, y, config) { super('phantom', x, y, config); }
 }
 
-// Then in code:
-const phantom = EnemyFactory.create('phantom', x, y);
+EntityRegistry.register(ENTITY_CATEGORIES.ENEMY, Phantom.config, Phantom);
+
+// 2. Add to src/entities/models/index.js
+import './phantom.js';
+
+// That's it — EnemyFactory.create('phantom', x, y) now works.
 ```
 
 ---
@@ -164,12 +171,15 @@ const phantom = EnemyFactory.create('phantom', x, y);
 
 ### Adding New Weapon
 
-1. Create weapon class:
+1. Create weapon class in `src/weapons/models/`:
 ```javascript
-// src/weapons/RocketLauncher.js
-import { Weapon } from './Weapon.js';
+// src/weapons/models/rocket_launcher.js
+import { Weapon } from '../Weapon.js';
+import { EntityRegistry, ENTITY_CATEGORIES } from '../../registry/EntityRegistry.js';
 
 export class RocketLauncher extends Weapon {
+  static config = { type: 'rocket_launcher' };
+
   constructor() {
     super('ROCKET LAUNCHER', {
       damage: 100,
@@ -178,6 +188,7 @@ export class RocketLauncher extends Weapon {
       fireRate: 2000,
       spread: 0,
       reloadTime: 3000,
+      fireType: 'manual',
     });
   }
 
@@ -185,14 +196,13 @@ export class RocketLauncher extends Weapon {
     // Implementation
   }
 }
+
+EntityRegistry.register(ENTITY_CATEGORIES.WEAPON, RocketLauncher.config, RocketLauncher);
 ```
 
-2. Register with factory:
+2. Add to `src/weapons/models/index.js`:
 ```javascript
-// src/weapons/WeaponFactory.js
-import { RocketLauncher } from './RocketLauncher.js';
-
-WeaponFactory.register('rocket', RocketLauncher);
+import './rocket_launcher.js';
 ```
 
 ### Adding New AI Behavior
@@ -213,9 +223,9 @@ export class FleeState extends AIBehavior {
 }
 ```
 
-2. Register with factory:
+2. Register with EnemyFactory:
 ```javascript
-// src/entities/EnemyFactory.js
+// In EnemyFactory.init() or after initialization:
 EnemyFactory.registerAIState('flee', new FleeState());
 ```
 

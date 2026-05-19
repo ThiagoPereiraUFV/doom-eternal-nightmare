@@ -16,7 +16,15 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - Entities and weapons use Factory pattern (EnemyFactory, WeaponFactory)
 - Factories handle object creation and initialization
 - Keep creation logic centralized in factory classes
-- Both factories auto-initialize at module load via a static `init()` call
+- Both factories auto-initialize via a static `async init()` call
+- Both factories delegate type registration to `EntityRegistry` — factories themselves contain no hard-coded type lists
+
+### Registry Pattern
+- `EntityRegistry` (`src/registry/EntityRegistry.js`) is the single source of truth for all registered entity types
+- Categories: `enemy`, `weapon`, `bot`, `player`, `particle`, `map` (constants in `ENTITY_CATEGORIES`)
+- Model files self-register at import time via `EntityRegistry.register(category, config, EntityClass)`
+- Factories and systems query the registry via `EntityRegistry.getTypes()`, `getConfig()`, `getClass()`
+- Adding a new enemy or weapon requires only: (1) create a model file, (2) add its import to the manifest index — no factory changes needed
 
 ### Event-Driven Architecture
 - Use EventManager for decoupled communication between systems
@@ -36,8 +44,8 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - Classes should be open for extension, closed for modification
 - Use inheritance for weapon types (extend base Weapon class)
 - AI states extend base State interface
-- Add new enemy types through `EnemyFactory.registerType()` without modifying core logic
-- Add new weapon types through `WeaponFactory.register()` without modifying core logic
+- Add new enemy types by creating `src/entities/models/<type>.js` and importing it in `models/index.js` — `EntityRegistry` handles the rest
+- Add new weapon types by creating `src/weapons/models/<type>.js` and importing it in `models/index.js` — `EntityRegistry` handles the rest
 
 ### Liskov Substitution Principle (LSP)
 - Derived classes must be substitutable for their base classes
@@ -124,7 +132,7 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - Shell casings: cylinder geometry with bouncing physics (up to 3 bounces, restitution 0.3–0.55), fade out; spawned via `spawnShell(px, py, angle, shellConfig)`; hard cap of 60 shells
 - Explosions: 20 sphere particles with orange→yellow color gradient + short `PointLight` flash; spawned via `spawnExplosion(wx, wy)`
 - Death animation: enemy mesh sinks and rotates 90° over 1.2 seconds via `DeathAnimationSystem`
-- Wall materials use `THREE.MeshBasicMaterial` (no lighting math); enemy/weapon parts use `MeshLambertMaterial`
+- Wall materials use `THREE.MeshBasicMaterial` (no lighting math); enemy model parts use `MeshStandardMaterial` (defined in each model file under `getMaterials()`); bot parts also use `MeshStandardMaterial`
 - `RayCaster` (incremental ray march at 0.01 precision, not Three.js `Raycaster`) handles ray-wall and ray-enemy intersection for **game logic** (shooting, line-of-sight), not for visual rendering
 - Window resize is handled via `_onResize()` which updates both cameras' aspect ratios and renderer size
 - `applyDifficultyLighting(diff)` updates ambient intensity, fog density, and flashlight intensity at game start
@@ -133,7 +141,7 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 ### MeshBuilder
 - `MeshBuilderMixin(BaseClass)` is a mixin function that adds geometry helper methods to any class: `box`, `sphere`, `cone`, `cyl`, `torus`, `ring`, `addTube`
 - All mixin helpers add a mesh to `this.g` (the current group) and return it
-- Enemy subclasses use `class Demon extends MeshBuilderMixin(Enemy)` pattern; `FriendlyBot` uses `MeshBuilderMixin(class {})` since it doesn't extend `Enemy`
+- Enemy subclasses use `class Demon extends MeshBuilderMixin(Enemy)` pattern; `FriendlyBot` uses `class FriendlyBot extends MeshBuilderMixin(Entity)` since it extends `Entity` but not `Enemy`
 - `MeshBuilder` is also available as a standalone class: `new MeshBuilder(group, mat)`
 - Use this mixin for all new entity mesh construction instead of raw `THREE.Mesh` creation
 
@@ -144,22 +152,27 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 
 ### Difficulty System
 - Five presets: `EASY`, `MEDIUM`, `HARD`, `IMPOSSIBLE`, `CUSTOM` — defined in `GameConfig.DIFFICULTY`
-- Per-difficulty overrides: `maxHealth`, `maxStamina`, `staminaDrain`, `staminaRecovery`, `ammoMultiplier`, `enemyCount`, `enemyHealthMult`, `enemySpeedMult`, `enemyDamage`, `fillRatio`, `smoothIterations`, `ambientIntensity`, `fogDensity`, `flashlightIntensity`, `autoReload`, `aimAssist`, `availableGuns`
+- Per-difficulty overrides: `maxHealth`, `maxStamina`, `staminaDrain`, `staminaRecovery`, `ammoMultiplier`, `enemyCount`, `enemyHealthMult`, `enemySpeedMult`, `enemyDamage`, `fillRatio`, `smoothIterations`, `ambientIntensity`, `fogDensity`, `flashlightIntensity`, `autoReload`, `aimAssist`, `availableGuns`, `botCount`
 - `DIFFICULTY_SCHEMA` array drives the Custom difficulty modal UI — adding an entry here automatically adds a slider, checkbox, or gun picker to the modal; no other changes needed
 - `HARD` restricts guns to `['pistol', 'shotgun', 'rifle', 'smg']`; `IMPOSSIBLE` to `['pistol']` only
 - Selected at game start by reading `.diff-btn.selected` from the DOM; defaults to `MEDIUM`
 - Applied to `Renderer` via `applyDifficultyLighting()` and to `Player`/`Enemy` instances at spawn time
 
+### Entity Base Class
+- `Entity` (`src/entities/Entity.js`) is the shared base for all positioned, living entities (`Player`, `Enemy`, `FriendlyBot`)
+- Provides: `x`, `y`, `angle`, `health`, `maxHealth`, `isAlive()`, `distanceTo(x, y)`, `angleTo(x, y)`
+
 ### Entity Management
 - Player is a singleton managed by Game core; tracks health, stamina, `isAiming` (ADS), `isSprinting`, `headBob`, `recoilOffset`, `screenShake`, and `bloodLoss`
-- Enemy types: `demon`, `zombie`, `ghost`, `brute` — defined in `GameConfig.ENEMY.TYPES`
+- Enemy types: `demon`, `zombie`, `ghost`, `brute` — defined in `src/entities/models/` and auto-registered with `EntityRegistry` at import time; use `EnemyFactory.getTypes()` at runtime to enumerate them
+- `GameConfig.ENEMY.AI_STATES` holds string constants (`CHASE`, `PATROL`, `SEARCH`) — single source of truth for all `setState()` calls
 - Enemies are instantiated through `EnemyFactory.create(type, x, y, initialState)`
 - **AI state instances are shared** — `EnemyFactory` holds one `ChaseState`, one `PatrolState`, one `SearchState` shared across all enemies; states must be stateless regarding individual enemy data; all per-enemy state (`patrolTarget`, `searchTarget`, `lastKnownPlayerPosition`, `stuckCounter`) is stored on the enemy instance itself
 - `Enemy.setState(state)` monkey-patched by `EnemyFactory` to route string names through `_aiStates` map; accepts either a state name string or a state object; when hit while not chasing, enemy auto-switches to `'chase'`
 - All entities should have consistent update/render interface
 
 ### FriendlyBot System
-- `FriendlyBot` is a friendly AI companion (`src/entities/FriendlyBot.js`) that does NOT extend `Enemy`
+- `FriendlyBot` is a friendly AI companion (`src/entities/FriendlyBot.js`) that extends `MeshBuilderMixin(Entity)` — it does NOT extend `Enemy`
 - Bots are spawned in an arc behind the player at game start; count and behavior driven by difficulty settings
 - Bot AI uses a **separate** base class `BotBehavior` (not `AIBehavior`) with `execute(bot, player, enemies, map, deltaTime)` signature
 - Three bot states: `BotFollowState` (follow player + engage enemies), `BotIdleState` (hold position, short-range engage), `BotSearchClearState` (wander + clear area)
@@ -169,11 +182,12 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - `BotBehavior._tryAttack()` selects weapon dynamically based on range: shotgun (<3.5u, 40dmg), pistol (<7.5u, 25dmg), sniper (else, 60dmg); sets `bot.weaponType` which controls which weapon sub-mesh is visible
 - Bot mesh contains 3 weapon sub-groups (pistol/shotgun/sniper); only one is visible at a time based on `bot.weaponType`
 - Bots can target both enemies and shield the player; `ChaseState` also considers living bots as potential targets (nearest entity with LoS)
-- `GameConfig.BOT`: `ATTACK_RANGE: 9`, `FOLLOW_MAX_DISTANCE: 8`, `SEARCH_WANDER_INTERVAL: 3000ms`, `MAX_COUNT: 5`, `COMMANDS` string constants
+- `GameConfig.BOT`: `HEALTH: 100`, `SPEED: 0.04`, `ATTACK_RANGE: 9`, `ATTACK_DAMAGE: 25`, `ATTACK_COOLDOWN: 700`, `FOLLOW_DESIRED_DISTANCE: 2.5`, `FOLLOW_MAX_DISTANCE: 8`, `SEARCH_WANDER_INTERVAL: 3000ms`, `MAX_COUNT: 5`, `COMMANDS` string constants
 
 ### MenuModelViewer
 - `MenuModelViewer` (`src/core/MenuModelViewer.js`) renders a standalone Three.js scene in `#modelViewerCanvas` for the pre-game model browser
-- Supports two categories: `enemies` (all 4 types) and `weapons` (all unique guns across difficulties)
+- Supports three categories: `enemies` (all registered enemy types), `weapons` (all registered weapon types), `characters` (marine variants: `marine_pistol`, `marine_shotgun`, `marine_sniper`)
+- Enemy and weapon entries are sourced dynamically from `EnemyFactory.getTypes()` / `WeaponFactory.getTypes()` (backed by `EntityRegistry`) so new types appear automatically
 - Uses `WeaponFactory.create()` / `EnemyFactory.create()` to build models, then `renderer.createWeaponPreview()` / `renderer.createEnemyPreview()` to clone materials for independent emissive state
 - Auto-rotates model (0.006 rad/frame); drag to rotate manually; auto-rotation resumes when pointer is released
 - `_fitModel()` computes camera distance from bounding box using FOV math
@@ -187,8 +201,8 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - `render` config per weapon: `{ basePosition, baseRotationY, adsOffset, adsRotation, scale, muzzleFlash: {intensity, color?, duration?} }`; sniper includes `adsFOV: 22°`
 - `audio` config per weapon: `{ shoot: [...sequence] }` — played by `AudioSystem` instead of the generic gunshot fallback
 - `shell` config per weapon (optional): ejection angle offset, geometry dimensions — absent on grenade launcher and plasma
-- Registered types (7 total): `pistol`, `shotgun`, `rifle`, `smg`, `sniper`, `grenade_launcher`, `plasma` — add new types via `WeaponFactory.register(type, WeaponClass)`
-- `WeaponFactory.create(type)` is **async** — uses dynamic `import('./models/${type}.js')` and caches the class after first load
+- Registered types (7 total): `pistol`, `shotgun`, `rifle`, `smg`, `sniper`, `grenade_launcher`, `plasma` — add new types by creating a model file that calls `EntityRegistry.register(ENTITY_CATEGORIES.WEAPON, config, WeaponClass)` and importing it in `src/weapons/models/index.js`
+- `WeaponFactory.create(type)` is **async** — resolves via `EntityRegistry`; falls back to a dynamic `import('./models/${type}.js')` for types not in the index
 - `fire(context)` receives `{ player, enemies, map, audioSystem, eventManager }` and performs an internal raycast to resolve hits
 - Reload lifecycle: `startReload()` → `updateReload()` (polls elapsed time) → `completeReload()` (adjusts magazine/reserve)
 - `canFire()` checks: not reloading, magazine > 0, fire rate cooldown elapsed
@@ -239,12 +253,14 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 
 ## File Organization
 - Core game loop and systems in `/core` (`Game.js`, `Renderer.js`, `InputManager.js`, `TouchInputManager.js`, `MapRenderer.js`, `MenuModelViewer.js`, `EventManager.js`)
-- Gameplay entities in `/entities` (`Player.js`, `Enemy.js` + subclasses, `FriendlyBot.js`, `EnemyFactory.js`)
+- Gameplay entities in `/entities` (`Entity.js` base class, `Player.js`, `Enemy.js` + subclasses, `FriendlyBot.js`, `EnemyFactory.js`)
+- Entity model descriptors in `/entities/models/` (one file per enemy type; each calls `EntityRegistry.register()`; manifest in `index.js`)
 - AI logic isolated in `/ai` (`AIBehavior.js` + ChaseState/PatrolState/SearchState for enemies; `BotBehavior.js` + BotFollowState/BotIdleState/BotSearchClearState for bots)
 - Particle/effect systems in `/systems` (`BloodSystem.js`, `ShellSystem.js`, `ExplosionSystem.js`, `DeathAnimationSystem.js`, `AudioSystem.js`)
 - Reusable utilities in `/utils` (`MapGenerator.js`, `MeshBuilder.js`, `RayCaster.js`, `Vector2D.js`)
-- Weapon models in `/weapons/models/` (one file per weapon type, lazy-loaded via dynamic import)
-- Configuration centralized in `/config/GameConfig.js`
+- Weapon models in `/weapons/models/` (one file per weapon type; each calls `EntityRegistry.register()`; manifest in `index.js`)
+- Central type registry in `/registry/EntityRegistry.js` (`EntityRegistry` class + `ENTITY_CATEGORIES` constants)
+- Configuration centralized in `/config/GameConfig.js` (includes `WEAPON_3D` section for 3D weapon rendering constants)
 - SVG sprite data in `/data/sprites.js` (loaded via `<script>` tag as `window.SVGSprites`; categories: `walls`, `enemies`, `weapons`)
 - State management in `/managers/` (`GameStateManager.js`, `ResourceManager.js`)
 - PWA assets: `manifest.json`, `sw.js`, `icons/`
