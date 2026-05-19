@@ -266,6 +266,19 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - PWA assets: `manifest.json`, `sw.js`, `icons/`
 - Keep files focused and under 300 lines when possible
 
+## Utility Commands
+
+- `yarn generate-icons` — regenerate PWA icons via `scripts/generate-icons.js`
+- `yarn generate-sw` — regenerate service worker via `scripts/generate-sw.js`
+- `yarn lint` — run all linters (JS + CSS + HTML)
+- `yarn lint:js` — ESLint on `src/**/*.js`, `scripts/**/*.js`, `sw.js`
+- `yarn lint:css` — Stylelint on all CSS files
+- `yarn lint:html` — HTMLHint on all HTML files
+- `yarn lint:ci` — strict lint + Prettier check (zero warnings, used in CI)
+- `yarn lint:fix` — auto-fix ESLint and Stylelint issues
+- `yarn format` — Prettier format all JS/CSS/HTML files
+- `yarn validate` — alias for `yarn lint`
+
 ## Best Practices
 - Avoid tight coupling between systems
 - Use dependency injection for testability
