@@ -31,6 +31,7 @@ export class TouchInputManager {
     // Look area state
     this.lookArea = {
       active: false,
+      touchId: null,
       lastX: 0,
       lastY: 0,
       deltaX: 0,
@@ -42,6 +43,7 @@ export class TouchInputManager {
     this.joystickElement = document.getElementById("touchJoystick");
     this.joystickStick = document.getElementById("joystickStick");
     this.lookAreaElement = document.getElementById("touchLookArea");
+    this.fireButtonElement = document.getElementById("touch-fire");
 
     // Validate elements exist
     if (!this.touchControls || !this.joystickElement || !this.lookAreaElement) {
@@ -103,6 +105,26 @@ export class TouchInputManager {
         this._handleLookEnd(e),
       );
       this.lookAreaElement.addEventListener("touchcancel", (e) =>
+        this._handleLookEnd(e),
+      );
+    }
+
+    // Fire button — also tracks look so dragging while firing moves the camera
+    if (this.fireButtonElement) {
+      this.fireButtonElement.addEventListener(
+        "touchstart",
+        (e) => this._handleLookStart(e),
+        { passive: false },
+      );
+      this.fireButtonElement.addEventListener(
+        "touchmove",
+        (e) => this._handleLookMove(e),
+        { passive: false },
+      );
+      this.fireButtonElement.addEventListener("touchend", (e) =>
+        this._handleLookEnd(e),
+      );
+      this.fireButtonElement.addEventListener("touchcancel", (e) =>
         this._handleLookEnd(e),
       );
     }
@@ -208,9 +230,15 @@ export class TouchInputManager {
    */
   _handleLookStart(e) {
     e.preventDefault();
-    const touch = e.touches[0];
+    if (this.lookArea.active) {
+      return;
+    }
+
+    // already tracking a look touch
+    const touch = e.changedTouches[0];
 
     this.lookArea.active = true;
+    this.lookArea.touchId = touch.identifier;
     this.lookArea.lastX = touch.clientX;
     this.lookArea.lastY = touch.clientY;
   }
@@ -225,7 +253,15 @@ export class TouchInputManager {
       return;
     }
 
-    const touch = e.touches[0];
+    let touch = null;
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === this.lookArea.touchId) {
+        touch = e.changedTouches[i];
+        break;
+      }
+    }
+    if (!touch)
+{return;}
 
     this.lookArea.deltaX = touch.clientX - this.lookArea.lastX;
     this.lookArea.deltaY = touch.clientY - this.lookArea.lastY;
@@ -240,9 +276,15 @@ export class TouchInputManager {
    */
   _handleLookEnd(e) {
     e.preventDefault();
-    this.lookArea.active = false;
-    this.lookArea.deltaX = 0;
-    this.lookArea.deltaY = 0;
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === this.lookArea.touchId) {
+        this.lookArea.active = false;
+        this.lookArea.touchId = null;
+        this.lookArea.deltaX = 0;
+        this.lookArea.deltaY = 0;
+        break;
+      }
+    }
   }
 
   /**
