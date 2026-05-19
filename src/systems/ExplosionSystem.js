@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { spliceByIndices } from "../utils/MathUtils.js";
 
 /**
  * ExplosionSystem — spawns and animates explosion particle effects.
@@ -63,8 +64,6 @@ export class ExplosionSystem {
         this._scene.remove(p.mesh);
       }
     }
-    for (let i = toRemove.length - 1; i >= 0; i--) {
-      this._explosionParticles.splice(toRemove[i], 1);
-    }
+    spliceByIndices(this._explosionParticles, toRemove);
   }
 }

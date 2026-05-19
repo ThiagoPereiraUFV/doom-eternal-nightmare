@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { spliceByIndices } from "../utils/MathUtils.js";
 
 /**
  * ShellSystem — spawns and animates ejected shell casings.
@@ -113,9 +114,7 @@ export class ShellSystem {
       }
     }
 
-    for (let i = toRemove.length - 1; i >= 0; i--) {
-      this._shells.splice(toRemove[i], 1);
-    }
+    spliceByIndices(this._shells, toRemove);
 
     if (this._shells.length > 60) {
       const excess = this._shells.splice(0, this._shells.length - 60);

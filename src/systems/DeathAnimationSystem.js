@@ -1,3 +1,5 @@
+import { spliceByIndices } from "../utils/MathUtils.js";
+
 /**
  * DeathAnimationSystem — plays fall-over animations for dying enemies.
  */
@@ -58,8 +60,6 @@ export class DeathAnimationSystem {
         this._scene.remove(d.mesh);
       }
     }
-    for (let i = toRemove.length - 1; i >= 0; i--) {
-      this._dyingEnemies.splice(toRemove[i], 1);
-    }
+    spliceByIndices(this._dyingEnemies, toRemove);
   }
 }

@@ -207,9 +207,10 @@ export class Player extends Entity {
    */
   look(yawDelta, pitchDelta = 0) {
     this.angle += yawDelta;
-    this.pitch = Math.max(
+    this.pitch = clamp(
+      this.pitch + pitchDelta,
       -GameConfig.INPUT.MAX_LOOK_PITCH,
-      Math.min(GameConfig.INPUT.MAX_LOOK_PITCH, this.pitch + pitchDelta),
+      GameConfig.INPUT.MAX_LOOK_PITCH,
     );
   }
 

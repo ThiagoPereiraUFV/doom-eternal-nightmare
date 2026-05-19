@@ -7,6 +7,7 @@
 
 import * as THREE from "three";
 import { GameConfig } from "../config/GameConfig.js";
+import { clamp, lerp } from "../utils/MathUtils.js";
 import { EnemyFactory } from "../entities/EnemyFactory.js";
 import {
   EntityRegistry,
@@ -155,24 +156,24 @@ export class Renderer {
     }
 
     const focusConfig = GameConfig.EFFECTS.ADS_FOCUS;
-    const intensity = THREE.MathUtils.clamp(focusConfig.INTENSITY ?? 1, 0, 2);
-    const normalizedZoom = THREE.MathUtils.clamp((75 - targetFov) / 53, 0, 1);
-    const blur = THREE.MathUtils.lerp(
+    const intensity = clamp(focusConfig.INTENSITY ?? 1, 0, 2);
+    const normalizedZoom = clamp((75 - targetFov) / 53, 0, 1);
+    const blur = lerp(
       focusConfig.BLUR_MIN,
       focusConfig.BLUR_MAX,
       normalizedZoom,
     );
-    const clearRadius = THREE.MathUtils.lerp(
+    const clearRadius = lerp(
       focusConfig.CLEAR_RADIUS_MAX,
       focusConfig.CLEAR_RADIUS_MIN,
       normalizedZoom * intensity,
     );
-    const feather = THREE.MathUtils.lerp(
+    const feather = lerp(
       focusConfig.FEATHER_MIN,
       focusConfig.FEATHER_MAX,
       normalizedZoom,
     );
-    const tintAlpha = THREE.MathUtils.lerp(
+    const tintAlpha = lerp(
       focusConfig.TINT_MIN,
       focusConfig.TINT_MAX,
       normalizedZoom * intensity,
@@ -393,21 +394,36 @@ export class Renderer {
   // Enemy Mesh Management
   // ═══════════════════════════════════════════════════════════════
 
-  _updateEnemyMeshes(enemies, t) {
-    for (const enemy of enemies) {
-      if (enemy.isDead) {
-        if (enemy.mesh) {
-          this.deathSystem.start(enemy.mesh);
-          enemy.removeMesh(this.enemiesGroup);
+  /**
+   * Shared mesh lifecycle loop for enemies and bots.
+   * @param {Array} entities
+   * @param {THREE.Group} group
+   * @param {(entity: object) => void} spawnFn - called when mesh needs creating
+   * @param {(entity: object) => void} updateFn - called every frame for live entities
+   */
+  _updateEntityMeshes(entities, group, spawnFn, updateFn) {
+    for (const entity of entities) {
+      if (entity.isDead) {
+        if (entity.mesh) {
+          this.deathSystem.start(entity.mesh);
+          entity.removeMesh(group);
         }
         continue;
       }
-      if (!enemy.mesh) {
-        const mats = this._getEnemyMats(enemy.type);
-        enemy.spawnMesh(this.enemiesGroup, mats);
+      if (!entity.mesh) {
+        spawnFn(entity);
       }
-      enemy.updateMesh(this.camera.position.x, this.camera.position.z, t);
+      updateFn(entity);
     }
+  }
+
+  _updateEnemyMeshes(enemies, t) {
+    this._updateEntityMeshes(
+      enemies,
+      this.enemiesGroup,
+      (e) => e.spawnMesh(this.enemiesGroup, this._getEnemyMats(e.type)),
+      (e) => e.updateMesh(this.camera.position.x, this.camera.position.z, t),
+    );
   }
 
   createEnemyPreview(type) {
@@ -447,31 +463,19 @@ export class Renderer {
    * animations. Call this before reinitialising the world on a new game.
    */
   clearEntities() {
-    // Remove all children from the shared groups
-    while (this.enemiesGroup.children.length > 0) {
-      this.enemiesGroup.remove(this.enemiesGroup.children[0]);
-    }
-    while (this.botsGroup.children.length > 0) {
-      this.botsGroup.remove(this.botsGroup.children[0]);
-    }
+    this.enemiesGroup.clear();
+    this.botsGroup.clear();
     // Cancel any mid-animation death meshes that were moved to the root scene
     this.deathSystem.clear();
   }
 
   _updateBotMeshes(bots, t) {
-    for (const bot of bots) {
-      if (bot.isDead) {
-        if (bot.mesh) {
-          this.deathSystem.start(bot.mesh);
-          bot.removeMesh(this.botsGroup);
-        }
-        continue;
-      }
-      if (!bot.mesh) {
-        bot.spawnMesh(this.botsGroup, this._botMat);
-      }
-      bot.updateMesh(t);
-    }
+    this._updateEntityMeshes(
+      bots,
+      this.botsGroup,
+      (b) => b.spawnMesh(this.botsGroup, this._botMat),
+      (b) => b.updateMesh(t),
+    );
   }
 
   // ═══════════════════════════════════════════════════════════════

@@ -29,6 +29,17 @@ export function clamp(value, min, max) {
 }
 
 /**
+ * Linear interpolation between a and b by factor t (0–1).
+ * @param {number} a
+ * @param {number} b
+ * @param {number} t
+ * @returns {number}
+ */
+export function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+/**
  * Returns true when integer tile coordinates (tx, ty) are inside map bounds.
  * Does NOT check tile content.
  * @param {number[][]} map
@@ -49,4 +60,17 @@ export function isInBounds(map, tx, ty) {
  */
 export function isWalkable(map, tx, ty) {
   return isInBounds(map, tx, ty) && map[ty][tx] === 0;
+}
+
+/**
+ * Remove elements from an array at the given indices in reverse order.
+ * Indices must be sorted ascending (as collected in a forward loop).
+ * Mutates the array in place.
+ * @param {Array} array
+ * @param {number[]} indices - ascending list of indices to remove
+ */
+export function spliceByIndices(array, indices) {
+  for (let i = indices.length - 1; i >= 0; i--) {
+    array.splice(indices[i], 1);
+  }
 }

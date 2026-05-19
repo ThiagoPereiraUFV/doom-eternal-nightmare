@@ -4,7 +4,6 @@
  * Following SRP - only enemy logic
  */
 
-import * as THREE from "three";
 import { GameConfig } from "../config/GameConfig.js";
 import { Entity } from "./Entity.js";
 
@@ -141,19 +140,6 @@ export class Enemy extends Entity {
   // ─── 3D Mesh Lifecycle ─────────────────────────────────────────────────────
 
   /**
-   * Build and add this enemy's 3D mesh to the given group.
-   * Subclasses must implement createMesh(group, mat).
-   * @param {THREE.Group} group - Parent group (e.g. enemiesGroup in scene)
-   * @param {Object} mat - Material palette
-   */
-  spawnMesh(group, mat) {
-    const g = new THREE.Group();
-    this.createMesh(g, mat);
-    this.mesh = g;
-    group.add(g);
-  }
-
-  /**
    * Sync position, billboard rotation, animation and hit flash each frame.
    * @param {number} cameraX
    * @param {number} cameraZ
@@ -183,17 +169,6 @@ export class Enemy extends Entity {
           child.material.emissive.setRGB(0, 0, 0);
         }
       });
-    }
-  }
-
-  /**
-   * Remove this enemy's mesh from the group and clear the reference.
-   * @param {THREE.Group} group
-   */
-  removeMesh(group) {
-    if (this.mesh) {
-      group.remove(this.mesh);
-      this.mesh = null;
     }
   }
 

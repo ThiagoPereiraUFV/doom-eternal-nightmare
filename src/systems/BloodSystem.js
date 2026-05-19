@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { spliceByIndices } from "../utils/MathUtils.js";
 
 /**
  * BloodSystem — spawns and animates blood particles, pools, and wall splatters.
@@ -143,9 +144,7 @@ export class BloodSystem {
       }
     }
 
-    for (let i = toRemove.length - 1; i >= 0; i--) {
-      this._bloodParticles.splice(toRemove[i], 1);
-    }
+    spliceByIndices(this._bloodParticles, toRemove);
 
     for (const child of this._bloodPoolGroup.children) {
       if (

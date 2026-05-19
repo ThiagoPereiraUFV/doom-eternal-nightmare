@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { clamp } from "../utils/MathUtils.js";
 
 /**
  * MapRenderer — builds and manages the 3D map geometry and torch lights.
@@ -103,14 +104,7 @@ export class MapRenderer {
       }
     }
 
-    const id = ctx.getImageData(0, 0, S, S);
-    for (let i = 0; i < id.data.length; i += 4) {
-      const n = (Math.random() - 0.5) * 22;
-      id.data[i] = Math.max(0, Math.min(255, id.data[i] + n));
-      id.data[i + 1] = Math.max(0, Math.min(255, id.data[i + 1] + n));
-      id.data[i + 2] = Math.max(0, Math.min(255, id.data[i + 2] + n));
-    }
-    ctx.putImageData(id, 0, 0);
+    this._applyNoise(ctx, S, 22);
     const tex = new THREE.CanvasTexture(cv);
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     return tex;
@@ -131,19 +125,28 @@ export class MapRenderer {
         ctx.strokeRect(x + 1, y + 1, ts - 2, ts - 2);
       }
     }
-    const id = ctx.getImageData(0, 0, S, S);
-    for (let i = 0; i < id.data.length; i += 4) {
-      const n = (Math.random() - 0.5) * 16;
-      id.data[i] =
-        id.data[i + 1] =
-        id.data[i + 2] =
-          Math.max(0, Math.min(255, id.data[i] + n));
-    }
-    ctx.putImageData(id, 0, 0);
+    this._applyNoise(ctx, S, 16);
     const tex = new THREE.CanvasTexture(cv);
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     tex.repeat.set(4, 4);
     return tex;
+  }
+
+  /**
+   * Add uniform per-pixel luminance noise to each RGB channel.
+   * @param {CanvasRenderingContext2D} ctx
+   * @param {number} S - Canvas side length in pixels
+   * @param {number} amount - Max noise magnitude (±amount/2)
+   */
+  _applyNoise(ctx, S, amount) {
+    const id = ctx.getImageData(0, 0, S, S);
+    for (let i = 0; i < id.data.length; i += 4) {
+      const n = (Math.random() - 0.5) * amount;
+      id.data[i] = clamp(id.data[i] + n, 0, 255);
+      id.data[i + 1] = clamp(id.data[i + 1] + n, 0, 255);
+      id.data[i + 2] = clamp(id.data[i + 2] + n, 0, 255);
+    }
+    ctx.putImageData(id, 0, 0);
   }
 
   /**

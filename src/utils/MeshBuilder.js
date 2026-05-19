@@ -122,6 +122,30 @@ export const MeshBuilderMixin = (Base) =>
     addRing(...a) {
       return this.ring(...a);
     }
+
+    /**
+     * Build and add this entity's 3D mesh to the given group.
+     * Subclasses must implement createMesh(group, mat).
+     * @param {THREE.Group} group
+     * @param {Object} mat - Material palette
+     */
+    spawnMesh(group, mat) {
+      const g = new THREE.Group();
+      this.createMesh(g, mat);
+      this.mesh = g;
+      group.add(g);
+    }
+
+    /**
+     * Remove this entity's mesh from the group and clear the reference.
+     * @param {THREE.Group} group
+     */
+    removeMesh(group) {
+      if (this.mesh) {
+        group.remove(this.mesh);
+        this.mesh = null;
+      }
+    }
   };
 
 /**
