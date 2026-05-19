@@ -11,6 +11,7 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - Each state should implement consistent interface methods
 - States are managed through their respective base classes (both abstract; throw if instantiated directly)
 - `GameStateManager` also uses the State pattern for game-level state transitions
+- Shared state instances (enemy AI states, bot states) must remain stateless; validate that no per-entity data is stored on state objects — all mutable state must live on the entity instance itself
 
 ### Factory Pattern
 - Entities and weapons use Factory pattern (EnemyFactory, WeaponFactory)
@@ -113,7 +114,7 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 
 ### Vector Math
 - `Vector2D` utility class is available for position/direction calculations (`add`, `subtract`, `normalize`, `dot`, `distanceTo`, `angle`, etc.)
-- **Note:** Most existing entity/AI code uses raw scalar math and `{x, y}` objects rather than `Vector2D`; new code may follow either convention
+- **Note:** Most existing entity/AI code uses raw scalar math and `{x, y}` objects rather than `Vector2D`; new code should use the `Vector2D` utility class for consistency
 
 ## Game Engine Specifics
 
@@ -128,7 +129,7 @@ This is a DOOM-style 3D game engine built with vanilla JavaScript and Three.js. 
 - Wall/floor textures are **procedurally generated on `<canvas>`** at 256×256 and wrapped as `THREE.CanvasTexture`; SVG sprites in `window.SVGSprites` are loaded by `ResourceManager` but not used for rendering
 - `MapRenderer` buckets wall tiles by type and creates one `InstancedMesh` per wall type (4 draw calls for all walls); randomly places flickering `PointLight` torches on ~3% of wall tiles
 - Weapons render in a separate `weaponScene`/`weaponCamera(55°)` layered on top (no fog, own ambient + directional lights); muzzle flash via orange `PointLight` in `weaponScene` (blue for plasma)
-- `#weaponCanvas` DOM element is accepted by `Renderer` constructor for API compatibility but is no longer used (rendering is done entirely in `#gameCanvas`)
+- `#weaponCanvas` DOM element is accepted by `Renderer` constructor for API compatibility but is no longer used (rendering is done entirely in `#gameCanvas`); do not restore or repurpose it
 - Shell casings: cylinder geometry with bouncing physics (up to 3 bounces, restitution 0.3–0.55), fade out; spawned via `spawnShell(px, py, angle, shellConfig)`; hard cap of 60 shells
 - Explosions: 20 sphere particles with orange→yellow color gradient + short `PointLight` flash; spawned via `spawnExplosion(wx, wy)`
 - Death animation: enemy mesh sinks and rotates 90° over 1.2 seconds via `DeathAnimationSystem`
