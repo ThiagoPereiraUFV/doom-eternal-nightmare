@@ -1717,9 +1717,16 @@ body {
 }
 
 @keyframes portrait-rotate-hint {
-  0%, 100% { transform: rotate(0deg); }
-  40% { transform: rotate(90deg); }
-  60% { transform: rotate(90deg); }
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(90deg);
+  }
+  60% {
+    transform: rotate(90deg);
+  }
 }
 
 #portrait-warning-content p {

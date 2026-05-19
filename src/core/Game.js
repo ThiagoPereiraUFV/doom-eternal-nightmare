@@ -495,7 +495,10 @@ export class Game {
         }
       } else {
         // Returned to landscape — resume only if we were the ones who paused
-        if (this._pausedByOrientation && this.stateManager.is(GameStates.PAUSED)) {
+        if (
+          this._pausedByOrientation &&
+          this.stateManager.is(GameStates.PAUSED)
+        ) {
           this._pausedByOrientation = false;
           this.resumeGame();
         }

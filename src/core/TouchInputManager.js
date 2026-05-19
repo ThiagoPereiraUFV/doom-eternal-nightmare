@@ -260,8 +260,9 @@ export class TouchInputManager {
         break;
       }
     }
-    if (!touch)
-{return;}
+    if (!touch) {
+      return;
+    }
 
     this.lookArea.deltaX = touch.clientX - this.lookArea.lastX;
     this.lookArea.deltaY = touch.clientY - this.lookArea.lastY;
