@@ -91,4 +91,20 @@ export class BotBehavior extends BaseBehavior {
     }
     return false;
   }
+
+  /**
+   * Navigate toward a combat target and fire when close enough.
+   * Uses GameConfig.BOT.ENGAGE_BUFFER as the movement threshold.
+   * @param {FriendlyBot} bot
+   * @param {Enemy} target
+   * @param {number[][]} map
+   * @protected
+   */
+  _engageTarget(bot, target, map) {
+    const dist = this._distance(bot.x, bot.y, target.x, target.y);
+    if (dist > GameConfig.BOT.ENGAGE_BUFFER) {
+      this._navigateTowards(bot, target.x, target.y, bot.speed, map);
+    }
+    this._tryAttack(bot, target);
+  }
 }

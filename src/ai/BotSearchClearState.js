@@ -16,16 +16,18 @@ export class BotSearchClearState extends BotBehavior {
   }
 
   execute(bot, _player, enemies, map, _deltaTime) {
-    const { ATTACK_RANGE, SEARCH_WANDER_INTERVAL } = GameConfig.BOT;
+    const {
+      ATTACK_RANGE,
+      SEARCH_WANDER_INTERVAL,
+      SEARCH_WANDER_MIN_DIST,
+      SEARCH_WANDER_RANGE,
+      SEARCH_WANDER_ATTEMPTS,
+    } = GameConfig.BOT;
 
     // 1. Engage any visible enemy
     const target = this._findTarget(bot, enemies, map, ATTACK_RANGE);
     if (target) {
-      const distToTarget = this._distance(bot.x, bot.y, target.x, target.y);
-      if (distToTarget > 1.2) {
-        this._navigateTowards(bot, target.x, target.y, bot.speed, map);
-      }
-      this._tryAttack(bot, target);
+      this._engageTarget(bot, target, map);
       bot.searchWanderTarget = null; // reset wander so we don't immediately resume old path
       return;
     }
@@ -40,10 +42,17 @@ export class BotSearchClearState extends BotBehavior {
         bot.y,
         bot.searchWanderTarget.x,
         bot.searchWanderTarget.y,
-      ) < 0.5;
+      ) < GameConfig.ENEMY.SEARCH_ARRIVAL_THRESHOLD;
 
     if (needNewTarget) {
-      bot.searchWanderTarget = this._pickWanderTarget(bot, map);
+      bot.searchWanderTarget = this._randomWalkablePosition(
+        bot.x,
+        bot.y,
+        map,
+        SEARCH_WANDER_MIN_DIST,
+        SEARCH_WANDER_MIN_DIST + SEARCH_WANDER_RANGE,
+        SEARCH_WANDER_ATTEMPTS,
+      );
       bot.searchWanderTime = now;
     }
 
@@ -60,28 +69,5 @@ export class BotSearchClearState extends BotBehavior {
         bot.searchWanderTarget = null;
       }
     }
-  }
-
-  /**
-   * Pick a random walkable tile within ~8 units of the bot as a wander goal.
-   */
-  _pickWanderTarget(bot, map) {
-    const RANGE = 8;
-    for (let attempt = 0; attempt < 20; attempt++) {
-      const angle = Math.random() * Math.PI * 2;
-      const dist = 3 + Math.random() * RANGE;
-      const tx = Math.floor(bot.x + Math.cos(angle) * dist);
-      const ty = Math.floor(bot.y + Math.sin(angle) * dist);
-      if (
-        ty >= 0 &&
-        ty < map.length &&
-        tx >= 0 &&
-        tx < map[0].length &&
-        map[ty][tx] === 0
-      ) {
-        return { x: tx + 0.5, y: ty + 0.5 };
-      }
-    }
-    return null;
   }
 }

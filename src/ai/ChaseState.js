@@ -139,13 +139,17 @@ export class ChaseState extends AIBehavior {
    * Try to get unstuck
    * @private
    */
-  _unstuck(enemy, player, map) {
-    // Try moving in a random perpendicular direction
-    const angle = Math.random() * Math.PI * 2;
-    const targetX = enemy.x + Math.cos(angle) * 2;
-    const targetY = enemy.y + Math.sin(angle) * 2;
-
-    this._moveTowards(enemy, targetX, targetY, enemy.speed, map);
+  _unstuck(enemy, _player, map) {
+    const target = this._randomWalkablePosition(
+      enemy.x,
+      enemy.y,
+      map,
+      1,
+      GameConfig.ENEMY.UNSTUCK_DISTANCE,
+    );
+    if (target) {
+      this._moveTowards(enemy, target.x, target.y, enemy.speed, map);
+    }
   }
 }
 

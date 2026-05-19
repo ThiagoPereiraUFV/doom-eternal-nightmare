@@ -7,6 +7,7 @@
  */
 
 import { BaseBehavior } from "./BaseBehavior.js";
+import { GameConfig } from "../config/GameConfig.js";
 
 export class AIBehavior extends BaseBehavior {
   constructor(name) {
@@ -29,5 +30,26 @@ export class AIBehavior extends BaseBehavior {
    */
   execute(_enemy, _player, _map, _deltaTime, _bots) {
     throw new Error("execute() must be implemented by subclass");
+  }
+
+  /**
+   * Check if the player is close and visible; if so, switch the enemy to chase.
+   * Returns true when the transition was triggered so callers can early-return.
+   * @param {Enemy} enemy
+   * @param {Player} player
+   * @param {number[][]} map
+   * @returns {boolean}
+   * @protected
+   */
+  _checkTransitionToChase(enemy, player, map) {
+    const dist = this._distance(enemy.x, enemy.y, player.x, player.y);
+    if (
+      dist < GameConfig.ENEMY.CHASE_DISTANCE &&
+      this._isPathClear(enemy.x, enemy.y, player.x, player.y, map)
+    ) {
+      enemy.setState(GameConfig.ENEMY.AI_STATES.CHASE);
+      return true;
+    }
+    return false;
   }
 }

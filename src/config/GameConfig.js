@@ -117,6 +117,7 @@ export const GameConfig = {
     PATROL_WANDER_RANGE: 4,
     PATROL_MIN_DISTANCE: 0.1,
     STUCK_THRESHOLD: 20,
+    UNSTUCK_DISTANCE: 2,
     PATROL_SPEED_MULT: 0.5,
     SEARCH_SPEED_MULT: 0.7,
 
@@ -225,6 +226,16 @@ export const GameConfig = {
 
     // How often a searching bot picks a new wander target (ms).
     SEARCH_WANDER_INTERVAL: 3000,
+
+    // Wander radius for search_clear mode (min and range, in tiles).
+    SEARCH_WANDER_MIN_DIST: 3,
+    SEARCH_WANDER_RANGE: 8,
+
+    // Max random attempts when picking a walkable wander position.
+    SEARCH_WANDER_ATTEMPTS: 20,
+
+    // Minimum distance to a combat target before the bot navigates toward it.
+    ENGAGE_BUFFER: 1.2,
 
     // Max bots allowed in Custom difficulty.
     MAX_COUNT: 5,

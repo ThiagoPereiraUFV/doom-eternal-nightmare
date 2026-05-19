@@ -19,13 +19,7 @@ export class BotFollowState extends BotBehavior {
     const target = this._findTarget(bot, enemies, map, ATTACK_RANGE);
 
     if (target) {
-      // Move toward the target (maintain a slight buffer so bot doesn't walk into it)
-      const distToTarget = this._distance(bot.x, bot.y, target.x, target.y);
-      if (distToTarget > 1.2) {
-        this._navigateTowards(bot, target.x, target.y, bot.speed, map);
-      }
-      // Fire
-      this._tryAttack(bot, target);
+      this._engageTarget(bot, target, map);
       return;
     }
 

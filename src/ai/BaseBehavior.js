@@ -128,4 +128,36 @@ export class BaseBehavior {
 
     return false;
   }
+
+  /**
+   * Find a random walkable tile within a distance band around (originX, originY).
+   * Returns null when no walkable tile is found within the attempt budget.
+   * @param {number} originX
+   * @param {number} originY
+   * @param {number[][]} map
+   * @param {number} minDist - Minimum distance from origin (default 1)
+   * @param {number} maxDist - Maximum distance from origin (default 8)
+   * @param {number} attempts - Search attempts before giving up (default 20)
+   * @returns {{ x: number, y: number } | null}
+   * @protected
+   */
+  _randomWalkablePosition(
+    originX,
+    originY,
+    map,
+    minDist = 1,
+    maxDist = 8,
+    attempts = 20,
+  ) {
+    for (let i = 0; i < attempts; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = minDist + Math.random() * (maxDist - minDist);
+      const tx = Math.floor(originX + Math.cos(angle) * dist);
+      const ty = Math.floor(originY + Math.sin(angle) * dist);
+      if (isWalkable(map, tx, ty)) {
+        return { x: tx + 0.5, y: ty + 0.5 };
+      }
+    }
+    return null;
+  }
 }

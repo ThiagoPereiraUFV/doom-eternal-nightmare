@@ -316,22 +316,8 @@ export class Game {
     }
 
     // Bot command touch buttons
-    const bindBotCmd = (id, cmd) => {
-      const el = document.getElementById(id);
-      if (!el) {
-        return;
-      }
-      el.onclick = () => this._issueBotCommand(cmd);
-      el.addEventListener(
-        "touchstart",
-        (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          this._issueBotCommand(cmd);
-        },
-        { passive: false },
-      );
-    };
+    const bindBotCmd = (id, cmd) =>
+      _bindTap(document.getElementById(id), () => this._issueBotCommand(cmd));
     bindBotCmd("touch-bot-follow", GameConfig.BOT.COMMANDS.FOLLOW);
     bindBotCmd("touch-bot-search", GameConfig.BOT.COMMANDS.SEARCH_CLEAR);
     bindBotCmd("touch-bot-stop", GameConfig.BOT.COMMANDS.STOP);
@@ -349,26 +335,18 @@ export class Game {
         return;
       }
 
-      if (lowerKey === "1") {
-        this.player?.switchWeapon(0);
-      }
-      if (lowerKey === "2") {
-        this.player?.switchWeapon(1);
-      }
-      if (lowerKey === "3") {
-        this.player?.switchWeapon(2);
-      }
-      if (lowerKey === "4") {
-        this.player?.switchWeapon(3);
-      }
-      if (lowerKey === "5") {
-        this.player?.switchWeapon(4);
-      }
-      if (lowerKey === "6") {
-        this.player?.switchWeapon(5);
-      }
-      if (lowerKey === "7") {
-        this.player?.switchWeapon(6);
+      const WEAPON_HOTKEYS = {
+        1: 0,
+        2: 1,
+        3: 2,
+        4: 3,
+        5: 4,
+        6: 5,
+        7: 6,
+      };
+      const weaponIdx = WEAPON_HOTKEYS[lowerKey];
+      if (weaponIdx !== undefined) {
+        this.player?.switchWeapon(weaponIdx);
       }
       if (lowerKey === "q") {
         this.player?.previousWeapon();
